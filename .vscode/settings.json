@@ -1,0 +1,16 @@
+{
+    "[python]": {
+      "editor.formatOnSave": true,
+      "editor.codeActionsOnSave": {
+          "source.fixAll": true
+      },
+      "editor.defaultFormatter": "ms-python.black-formatter",
+    },
+    "editor.rulers": [
+      88
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "black-formatter.args": [
+        "--config=pyproject.toml"
+      ]
+  }
