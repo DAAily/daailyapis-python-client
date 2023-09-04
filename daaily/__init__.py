@@ -2,7 +2,7 @@
 
 
 from daaily import version as daaily_version
-from daaily._auth import Credentials
+from daaily.credentials import Credentials
 
 __version__ = daaily_version.__version__
 
