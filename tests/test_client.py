@@ -1,15 +1,16 @@
+import os
+
+import pytest
+import urllib3
+
 from daaily.credentials_sally import (
-    Credentials,
+    DAAILY_API_KEY_ENV,
     DAAILY_USER_EMAIL_ENV,
     DAAILY_USER_UID_ENV,
-    DAAILY_API_KEY_ENV,
+    Credentials,
 )
-import urllib3
 from daaily.exceptions import MissingEnvironmentVariable
-
 from daaily.transport.urllib3_http import Request
-import pytest
-import os
 
 
 class TestAuthSallyCredentials:

@@ -3,8 +3,7 @@ import time
 
 import flask
 import pytest
-from pytest_localserver.http import WSGIServer  # type: ignore
-
+from pytest_localserver.http import WSGIServer
 
 # .invalid will never resolve, see https://tools.ietf.org/html/rfc2606
 NXDOMAIN = "test.invalid"

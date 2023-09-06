@@ -1,14 +1,13 @@
 import http.client as http_client
-import urllib3
-
 from unittest import mock
 
-import daaily.transport.urllib3_http
-import daaily.transport.exceptions
+import urllib3
 
-from tests.transport import fixtures
-import daaily.credentials_sally
 import daaily.credentials
+import daaily.credentials_sally
+import daaily.transport.exceptions
+import daaily.transport.urllib3_http
+from tests.transport import fixtures
 
 
 class TestRequestResponse(fixtures.RequestResponseTests):
@@ -17,7 +16,6 @@ class TestRequestResponse(fixtures.RequestResponseTests):
 
     def test_http(self, server):
         request = self.make_request()
-        request.http
         response = request(url=f"{server.url}/basic", method="GET")
         assert response.status == http_client.OK
         assert response.headers["x-test-header"] == "value"

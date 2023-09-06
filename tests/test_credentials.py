@@ -1,7 +1,7 @@
 import datetime
 
-import daaily.credentials_sally
 import daaily.credentials
+import daaily.credentials_sally
 
 
 class CredentialsImpl(daaily.credentials.Credentials):
