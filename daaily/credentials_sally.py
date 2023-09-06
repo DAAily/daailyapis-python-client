@@ -40,9 +40,9 @@ class Credentials(daaily.credentials.Credentials):
         super(Credentials, self).__init__()
         if user_email is None or user_uid is None or api_key is None:
             try:
-                user_email = os.environ["DAAILY_USER_EMAIL"]
-                user_uid = os.environ["DAAILY_USER_UID"]
-                api_key = os.environ["DAAILY_API_KEY"]
+                user_email = os.environ[DAAILY_USER_EMAIL_ENV]
+                user_uid = os.environ[DAAILY_USER_UID_ENV]
+                api_key = os.environ[DAAILY_API_KEY_ENV]
             except KeyError as e:
                 raise daaily.exceptions.MissingEnvironmentVariable(
                     f"{MISSING_ENV_USER_CREDENTIALS_MESSAGE}\nError: {str(e.args)}"
