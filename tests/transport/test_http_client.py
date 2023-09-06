@@ -1,5 +1,5 @@
-import pytest  # type: ignore
 import http.client as http_client
+import urllib3
 
 from unittest import mock
 
@@ -7,7 +7,8 @@ import daaily.transport.urllib3_http
 import daaily.transport.exceptions
 
 from tests.transport import fixtures
-import daaily.auth_sally
+import daaily.credentials_sally
+import daaily.credentials
 
 
 class TestRequestResponse(fixtures.RequestResponseTests):
@@ -18,38 +19,77 @@ class TestRequestResponse(fixtures.RequestResponseTests):
         request = self.make_request()
         request.http
         response = request(url=f"{server.url}/basic", method="GET")
-
-        # with pytest.raises(daaily.transport.exceptions.TransportException) as ex:
-        #     request(url="https://{}".format(fixtures.NXDOMAIN), method="GET")
         assert response.status == http_client.OK
         assert response.headers["x-test-header"] == "value"
         assert response.data == b"Basic Content"
-        # assert ex.match("https")
 
-    def make_auth_http(self, server):
-        """
-        This tests first mocks the credentials class from daaily.auth_sally and then uses
-        the mock to create an AuthorizedHttp object.
-        """
-        # credentials = daaily.auth_sally.Credentials()
-        with mock.MagicMock() as mock_credentials:
-            mock_credentials.before_request.return_value = None
-            mock_credentials.id_token.return_value = "this-is-an-id-token"
-            mock_credentials.refresh_token.return_value = "this-is-a-refresh-token"
-        #     mock_credentials.id_token.return_value = "this-is-an-id-token"
-        # mock_credentials.get_token.return_value = None
-        # mock_credentials.refresh_token.return_value = None
-        # mock_credentials._make_request.return_value = None
-        # mock_credentials._token_exchange_endpoint = (
-        #     f"{daaily.auth_sally.SALLY_BASE_URL}/{daaily.auth_sally.TOKEN_ENDPOINT}"
-        # )
-        # return daaily.transport.urllib3_http.AuthorizedHttp(mock_credentials)
-        with mock.patch.object(credentials, "before_request", return_value=None):
-            return daaily.transport.urllib3_http.AuthorizedHttp(credentials)
-        auth_request = daaily.transport.urllib3_http.AuthorizedHttp(credentials)
-        response = auth_request.request(
-            url=f"{server.url}/make-auth-request", method="POST"
+
+class CredentialsStub(daaily.credentials.Credentials):
+    def __init__(self, token="token"):
+        super(CredentialsStub, self).__init__()
+        self.token = token
+
+    def apply(self, headers, token=None):
+        headers["authorization"] = self.token
+
+    def before_request(self, request, headers):
+        self.apply(headers)
+
+    def refresh(self, request):
+        self.token += "1"
+
+
+class HttpStub:
+    def __init__(self, responses, headers=None):
+        self.responses = responses
+        self.requests = []
+        self.headers = headers or {}
+
+    def urlopen(self, method, url, body=None, headers=None, **kwargs):
+        self.requests.append((method, url, body, headers, kwargs))
+        return self.responses.pop(0)
+
+
+class ResponseStub:
+    def __init__(self, status=http_client.OK, data=None):
+        self.status = status
+        self.data = data
+
+
+class TestAuthorizedHttp:
+    TEST_URL = "http://example.com"
+
+    def test_auth_http_defaults(self):
+        auth_http = daaily.transport.urllib3_http.AuthorizedHttp(
+            mock.sentinel.credentials
         )
-        assert response.status == http_client.OK
-        assert response.headers["Authentication"] == "Bearer"
-        assert response.data == b"Authorized Content"
+        assert auth_http.credentials == mock.sentinel.credentials
+        assert isinstance(auth_http.http, urllib3.PoolManager)
+
+    def test_urlopen_no_refresh(self):
+        credentials = mock.Mock(wraps=CredentialsStub())
+        response = ResponseStub()
+        http = HttpStub([response])
+        auth_http = daaily.transport.urllib3_http.AuthorizedHttp(credentials, http=http)
+        result = auth_http.urlopen("GET", self.TEST_URL)
+        assert result == response
+        assert credentials.before_request.called
+        assert not credentials.refresh.called
+        assert http.requests == [
+            ("GET", self.TEST_URL, None, {"authorization": "token"}, {})
+        ]
+
+    def test_urlopen_refresh(self):
+        credentials = mock.Mock(wraps=CredentialsStub())
+        final_response = ResponseStub(status=http_client.OK)
+        # First request will 401, second request will succeed.
+        http = HttpStub([ResponseStub(status=http_client.UNAUTHORIZED), final_response])
+        auth_http = daaily.transport.urllib3_http.AuthorizedHttp(credentials, http=http)
+        auth_http = auth_http.urlopen("GET", "http://example.com")
+        assert auth_http == final_response
+        assert credentials.before_request.call_count == 2
+        assert credentials.refresh.called
+        assert http.requests == [
+            ("GET", self.TEST_URL, None, {"authorization": "token"}, {}),
+            ("GET", self.TEST_URL, None, {"authorization": "token1"}, {}),
+        ]

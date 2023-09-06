@@ -1,26 +1,13 @@
-# Copyright 2016 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+"""
+Transport - HTTP client library support.
 
-"""Transport - HTTP client library support.
-
-:mod:`google.auth` is designed to work with various HTTP client libraries such
+:mod:`daaily` is designed to work with various HTTP client libraries such
 as urllib3 and requests. In order to work across these libraries with different
 interfaces some abstraction is needed.
 
 This module provides two interfaces that are implemented by transport adapters
 to support HTTP libraries. :class:`Request` defines the interface expected by
-:mod:`google.auth` to make requests. :class:`Response` defines the interface
+:mod:`daaily` to make requests. :class:`Response` defines the interface
 for the return value of :class:`Request`.
 """
 
@@ -96,6 +83,6 @@ class Request(metaclass=abc.ABCMeta):
             Response: The HTTP response.
 
         Raises:
-            google.auth.exceptions.TransportError: If any exception occurred.
+            daaily.transport.exceptions.TransportException: If any exception occurred.
         """
         raise NotImplementedError("__call__ must be implemented.")

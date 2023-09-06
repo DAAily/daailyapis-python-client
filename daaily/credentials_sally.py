@@ -1,11 +1,11 @@
+import datetime
 import http.client as http_client
 import json
 import os
-from urllib import parse
 
 import daaily.credentials
+import daaily.exceptions
 import daaily.transport.exceptions
-from daaily.exceptions import MissingEnvironmentVariable
 
 REFRESH_THRESHOLD_SECS = 600
 DAAILY_USER_EMAIL_ENV = "DAAILY_USER_EMAIL"
@@ -44,23 +44,28 @@ class Credentials(daaily.credentials.Credentials):
                 user_uid = os.environ["DAAILY_USER_UID"]
                 api_key = os.environ["DAAILY_API_KEY"]
             except KeyError as e:
-                raise MissingEnvironmentVariable(
+                raise daaily.exceptions.MissingEnvironmentVariable(
                     f"{MISSING_ENV_USER_CREDENTIALS_MESSAGE}\nError: {str(e.args)}"
                 ) from e
         self._user_email = user_email
         self._user_uid = user_uid
         self._api_key = api_key
 
-    def _make_request(self, request, headers, request_body):
+    def _make_request(
+        self, request, headers: dict | None = None, request_body: dict | None = None
+    ):
+        body = request_body
+        if request_body is not None:
+            body = json.dumps(request_body)
         response = request(
             url=self._token_exchange_endpoint,
             method="POST",
             headers=headers,
-            body=parse.urlencode(request_body).encode("utf-8"),
+            body=body,
         )
         if response.status != http_client.OK:
             raise daaily.transport.exceptions.TransportException(
-                f"Request failed with status code {response.status}."
+                response, response.data
             )
         response_body = (
             response.data.decode("utf-8")
@@ -71,10 +76,18 @@ class Credentials(daaily.credentials.Credentials):
         return response_data
 
     def refresh(self, request):
-        if self._id_token and self._refresh_token:
-            return self.refresh_token(request, self._refresh_token)
+        if self.id_token and self.refresh_token:
+            response_data = self.get_token_with_refresh_token(
+                request, self.refresh_token
+            )
         else:
-            return self.get_token(request)
+            response_data = self.get_token(request)
+        now = datetime.datetime.utcnow()
+        self.id_token = response_data.get("id_token")
+        if "refresh_token" in response_data:
+            self.refresh_token = response_data["refresh_token"]
+        lifetime = datetime.timedelta(seconds=response_data.get("expires_in"))
+        self.expiry = now + lifetime
 
     def get_token(self, request):
         """Exchanges a refresh token for an access token based on the
@@ -85,14 +98,16 @@ class Credentials(daaily.credentials.Credentials):
                 HTTP requests.
             subject_token (str): The OAuth 2.0 refresh token.
         """
-        self._token_exchange_endpoint = f"{SALLY_BASE_URL}/{TOKEN_ENDPOINT}"
+        self._token_exchange_endpoint = (
+            f"{SALLY_BASE_URL}/{TOKEN_ENDPOINT}?key={self._api_key}"
+        )
         return self._make_request(
             request,
             None,
-            {"email": f"{self._user_email}", "user_uid": f"{self._user_uid}"},
+            {"email": f"{self._user_email}", "uid": f"{self._user_uid}"},
         )
 
-    def refresh_token(self, request, refresh_token: str):
+    def get_token_with_refresh_token(self, request, refresh_token: str):
         """Exchanges a refresh token for an access token based on the
         RFC6749 spec.
 
@@ -102,38 +117,10 @@ class Credentials(daaily.credentials.Credentials):
             subject_token (str): The OAuth 2.0 refresh token.
         """
         self._token_exchange_endpoint = (
-            f"{SALLY_BASE_URL}/{REFRESH_ENDPOINT}&key={self._api_key}"
+            f"{SALLY_BASE_URL}/{REFRESH_ENDPOINT}?key={self._api_key}"
         )
         return self._make_request(
             request,
             None,
             {"email": f"{self._user_email}", "refresh_token": refresh_token},
         )
-
-    # def _update_credentials(self, out):
-    #     """
-    #     Updates the credentials for the client.
-    #     """
-    #     pass
-
-    # def apply_to_header(self, headers: dict, id_token=None):
-    #     """Apply the token to the authentication header.
-
-    #     Args:
-    #         headers (Mapping): The HTTP request headers.
-    #         id_token (Optional[str]): If specified, overrides the current id token.
-    #     """
-    #     headers["authorization"] = f"Bearer {id_token or self._id_token}"
-
-    # def refresh(self, request):
-    #     pass
-
-    # def before_request(self, request, headers):
-    #     """Performs credential-specific before request logic.
-
-    #     Refreshes the credentials if necessary, then calls :meth:`apply_to_header` to
-    #     apply the token to the authentication header.
-    #     """
-    #     if not self.valid:
-    #         self.refresh(request)
-    #     self.apply_to_header(headers)

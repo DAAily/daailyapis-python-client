@@ -1,6 +1,6 @@
 from http import client as http_client
 
-from daaily.auth_sally import Credentials
+from daaily.credentials_sally import Credentials
 from daaily.transport.urllib3_http import AuthorizedHttp, Request
 
 LUCY_V2_BASE_URL = "https://lucy.daaily.com/api/v2"
