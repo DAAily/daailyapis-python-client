@@ -32,10 +32,6 @@ class Credentials(metaclass=abc.ABCMeta):
         if not self.expiry:
             return False
         skewed_expiry = self.expiry.timestamp() - REFRESH_THRESHOLD_SECS
-        print(self.expiry.second)
-        print(skewed_expiry)
-        print(datetime.datetime.fromtimestamp(skewed_expiry))
-        print(datetime.datetime.utcnow())
         return datetime.datetime.utcnow() >= datetime.datetime.fromtimestamp(
             skewed_expiry
         )
