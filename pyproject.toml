@@ -37,7 +37,6 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "tests",
     "cms",
     "sheets",
 ]
