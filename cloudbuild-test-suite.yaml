@@ -1,0 +1,12 @@
+steps:
+
+  - name: python:3.11
+    entrypoint: python
+    args: ['-m', 'pip', 'install', '-r', 'tests/requirements.txt', '--user']
+
+  - name: python:3.11
+    entrypoint: 'python'
+    args: ['-m', 'pytest', '-v']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
