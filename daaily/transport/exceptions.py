@@ -54,7 +54,7 @@ class TransportException(Exception):
 
     # def __repr__(self):
     #     if self.error_details:
-    #         return '<HttpError %s when requesting %s returned "%s". Details: "%s">' % (
+    #        return '<HttpError %s when requesting %s returned "%s". Details: "%s">' % (
     #             self.resp.status,
     #             self.uri,
     #             self.reason,
