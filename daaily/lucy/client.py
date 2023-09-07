@@ -1,12 +1,15 @@
-from http import client as http_client
-
+import daaily.lucy
 from daaily.credentials_sally import Credentials
-from daaily.transport.urllib3_http import AuthorizedHttp, Request
+from daaily.lucy.config import entity_type_endpoint_mapping
+from daaily.lucy.enums import EntityType
+from daaily.lucy.models import Filter
+from daaily.transport import Response
+from daaily.transport.urllib3_http import AuthorizedHttp
 
 LUCY_V2_BASE_URL = "https://lucy.daaily.com/api/v2"
 
 
-class Client:
+class Client(daaily.lucy.Client):
     """
     The Lucy client is used to interact with the Lucy server.
     It provides functionality in order to make requests to each of Lucy's endpoints
@@ -26,12 +29,10 @@ class Client:
         """
         if credentials is None:
             credentials = Credentials()
-        self.credentials = credentials
-        self.headers = {}
-        self.body = None
+        self._credentials = credentials
         if base_url is None:
             base_url = LUCY_V2_BASE_URL
-        self.base_url = base_url
+        self._base_url = base_url
         if http is not None:
             """
             TODO: Add custom request handlers. That allows async requests.
@@ -39,24 +40,37 @@ class Client:
             abc classes.
             """
             raise NotImplementedError("Custom request handlers are not supported yet.")
-        if http is None:
-            http = Request()
-        self.http = http
-        self._auth_http = AuthorizedHttp(self.credentials, self.http)
+        self._auth_http = AuthorizedHttp(self._credentials)
 
-    def _do_request(self, method, url, **kwargs) -> http_client.HTTPResponse:
+    def _do_request(self, method, url, **kwargs) -> Response:
         """
         Makes a request to the server.
         """
-        # self.credentials.before_request(self.headers)
         r = self._auth_http.request(method, url, **kwargs)
         if r.status != 200:
             raise Exception(f"Request failed with status {r.status}")
         return r
 
-    def get_entities_by_type(self, entity_type: str):
+    def _get_entity_endpoint(self, entity_type: EntityType):
+        return f"{self._base_url}/{entity_type_endpoint_mapping[entity_type]}"
+
+    def _build_query_string(self, filters: list[Filter]):
+        query_string = "?"
+        for filter in filters:
+            query_string += f"{filter.name}={filter.value}&"
+        return query_string
+
+    def get_entities(
+        self,
+        entity_type: EntityType,
+        filters: list[Filter] | None = None,
+        limit=100,
+        disable_pagination=False,
+    ):
         """
         Gets all entities of a certain type.
         """
-        url = f"{self.base_url}/{entity_type}"
+        url = self._get_entity_endpoint(entity_type)
+        if filters is not None:
+            url += self._build_query_string(filters)
         return self._do_request("GET", url)

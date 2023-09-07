@@ -1,5 +1,4 @@
 import http.client as http_client
-import time
 
 import flask
 import pytest
@@ -9,7 +8,7 @@ from pytest_localserver.http import WSGIServer
 NXDOMAIN = "test.invalid"
 
 
-class RequestResponseTests(object):
+class RequestResponseTests:
     @pytest.fixture(scope="module")
     def server(self):
         """Provides a test HTTP server.
@@ -33,14 +32,11 @@ class RequestResponseTests(object):
             headers = {"Authorization": header_value}
             return "Authorized Content", http_client.OK, headers
 
-        @app.route("/server_error")
-        def server_error():
-            return "Error", http_client.INTERNAL_SERVER_ERROR
-
-        @app.route("/wait")
-        def wait():
-            time.sleep(3)
-            return "Waited"
+        @app.route("/products")
+        def get_lucy_data():
+            header_value = flask.request.headers.get("Authorization", "Bearer")
+            headers = {"Authorization": header_value}
+            return "Lucy Products", http_client.OK, headers
 
         server = WSGIServer(application=app.wsgi_app)
         server.start()

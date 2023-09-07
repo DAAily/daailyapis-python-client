@@ -38,9 +38,7 @@ class Request(daaily.transport.Request):
     asynchronous manner.
     """
 
-    def __init__(self, http=None):
-        if http is None:
-            http = urllib3.PoolManager()
+    def __init__(self, http):
         self.http = http
 
     def __call__(
@@ -116,6 +114,7 @@ class AuthorizedHttp(RequestMethods):
         self._refresh_status_codes = refresh_status_codes
         self._max_refresh_attempts = max_refresh_attempts
         self._request = Request(self.http)
+        super(AuthorizedHttp, self).__init__()
 
     def urlopen(self, method, url, body=None, headers=None, **kwargs):
         """Implementation of urllib3's urlopen."""
@@ -153,6 +152,20 @@ class AuthorizedHttp(RequestMethods):
                 **kwargs,
             )
         return response
+
+    # Proxy methods for compliance with the urllib3.PoolManager interface
+
+    def __enter__(self):
+        """Proxy to ``self.http``."""
+        return self.http.__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Proxy to ``self.http``."""
+        return self.http.__exit__(exc_type, exc_val, exc_tb)
+
+    def __del__(self):
+        if hasattr(self, "http") and self.http is not None:
+            self.http.clear()
 
     @property
     def headers(self):
