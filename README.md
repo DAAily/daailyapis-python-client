@@ -4,23 +4,24 @@ This package ought to include all clients of the services provided by Daaily. We
 This will be a rapper around the `lucy` service. Based on HTTP requests.
 ## Installation
 
+
+## Installation
+Latest unstable release
 ```bash
-pip install daaily
+pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
+```
+
+Latest stable release
+```bash
+pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v0.2.0
 ```
 
 ## Usage
-
-```python
-from daaily import lucy
-from daaily.lucy.types import Entity
-
-lucy_client = lucy.Client()
-manufacturers = lucy_client.get_entities(Entity.MANUFACTURER, limit=50)
-```
+For usage please have a look at the samples part of the samples folder.
 
 ## Development
 
 ```bash
 cp .env.example .env
-pip install -r requirements.txt
+pip install -r tests/requirements.txt
 ```
