@@ -11,7 +11,7 @@ class TransportException(Exception):
         self.content = content
         self.uri = uri
         self.error_details = ""
-        # self.reason = self._get_reason()
+        self.reason = self._get_reason()
 
     @property
     def status_code(self):
@@ -52,21 +52,21 @@ class TransportException(Exception):
             reason = ""
         return reason.strip()
 
-    # def __repr__(self):
-    #     if self.error_details:
-    #        return '<HttpError %s when requesting %s returned "%s". Details: "%s">' % (
-    #             self.resp.status,
-    #             self.uri,
-    #             self.reason,
-    #             self.error_details,
-    #         )
-    #     elif self.uri:
-    #         return '<HttpError %s when requesting %s returned "%s">' % (
-    #             self.resp.status,
-    #             self.uri,
-    #             self.reason,
-    #         )
-    #     else:
-    #         return '<HttpError %s "%s">' % (self.resp.status, self.reason)
+    def __repr__(self):
+        if self.error_details:
+            return '<HttpError %s when requesting %s returned "%s". Details: "%s">' % (
+                self.resp.status,
+                self.uri,
+                self.reason,
+                self.error_details,
+            )
+        elif self.uri:
+            return '<HttpError %s when requesting %s returned "%s">' % (
+                self.resp.status,
+                self.uri,
+                self.reason,
+            )
+        else:
+            return '<HttpError %s "%s">' % (self.resp.status, self.reason)
 
-    # __str__ = __repr__
+    __str__ = __repr__

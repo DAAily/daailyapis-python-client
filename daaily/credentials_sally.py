@@ -10,7 +10,7 @@ import daaily.transport.exceptions
 REFRESH_THRESHOLD_SECS = 600
 DAAILY_USER_EMAIL_ENV = "DAAILY_USER_EMAIL"
 DAAILY_USER_UID_ENV = "DAAILY_USER_UID"
-DAAILY_API_KEY_ENV = "DAAILY_API_KEY"
+DAAILY_USER_API_KEY_ENV = "DAAILY_USER_API_KEY"
 MISSING_ENV_USER_CREDENTIALS_MESSAGE = (
     "You either have to pass the user credentials are set them via the environment."
 )
@@ -42,7 +42,7 @@ class Credentials(daaily.credentials.Credentials):
             try:
                 user_email = os.environ[DAAILY_USER_EMAIL_ENV]
                 user_uid = os.environ[DAAILY_USER_UID_ENV]
-                api_key = os.environ[DAAILY_API_KEY_ENV]
+                api_key = os.environ[DAAILY_USER_API_KEY_ENV]
             except KeyError as e:
                 raise daaily.exceptions.MissingEnvironmentVariable(
                     f"{MISSING_ENV_USER_CREDENTIALS_MESSAGE}\nError: {str(e.args)}"

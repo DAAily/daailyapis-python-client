@@ -1,15 +1,14 @@
+include .env
 
 install: 
 	python3 -m venv venv
 	venv/bin/pip install -r tests/requirements.txt
 
-
 test:
+	venv/bin/python -m pytest
 
-	venv/bin/python -m pytest -vv --cov=daaily --cov-report term-missing
-
-
+sample-1:
+	venv/bin/python -m samples.get_entities_from_lucy
 
 local: 
 	venv/bin/python main.py
-	# venv/bin/pip install -r requirements.txt

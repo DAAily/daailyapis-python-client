@@ -7,12 +7,13 @@ import daaily.credentials
 import daaily.credentials_sally
 import daaily.transport.exceptions
 import daaily.transport.urllib3_http
-from tests.transport import fixtures
+from tests import fixtures
 
 
 class TestRequestResponse(fixtures.RequestResponseTests):
     def make_request(self):
-        return daaily.transport.urllib3_http.Request()
+        http = urllib3.PoolManager()
+        return daaily.transport.urllib3_http.Request(http)
 
     def test_http(self, server):
         request = self.make_request()
@@ -23,18 +24,18 @@ class TestRequestResponse(fixtures.RequestResponseTests):
 
 
 class CredentialsStub(daaily.credentials.Credentials):
-    def __init__(self, token="token"):
+    def __init__(self, id_token="token"):
         super(CredentialsStub, self).__init__()
-        self.token = token
+        self.id_token = id_token
 
-    def apply(self, headers, token=None):
-        headers["authorization"] = self.token
+    def apply(self, headers, id_token=None):
+        headers["authorization"] = self.id_token
 
     def before_request(self, request, headers):
         self.apply(headers)
 
     def refresh(self, request):
-        self.token += "1"
+        self.id_token += "1"  # type: ignore
 
 
 class HttpStub:
@@ -46,6 +47,9 @@ class HttpStub:
     def urlopen(self, method, url, body=None, headers=None, **kwargs):
         self.requests.append((method, url, body, headers, kwargs))
         return self.responses.pop(0)
+
+    def clear(self):
+        pass
 
 
 class ResponseStub:
