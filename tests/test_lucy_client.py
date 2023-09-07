@@ -12,7 +12,6 @@ import tests.fixtures as fixtures
 
 class CredentialsStub(daaily.credentials_sally.Credentials):
     def __init__(self, id_token="token"):
-        super(CredentialsStub, self).__init__()
         self.id_token = id_token
 
     def apply(self, headers, id_token=None):
