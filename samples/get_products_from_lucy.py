@@ -1,5 +1,5 @@
-from daaily.credentials_sally import Credentials
 from daaily.transport.urllib3_http import AuthorizedHttp
+from daaily.credentials_sally import Credentials
 from dotenv import load_dotenv
 
 load_dotenv()
