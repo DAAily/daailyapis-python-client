@@ -3,6 +3,7 @@ from daaily.transport.urllib3_http import AuthorizedHttp
 from dotenv import load_dotenv
 
 load_dotenv()
+
 creds = Credentials()
 s = AuthorizedHttp(creds)
 
