@@ -86,7 +86,7 @@ class Credentials(daaily.credentials.Credentials):
         self.id_token = response_data.get("id_token")
         if "refresh_token" in response_data:
             self.refresh_token = response_data["refresh_token"]
-        lifetime = datetime.timedelta(seconds=response_data.get("expires_in"))
+        lifetime = datetime.timedelta(seconds=int(response_data.get("expires_in")))
         self.expiry = now + lifetime
 
     def get_token(self, request):

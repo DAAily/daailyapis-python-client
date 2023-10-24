@@ -9,6 +9,3 @@ test:
 
 sample-1:
 	venv/bin/python -m samples.get_entities_from_lucy
-
-local: 
-	venv/bin/python main.py
