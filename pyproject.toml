@@ -24,7 +24,8 @@ authors = [
 description = "Daaily API Library"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["urllib3<3.0"]
+dependencies = ["urllib3>=2.1.0,<3.0"]
+
 dynamic = ["version"]
 
 [project.urls]
