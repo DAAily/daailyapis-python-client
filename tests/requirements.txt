@@ -2,6 +2,5 @@ pytest
 pytest-cov
 pytest-localserver
 flask
-urllib3==1.26.16
-black
+urllib3<3.0
 ruff
