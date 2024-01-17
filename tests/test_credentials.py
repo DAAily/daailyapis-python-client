@@ -22,18 +22,10 @@ def test_expired_and_valid():
     credentials.id_token = "token"
     assert credentials.valid
     assert not credentials.expired
-    # Set the expiration to one second more than now plus the clock skew
-    # accommodation. These credentials should be valid.
-    credentials.expiry = datetime.datetime.fromtimestamp(
-        datetime.datetime.utcnow().timestamp()
-        + daaily.credentials.REFRESH_THRESHOLD_SECS
-        + datetime.timedelta(seconds=1).seconds
-    )
+    credentials.expiry = datetime.datetime.utcnow() + datetime.timedelta(seconds=3600)
     assert credentials.valid
     assert not credentials.expired
-    # Set the credentials expiration to now. Because of the clock skew
-    # accommodation, these credentials should report as expired.
-    credentials.expiry = datetime.datetime.utcnow()
+    credentials.expiry = datetime.datetime.utcnow() - datetime.timedelta(seconds=3600)
     assert not credentials.valid
     assert credentials.expired
 

@@ -25,3 +25,11 @@ For usage please have a look at the samples part of the samples folder.
 cp .env.example .env
 pip install -r tests/requirements.txt
 ```
+
+## Push New Version
+
+Increment version by doing the following steps:
+```bash
+python3 -m build
+python3 -m twine upload --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ dist/* --skip-existing
+```

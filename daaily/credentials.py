@@ -1,7 +1,7 @@
 import abc
 import datetime
 
-REFRESH_THRESHOLD_SECS = 3600
+REFRESH_THRESHOLD_SECS = 30
 
 
 class Credentials(metaclass=abc.ABCMeta):
@@ -31,10 +31,8 @@ class Credentials(metaclass=abc.ABCMeta):
         """
         if not self.expiry:
             return False
-        skewed_expiry = self.expiry.timestamp() - REFRESH_THRESHOLD_SECS
-        return datetime.datetime.utcnow() >= datetime.datetime.fromtimestamp(
-            skewed_expiry
-        )
+        skewed_expiry = self.expiry - datetime.timedelta(seconds=REFRESH_THRESHOLD_SECS)
+        return datetime.datetime.utcnow() >= skewed_expiry
 
     @property
     def valid(self):

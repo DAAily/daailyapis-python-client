@@ -7,7 +7,6 @@ import daaily.credentials
 import daaily.exceptions
 import daaily.transport.exceptions
 
-REFRESH_THRESHOLD_SECS = 600
 DAAILY_USER_EMAIL_ENV = "DAAILY_USER_EMAIL"
 DAAILY_USER_UID_ENV = "DAAILY_USER_UID"
 DAAILY_USER_API_KEY_ENV = "DAAILY_USER_API_KEY"
