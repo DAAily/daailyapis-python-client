@@ -13,7 +13,7 @@ pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 
 Latest stable release
 ```bash
-pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v0.2.0
+pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v1.3.0
 ```
 
 ## Usage
@@ -28,8 +28,12 @@ pip install -r tests/requirements.txt
 
 ## Push New Version
 
-Increment version by doing the following steps:
+Increment version by doing the following steps (ensure you have gcloud installed and authenticated):
 ```bash
-python3 -m build
-python3 -m twine upload --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ dist/* --skip-existing
+source venv/bin/activate
+pip install keyrings.google-artifactregistry-auth
+pip install build
+pip install twine
+python -m build
+python -m twine upload --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ dist/* --skip-existing
 ```
