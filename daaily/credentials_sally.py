@@ -13,7 +13,7 @@ DAAILY_USER_API_KEY_ENV = "DAAILY_USER_API_KEY"
 MISSING_ENV_USER_CREDENTIALS_MESSAGE = (
     "You either have to pass the user credentials are set them via the environment."
 )
-SALLY_BASE_URL = "https://sally.daaily.com/api/v2"
+SALLY_BASE_URL = "https://sally.daaily.com/api/v3"
 TOKEN_ENDPOINT = "tokens/get-token"
 REFRESH_ENDPOINT = "tokens/get-token-with-refresh-token"
 
