@@ -14,3 +14,17 @@ class LucyEndpoint(str, Enum):
     STORY = "/stories"
     GROUP = "/groups"
     FAIR = "/fairs"
+
+
+class Status(str, Enum):
+    PREVIEW = "preview"
+    ONLINE = "online"
+    OFFLINE = "offline"
+    DELETED = "deleted"
+
+
+class Currency(str, Enum):
+    CHF = "chf"
+    EUR = "eur"
+    GBP = "gbp"
+    USD = "usd"

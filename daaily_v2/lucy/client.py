@@ -1,14 +1,24 @@
 from daaily_v2.enums import Environment
 from daaily_v2.http.client import Client as HttpClient
 from daaily_v2.http.utility import add_authorization_header
-from daaily_v2.lucy.enums import LucyEndpoint
+from daaily_v2.lucy.enums import Currency, LucyEndpoint, Status
 from daaily_v2.lucy.utility import (
     extract_response_data,
     gen_request_url_with_id,
     gen_request_url_with_params,
+    get_collection_params,
+    get_creator_params,
     get_distributor_params,
+    get_fair_params,
+    get_family_params,
+    get_filter_params,
+    get_group_params,
+    get_journalist_params,
     get_lucy_v2_endpoint_url,
     get_manufacturer_params,
+    get_product_params,
+    get_project_params,
+    get_story_params,
 )
 from daaily_v2.sally.client import Client as SallyClient
 
@@ -101,3 +111,114 @@ class Client:
     ) -> list[dict]:
         params = get_distributor_params(skip, limit, distributor_ids, distributor_name)
         return self._get_entities(LucyEndpoint.DISTRIBUTOR, params)
+
+    def get_collections(
+        self,
+        manufacturer_id: int | None = None,
+        collection_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_collection_params(skip, limit, manufacturer_id, collection_ids)
+        return self._get_entities(LucyEndpoint.COLLECTION, params)
+
+    def get_journalists(
+        self,
+        journalist_ids: list[int] | None = None,
+        journalist_name: str | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_journalist_params(skip, limit, journalist_ids, journalist_name)
+        return self._get_entities(LucyEndpoint.JOURNALIST, params)
+
+    def get_projects(
+        self,
+        project_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_project_params(skip, limit, project_ids)
+        return self._get_entities(LucyEndpoint.PROJECT, params)
+
+    def get_products(
+        self,
+        manufacturer_id: int | None = None,
+        collection_ids: list[int] | None = None,
+        family_ids: list[int] | None = None,
+        product_ids: list[int] | None = None,
+        statuses: list[Status] | None = None,
+        price_min: int | None = None,
+        price_max: int | None = None,
+        currency: Currency | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_product_params(
+            skip,
+            limit,
+            manufacturer_id,
+            collection_ids,
+            family_ids,
+            product_ids,
+            statuses,
+            price_min,
+            price_max,
+            currency,
+        )
+        return self._get_entities(LucyEndpoint.PRODUCT, params)
+
+    def get_families(
+        self,
+        manufacturer_id: int | None = None,
+        family_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_family_params(skip, limit, manufacturer_id, family_ids)
+        return self._get_entities(LucyEndpoint.FAMILY, params)
+
+    def get_creators(
+        self,
+        creator_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_creator_params(skip, limit, creator_ids)
+        return self._get_entities(LucyEndpoint.CREATOR, params)
+
+    def get_filters(
+        self,
+        filter_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_filter_params(skip, limit, filter_ids)
+        return self._get_entities(LucyEndpoint.FILTER, params)
+
+    def get_stories(
+        self,
+        story_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_story_params(skip, limit, story_ids)
+        return self._get_entities(LucyEndpoint.STORY, params)
+
+    def get_groups(
+        self,
+        group_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_group_params(skip, limit, group_ids)
+        return self._get_entities(LucyEndpoint.GROUP, params)
+
+    def get_fairs(
+        self,
+        fair_ids: list[int] | None = None,
+        skip: int = 0,
+        limit: int = 500,
+    ) -> list[dict]:
+        params = get_fair_params(skip, limit, fair_ids)
+        return self._get_entities(LucyEndpoint.FAIR, params)

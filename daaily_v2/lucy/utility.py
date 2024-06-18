@@ -4,7 +4,7 @@ from urllib import parse
 from urllib3 import BaseHTTPResponse
 
 from daaily_v2.enums import Environment, HttpResponseCode
-from daaily_v2.lucy.enums import LucyEndpoint
+from daaily_v2.lucy.enums import Currency, LucyEndpoint, Status
 
 
 def get_lucy_v2_endpoint_url(environment: Environment, endpoint: LucyEndpoint) -> str:
@@ -68,4 +68,150 @@ def get_distributor_params(
         if distributor_ids
         else None,
         "distributor_name": distributor_name,
+    }
+
+
+def get_collection_params(
+    skip: int,
+    limit: int,
+    manufacturer_id: int | None = None,
+    collection_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "manufacturer_id": manufacturer_id,
+        "collection_ids": ",".join(map(str, collection_ids))
+        if collection_ids
+        else None,
+    }
+
+
+def get_journalist_params(
+    skip: int,
+    limit: int,
+    journalist_ids: list[int] | None = None,
+    journalist_name: str | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "journalist_ids": ",".join(map(str, journalist_ids))
+        if journalist_ids
+        else None,
+        "journalist_name": journalist_name,
+    }
+
+
+def get_project_params(
+    skip: int,
+    limit: int,
+    project_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "project_ids": ",".join(map(str, project_ids)) if project_ids else None,
+    }
+
+
+def get_product_params(
+    skip: int,
+    limit: int,
+    manufacturer_id: int | None = None,
+    collection_ids: list[int] | None = None,
+    family_ids: list[int] | None = None,
+    product_ids: list[int] | None = None,
+    statuses: list[Status] | None = None,
+    price_min: int | None = None,
+    price_max: int | None = None,
+    currency: Currency | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "manufacturer_id": manufacturer_id,
+        "collection_ids": ",".join(map(str, collection_ids))
+        if collection_ids
+        else None,
+        "family_ids": ",".join(map(str, family_ids)) if family_ids else None,
+        "product_ids": ",".join(map(str, product_ids)) if product_ids else None,
+        "status": ",".join(map(str, [s.value for s in statuses])) if statuses else None,
+        "price_min": price_min,
+        "price_max": price_max,
+        "currency": currency.value if currency else None,
+    }
+
+
+def get_family_params(
+    skip: int,
+    limit: int,
+    manufacturer_id: int | None = None,
+    family_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "manufacturer_id": manufacturer_id,
+        "family_ids": ",".join(map(str, family_ids)) if family_ids else None,
+    }
+
+
+def get_creator_params(
+    skip: int,
+    limit: int,
+    creator_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "creator_ids": ",".join(map(str, creator_ids)) if creator_ids else None,
+    }
+
+
+def get_filter_params(
+    skip: int,
+    limit: int,
+    filter_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "filter_ids": ",".join(map(str, filter_ids)) if filter_ids else None,
+    }
+
+
+def get_story_params(
+    skip: int,
+    limit: int,
+    story_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "story_ids": ",".join(map(str, story_ids)) if story_ids else None,
+    }
+
+
+def get_group_params(
+    skip: int,
+    limit: int,
+    group_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "group_ids": ",".join(map(str, group_ids)) if group_ids else None,
+    }
+
+
+def get_fair_params(
+    skip: int,
+    limit: int,
+    fair_ids: list[int] | None = None,
+) -> dict:
+    return {
+        "skip": skip,
+        "limit": limit,
+        "fair_ids": ",".join(map(str, fair_ids)) if fair_ids else None,
     }
