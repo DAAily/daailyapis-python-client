@@ -1,16 +1,12 @@
 {
-    "[python]": {
+  "editor.rulers": [88],
+  "[python]": {
       "editor.formatOnSave": true,
       "editor.codeActionsOnSave": {
-        "source.fixAll": "explicit"
+          "source.fixAll": "explicit",
+          "source.organizeImports": "explicit"
       },
-      "editor.defaultFormatter": "ms-python.black-formatter",
-    },
-    "editor.rulers": [
-      88
-    ],
-    "python.analysis.typeCheckingMode": "basic",
-    "black-formatter.args": [
-        "--config=pyproject.toml"
-      ]
-  }
+      "editor.defaultFormatter": "charliermarsh.ruff",
+  },
+  "python.analysis.typeCheckingMode": "basic"
+}

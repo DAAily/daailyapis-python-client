@@ -9,60 +9,36 @@ path = "daaily/version.py"
 packages = ["daaily"]
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-  "/.github",
-  "/samples",
-  ".vscode",
-  "/tests",
-]
+exclude = ["/.github", "/samples", ".vscode", "/tests"]
 
 [project]
 name = "daaily"
-authors = [
-  { name="Daaily Dev Team", email="dev@daaily.com" },
-]
+authors = [{ name="Daaily Dev Team", email="dev@daaily.com" }]
 description = "Daaily API Library"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["urllib3>=2.1.0,<3.0"]
-
 dynamic = ["version"]
 
 [project.urls]
 "Source code" = "https://github.com/DAAily/daailyapis-python-client"
 
-
 [tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+unfixable = ["F841","F401"]
+extend-select = ["UP", "E501"]
+extend-ignore = ["B008"]
 select = ["E", "F", "B", "Q", "C", "I"]
 fixable = ["E", "F", "B", "Q", "C", "I"]
-unfixable = ["F841","F401"]
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-    "cms",
-    "sheets",
-]
-per-file-ignores = {}
-line-length = 88
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-target-version = "py312"
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+docstring-code-format = true
 
 [tool.ruff.mccabe]
 max-complexity = 10
