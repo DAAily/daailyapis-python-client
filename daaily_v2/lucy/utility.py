@@ -3,8 +3,8 @@ from urllib import parse
 
 from urllib3 import BaseHTTPResponse
 
-from daaily_v2.enums import Environment, HttpResponseCode
-from daaily_v2.lucy.enums import Currency, LucyEndpoint, Status
+from daaily_v2.enums import Environment
+from daaily_v2.lucy.enums import Currency, LucyEndpoint, Status, TopicEntityStage
 
 
 def get_lucy_v2_endpoint_url(environment: Environment, endpoint: LucyEndpoint) -> str:
@@ -14,7 +14,7 @@ def get_lucy_v2_endpoint_url(environment: Environment, endpoint: LucyEndpoint) -
 
 
 def extract_response_data(response: BaseHTTPResponse):
-    if response.status != HttpResponseCode.HTTP_200_OK.value:
+    if response.status >= 400:
         raise Exception("Error requesting Lucy: " + str(response.data))
     return json.loads(response.data)
 
@@ -39,7 +39,7 @@ def gen_request_url_with_params(endpoint_url: str, params: dict) -> str:
     return url_with_query
 
 
-def get_manufacturer_params(
+def gen_manufacturer_get_params(
     skip: int,
     limit: int,
     manufacturer_ids: list[int] | None = None,
@@ -55,7 +55,7 @@ def get_manufacturer_params(
     }
 
 
-def get_distributor_params(
+def gen_distributor_get_params(
     skip: int,
     limit: int,
     distributor_ids: list[int] | None = None,
@@ -71,7 +71,7 @@ def get_distributor_params(
     }
 
 
-def get_collection_params(
+def gen_collection_get_params(
     skip: int,
     limit: int,
     manufacturer_id: int | None = None,
@@ -87,7 +87,7 @@ def get_collection_params(
     }
 
 
-def get_journalist_params(
+def gen_journalist_get_params(
     skip: int,
     limit: int,
     journalist_ids: list[int] | None = None,
@@ -103,7 +103,7 @@ def get_journalist_params(
     }
 
 
-def get_project_params(
+def gen_project_get_params(
     skip: int,
     limit: int,
     project_ids: list[int] | None = None,
@@ -115,7 +115,7 @@ def get_project_params(
     }
 
 
-def get_product_params(
+def gen_product_get_params(
     skip: int,
     limit: int,
     manufacturer_id: int | None = None,
@@ -143,7 +143,7 @@ def get_product_params(
     }
 
 
-def get_family_params(
+def gen_family_get_params(
     skip: int,
     limit: int,
     manufacturer_id: int | None = None,
@@ -157,7 +157,7 @@ def get_family_params(
     }
 
 
-def get_creator_params(
+def gen_creator_get_params(
     skip: int,
     limit: int,
     creator_ids: list[int] | None = None,
@@ -169,7 +169,7 @@ def get_creator_params(
     }
 
 
-def get_filter_params(
+def gen_filter_get_params(
     skip: int,
     limit: int,
     filter_ids: list[int] | None = None,
@@ -181,7 +181,7 @@ def get_filter_params(
     }
 
 
-def get_story_params(
+def gen_story_get_params(
     skip: int,
     limit: int,
     story_ids: list[int] | None = None,
@@ -193,7 +193,7 @@ def get_story_params(
     }
 
 
-def get_group_params(
+def gen_group_get_params(
     skip: int,
     limit: int,
     group_ids: list[int] | None = None,
@@ -205,7 +205,7 @@ def get_group_params(
     }
 
 
-def get_fair_params(
+def gen_fair_get_params(
     skip: int,
     limit: int,
     fair_ids: list[int] | None = None,
@@ -214,4 +214,18 @@ def get_fair_params(
         "skip": skip,
         "limit": limit,
         "fair_ids": ",".join(map(str, fair_ids)) if fair_ids else None,
+    }
+
+
+def gen_post_put_params(
+    pubsub_stage: TopicEntityStage | None = None,
+    pubsub_ordering_key: str | None = None,
+    publish_send_status: bool | None = None,
+    gen_create_params: bool | None = None,
+) -> dict:
+    return {
+        "pubsub_stage": pubsub_stage,
+        "pubsub_ordering_key": pubsub_ordering_key,
+        "publish_send_status": publish_send_status,
+        "gen_create_params": gen_create_params,
     }

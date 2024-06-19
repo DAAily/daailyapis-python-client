@@ -10,13 +10,13 @@ class Client:
         return response
 
     def post_request(
-        self, url: str, body: dict | None, headers: dict | None
+        self, url: str, body: dict | list | None, headers: dict | None
     ) -> BaseHTTPResponse:
         response = self.http.request("POST", url, json=body, headers=headers)
         return response
 
     def put_request(
-        self, url: str, body: dict | None, headers: dict | None
+        self, url: str, body: dict | list | None, headers: dict | None
     ) -> BaseHTTPResponse:
         response = self.http.request("PUT", url, json=body, headers=headers)
         return response

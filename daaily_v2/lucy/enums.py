@@ -28,3 +28,8 @@ class Currency(str, Enum):
     EUR = "eur"
     GBP = "gbp"
     USD = "usd"
+
+
+class TopicEntityStage(str, Enum):
+    PREVIEW = "preview"
+    PUBLISH = "publish"
