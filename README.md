@@ -26,6 +26,8 @@ cp .env.example .env
 pip install -r tests/requirements.txt
 ```
 
+NOTE: Before publishing an new version, make sure that the development changes are merged into the main (production) branch.
+
 ## Push New Version
 
 Increment version by doing the following steps (ensure you have gcloud installed and authenticated):
