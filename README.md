@@ -26,11 +26,14 @@ cp .env.example .env
 pip install -r tests/requirements.txt
 ```
 
-NOTE: Before publishing an new version, make sure that the development changes are merged into the main (production) branch.
-
 ## Push New Version
 
 Increment version by doing the following steps (ensure you have gcloud installed and authenticated):
+
+- Manually increment the version in `daaily/version.py`. Check the naming convension at https://github.com/DAAily/daailyapis-python-client/releases
+- Merge the new changes (including the version increment) into the main branch (production).
+- Run the following:
+
 ```bash
 source venv/bin/activate
 pip install keyrings.google-artifactregistry-auth
