@@ -3,7 +3,7 @@ import os
 
 from setuptools import find_namespace_packages, setup
 
-DEPENDENCIES = "urllib3>=2.1.0,<3.0"
+DEPENDENCIES = "httpx==0.27.0 pydantic-settings==2.1.0".split()
 
 package_root = os.path.abspath(os.path.dirname(__file__))
 

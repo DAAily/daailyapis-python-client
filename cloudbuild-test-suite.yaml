@@ -1,10 +1,10 @@
 steps:
 
-  - name: python:3.10
+  - name: python:3.12
     entrypoint: python
     args: ['-m', 'pip', 'install', '-r', 'tests/requirements.txt', '--user']
 
-  - name: python:3.10
+  - name: python:3.12
     entrypoint: 'python'
     args: ['-m', 'pytest', '-v']
 

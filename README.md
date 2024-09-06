@@ -1,19 +1,16 @@
 # Python Client For Daaily Services Apis
 
-This package ought to include all clients of the services provided by Daaily. We will start with the `lucy` client.
-This will be a rapper around the `lucy` service. Based on HTTP requests.
-## Installation
-
+This package ought to include all clients of the services provided by Daaily, based on HTTP requests.
 
 ## Installation
-Latest unstable release
+Latest unstable release:
 ```bash
 pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 ```
 
-Latest stable release
+Latest stable release:
 ```bash
-pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v1.3.0
+pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v2.0.0
 ```
 
 ## Usage
