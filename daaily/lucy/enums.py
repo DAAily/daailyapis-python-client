@@ -1,24 +1,25 @@
 from enum import Enum
 
 
-class QueryOperators(str, Enum):
-    EQ = "eq"
-    NEQ = "neq"
-    GT = "gt"
-    GTE = "gte"
-    LT = "lt"
-    LTE = "lte"
-    IN = "in"
+class LucyEndpoint(str, Enum):
+    MANUFACTURER = "/manufacturers"
+    DISTRIBUTOR = "/distributors"
+    COLLECTION = "/collections"
+    JOURNALIST = "/journalists"
+    MATERIAL = "/materials"
+    PROJECT = "/projects"
+    PRODUCT = "/products"
+    FAMILY = "/families"
+    CREATOR = "/creators"
+    FILTER = "/filters"
+    STORY = "/stories"
+    SPACE = "/spaces"
+    GROUP = "/groups"
+    FAIR = "/fairs"
 
 
-class EntityType(str, Enum):
-    MANUFACTURER = "manufacturer"
-    PRODUCT = "product"
-    GROUP = "group"
-    FILTER = "filter"
-    FAMILY = "family"
-    COLLECTION = "collection"
-    DISTRIBUTOR = "distributor"
-    PROJECT = "project"
-    STORY = "story"
-    CREATOR = "creator"
+class Status(str, Enum):
+    PREVIEW = "preview"
+    ONLINE = "online"
+    OFFLINE = "offline"
+    DELETED = "deleted"

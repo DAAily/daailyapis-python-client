@@ -1,76 +1,101 @@
-import daaily.lucy
-from daaily.credentials_sally import Credentials
-from daaily.lucy.config import entity_type_endpoint_mapping
-from daaily.lucy.enums import EntityType
-from daaily.lucy.models import Filter
-from daaily.transport import Response
-from daaily.transport.urllib3_http import AuthorizedHttp
+from daaily.enums import DaailyService, Environment
+from daaily.http.client import Client as HttpClient
+from daaily.http.enums import HttpAuthType
+from daaily.http.models import HttpResponse
+from daaily.http.utility import add_authorization_header, extract_response_data
+from daaily.lucy.enums import LucyEndpoint, Status
+from daaily.lucy.utility import (
+    gen_graphql_entity_query,
+    gen_graphql_payload_with_query,
+    gen_lucy_graphql_endpoint_url,
+    gen_lucy_v2_endpoint_url,
+    gen_request_url_with_id,
+    gen_request_url_with_params,
+)
+from daaily.sally.client import Client as SallyClient
 
-LUCY_V2_BASE_URL = "https://lucy.daaily.com/api/v2"
 
-
-class Client(daaily.lucy.Client):
-    """
-    The Lucy client is used to interact with the Lucy server.
-    It provides functionality in order to make requests to each of Lucy's endpoints
-    including the ability to create, update, and delete objects.
-    You will also be able to specify to either use the client in a synchronous or
-    asynchronous manner.
-    """
-
+class Client:
     def __init__(
         self,
-        credentials: Credentials | None = None,
-        http=None,
-        base_url: str | None = None,
-    ):
-        """
-        Creates a new Lucy client.
-        """
-        if credentials is None:
-            credentials = Credentials()
-        self._credentials = credentials
-        if base_url is None:
-            base_url = LUCY_V2_BASE_URL
-        self._base_url = base_url
-        if http is not None:
-            """
-            TODO: Add custom request handlers. That allows async requests.
-            Needs to follow the same interface as the http_client. By implementing
-            abc classes.
-            """
-            raise NotImplementedError("Custom request handlers are not supported yet.")
-        self._auth_http = AuthorizedHttp(self._credentials)
+        environment: Environment = Environment.STAGING,
+        check_response_code: bool = True,
+    ) -> None:
+        # DAAILY AUTH
+        self.sally_client = SallyClient()
+        # HTTP REQUESTS
+        self.http_client = HttpClient()
+        self.environment = environment
+        # BYPASS RESPONSE CODE CHECK
+        self.check_response_code = check_response_code
 
-    def _do_request(self, method, url, **kwargs) -> Response:
-        """
-        Makes a request to the server.
-        """
-        r = self._auth_http.request(method, url, **kwargs)
-        if r.status != 200:
-            raise Exception(f"Request failed with status {r.status}")
-        return r
+    async def _gen_request_headers(self) -> dict:
+        sally_id_token = await self.sally_client.get_token()
+        headers = add_authorization_header(HttpAuthType.BEARER, sally_id_token, None)
+        return headers
 
-    def _get_entity_endpoint(self, entity_type: EntityType):
-        return f"{self._base_url}/{entity_type_endpoint_mapping[entity_type]}"
+    async def get_entity(
+        self, lucy_endpoint: LucyEndpoint, entity_id: int
+    ) -> HttpResponse:
+        endpoint_url = gen_lucy_v2_endpoint_url(self.environment, lucy_endpoint)
+        request_url = gen_request_url_with_id(endpoint_url, entity_id)
+        headers = await self._gen_request_headers()
+        response = await self.http_client.get_request(request_url, headers)
+        response = extract_response_data(
+            response, DaailyService.LUCY, check_response_code=self.check_response_code
+        )
+        return response
 
-    def _build_query_string(self, filters: list[Filter]):
-        query_string = "?"
-        for filter in filters:
-            query_string += f"{filter.name}={filter.value}&"
-        return query_string
+    async def get_entities(
+        self, lucy_endpoint: LucyEndpoint, params: dict
+    ) -> HttpResponse:
+        endpoint_url = gen_lucy_v2_endpoint_url(self.environment, lucy_endpoint)
+        request_url = gen_request_url_with_params(endpoint_url, params)
+        headers = await self._gen_request_headers()
+        response = await self.http_client.get_request(request_url, headers)
+        response = extract_response_data(
+            response, DaailyService.LUCY, check_response_code=self.check_response_code
+        )
+        return response
 
-    def get_entities(
+    async def get_graphql_entities(
         self,
-        entity_type: EntityType,
-        filters: list[Filter] | None = None,
-        limit=100,
-        disable_pagination=False,
-    ):
-        """
-        Gets all entities of a certain type.
-        """
-        url = self._get_entity_endpoint(entity_type)
-        if filters is not None:
-            url += self._build_query_string(filters)
-        return self._do_request("GET", url)
+        lucy_endpoint: LucyEndpoint,
+        fields: list,
+        skip: int,
+        limit: int,
+        statuses: list[Status],
+    ) -> HttpResponse:
+        endpoint_url = gen_lucy_graphql_endpoint_url(self.environment, lucy_endpoint)
+        query = gen_graphql_entity_query(lucy_endpoint, fields, skip, limit, statuses)
+        payload = gen_graphql_payload_with_query(query)
+        headers = await self._gen_request_headers()
+        response = await self.http_client.post_request(endpoint_url, payload, headers)
+        response = extract_response_data(
+            response, DaailyService.LUCY, check_response_code=self.check_response_code
+        )
+        return response
+
+    async def create_entities(
+        self, lucy_endpoint: LucyEndpoint, params: dict, data: list[dict]
+    ) -> HttpResponse:
+        endpoint_url = gen_lucy_v2_endpoint_url(self.environment, lucy_endpoint)
+        request_url = gen_request_url_with_params(endpoint_url, params)
+        headers = await self._gen_request_headers()
+        response = await self.http_client.post_request(request_url, data, headers)
+        response = extract_response_data(
+            response, DaailyService.LUCY, check_response_code=self.check_response_code
+        )
+        return response
+
+    async def update_entities(
+        self, lucy_endpoint: LucyEndpoint, params: dict, data: list[dict]
+    ) -> HttpResponse:
+        endpoint_url = gen_lucy_v2_endpoint_url(self.environment, lucy_endpoint)
+        request_url = gen_request_url_with_params(endpoint_url, params)
+        headers = await self._gen_request_headers()
+        response = await self.http_client.put_request(request_url, data, headers)
+        response = extract_response_data(
+            response, DaailyService.LUCY, check_response_code=self.check_response_code
+        )
+        return response
