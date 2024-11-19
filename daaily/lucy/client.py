@@ -47,8 +47,6 @@ class Client(daaily.lucy.Client):
         Makes a request to the server.
         """
         r = self._auth_http.request(method, url, **kwargs)
-        if r.status != 200:
-            raise Exception(f"Request failed with status {r.status}")
         return r
 
     def _get_entity_endpoint(self, entity_type: EntityType):
@@ -60,12 +58,16 @@ class Client(daaily.lucy.Client):
             query_string += f"{filter.name}={filter.value}&"
         return query_string
 
+    def get_entity(self, entity_type: EntityType, entity_id: int):
+        """
+        Gets a entity of a certain type.
+        """
+        url = self._get_entity_endpoint(entity_type)
+        entity_url = f"{url}/{entity_id}"
+        return self._do_request("GET", entity_url)
+
     def get_entities(
-        self,
-        entity_type: EntityType,
-        filters: list[Filter] | None = None,
-        limit=100,
-        disable_pagination=False,
+        self, entity_type: EntityType, filters: list[Filter] | None = None
     ):
         """
         Gets all entities of a certain type.
@@ -74,3 +76,247 @@ class Client(daaily.lucy.Client):
         if filters is not None:
             url += self._build_query_string(filters)
         return self._do_request("GET", url)
+
+    def create_entities(
+        self,
+        entity_type: EntityType,
+        entities: list[dict],
+        filters: list[Filter] | None = None,
+    ):
+        """
+        Creates entities of a certain type.
+        """
+        url = self._get_entity_endpoint(entity_type)
+        if filters is not None:
+            url += self._build_query_string(filters)
+        return self._do_request("POST", url, json=entities)
+
+    def update_entities(
+        self,
+        entity_type: EntityType,
+        entities: list[dict],
+        filters: list[Filter] | None = None,
+    ):
+        """
+        Updates entities of a certain type.
+        """
+        url = self._get_entity_endpoint(entity_type)
+        if filters is not None:
+            url += self._build_query_string(filters)
+        return self._do_request("PUT", url, json=entities)
+
+    # Utility functions to get a single entity of a certain type
+
+    def get_manufacturer(self, manufacturer_id: int):
+        return self.get_entity(EntityType.MANUFACTURER, manufacturer_id)
+
+    def get_distributor(self, distributor_id: int):
+        return self.get_entity(EntityType.DISTRIBUTOR, distributor_id)
+
+    def get_collection(self, collection_id: int):
+        return self.get_entity(EntityType.COLLECTION, collection_id)
+
+    def get_journalist(self, journalist_id: int):
+        return self.get_entity(EntityType.JOURNALIST, journalist_id)
+
+    def get_material(self, material_id: int):
+        return self.get_entity(EntityType.MATERIAL, material_id)
+
+    def get_project(self, project_id: int):
+        return self.get_entity(EntityType.PROJECT, project_id)
+
+    def get_product(self, product_id: int):
+        return self.get_entity(EntityType.PRODUCT, product_id)
+
+    def get_creator(self, creator_id: int):
+        return self.get_entity(EntityType.CREATOR, creator_id)
+
+    def get_family(self, family_id: int):
+        return self.get_entity(EntityType.FAMILY, family_id)
+
+    def get_filter(self, filter_id: int):
+        return self.get_entity(EntityType.FILTER, filter_id)
+
+    def get_story(self, story_id: int):
+        return self.get_entity(EntityType.STORY, story_id)
+
+    def get_space(self, space_id: int):
+        return self.get_entity(EntityType.SPACE, space_id)
+
+    def get_group(self, group_id: int):
+        return self.get_entity(EntityType.GROUP, group_id)
+
+    def get_fair(self, fair_id: int):
+        return self.get_entity(EntityType.FAIR, fair_id)
+
+    # Utility functions to get all entities of a certain type
+
+    def get_manufacturers(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.MANUFACTURER, filters)
+
+    def get_distributors(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.DISTRIBUTOR, filters)
+
+    def get_collections(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.COLLECTION, filters)
+
+    def get_journalists(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.JOURNALIST, filters)
+
+    def get_materials(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.MATERIAL, filters)
+
+    def get_projects(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.PROJECT, filters)
+
+    def get_products(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.PRODUCT, filters)
+
+    def get_creators(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.CREATOR, filters)
+
+    def get_families(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.FAMILY, filters)
+
+    def get_filters(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.FILTER, filters)
+
+    def get_stories(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.STORY, filters)
+
+    def get_spaces(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.SPACE, filters)
+
+    def get_groups(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.GROUP, filters)
+
+    def get_fairs(self, filters: list[Filter] | None = None):
+        return self.get_entities(EntityType.FAIR, filters)
+
+    # Utility functions to create entities of a certain type
+
+    def create_manufacturers(
+        self, manufacturers: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.MANUFACTURER, manufacturers, filters)
+
+    def create_distributors(
+        self, distributors: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.DISTRIBUTOR, distributors, filters)
+
+    def create_collections(
+        self, collections: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.COLLECTION, collections, filters)
+
+    def create_journalists(
+        self, journalists: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.JOURNALIST, journalists, filters)
+
+    def create_materials(
+        self, materials: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.MATERIAL, materials, filters)
+
+    def create_projects(
+        self, projects: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.PROJECT, projects, filters)
+
+    def create_products(
+        self, products: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.PRODUCT, products, filters)
+
+    def create_creators(
+        self, creators: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.CREATOR, creators, filters)
+
+    def create_families(
+        self, families: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.FAMILY, families, filters)
+
+    def create_filters(
+        self, filters: list[dict], query_filters: list[Filter] | None = None
+    ):
+        return self.create_entities(EntityType.FILTER, filters, query_filters)
+
+    def create_stories(self, stories: list[dict], filters: list[Filter] | None = None):
+        return self.create_entities(EntityType.STORY, stories, filters)
+
+    def create_spaces(self, spaces: list[dict], filters: list[Filter] | None = None):
+        return self.create_entities(EntityType.SPACE, spaces, filters)
+
+    def create_groups(self, groups: list[dict], filters: list[Filter] | None = None):
+        return self.create_entities(EntityType.GROUP, groups, filters)
+
+    def create_fairs(self, fairs: list[dict], filters: list[Filter] | None = None):
+        return self.create_entities(EntityType.FAIR, fairs, filters)
+
+    # Utility functions to update entities of a certain type
+
+    def update_manufacturers(
+        self, manufacturers: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.MANUFACTURER, manufacturers, filters)
+
+    def update_distributors(
+        self, distributors: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.DISTRIBUTOR, distributors, filters)
+
+    def update_collections(
+        self, collections: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.COLLECTION, collections, filters)
+
+    def update_journalists(
+        self, journalists: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.JOURNALIST, journalists, filters)
+
+    def update_materials(
+        self, materials: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.MATERIAL, materials, filters)
+
+    def update_projects(
+        self, projects: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.PROJECT, projects, filters)
+
+    def update_products(
+        self, products: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.PRODUCT, products, filters)
+
+    def update_creators(
+        self, creators: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.CREATOR, creators, filters)
+
+    def update_families(
+        self, families: list[dict], filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.FAMILY, families, filters)
+
+    def update_filters(
+        self, filters: list[dict], query_filters: list[Filter] | None = None
+    ):
+        return self.update_entities(EntityType.FILTER, filters, query_filters)
+
+    def update_stories(self, stories: list[dict], filters: list[Filter] | None = None):
+        return self.update_entities(EntityType.STORY, stories, filters)
+
+    def update_spaces(self, spaces: list[dict], filters: list[Filter] | None = None):
+        return self.update_entities(EntityType.SPACE, spaces, filters)
+
+    def update_groups(self, groups: list[dict], filters: list[Filter] | None = None):
+        return self.update_entities(EntityType.GROUP, groups, filters)
+
+    def update_fairs(self, fairs: list[dict], filters: list[Filter] | None = None):
+        return self.update_entities(EntityType.FAIR, fairs, filters)
