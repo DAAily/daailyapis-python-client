@@ -1,3 +1,5 @@
+import json
+
 import daaily.lucy
 from daaily.credentials_sally import Credentials
 from daaily.lucy.config import entity_type_endpoint_mapping
@@ -58,6 +60,22 @@ class Client(daaily.lucy.Client):
             query_string += f"{filter.name}={filter.value}&"
         return query_string
 
+    def get_skip_query(self, skip: int) -> tuple[int, int]:
+        limit = 500
+        lskip = limit * skip
+        return lskip, limit
+
+    def handle_entity_response_data(
+        self, response: Response, entities: list[dict]
+    ) -> tuple[list[dict], bool]:
+        if response.status == 200:
+            data = json.loads(response.data.decode("utf-8"))
+            entities.extend(data)
+            more_data = True
+        else:
+            more_data = False
+        return entities, more_data
+
     def get_entity(self, entity_type: EntityType, entity_id: int):
         """
         Gets a entity of a certain type.
@@ -104,6 +122,42 @@ class Client(daaily.lucy.Client):
         if filters is not None:
             url += self._build_query_string(filters)
         return self._do_request("PUT", url, json=entities)
+
+    # Utility functions to get all entities via pagination of a certain type
+
+    def get_paginated_entities(
+        self,
+        entity_type: EntityType,
+        filters: list[Filter] | None = None,
+        max_pages: int = 10,
+    ) -> list[dict]:
+        """
+        This function is used to get all entities of a certain type while using
+        pagination for bulk retrieval. The function will fetch entities in batches
+        of 500 until all entities have been retrieved or until the max_pages limit
+        has been reached.
+
+        DO NOT provide filters for SKIP and LIMIT as they will be
+        automatically added by the function!
+        """
+        skip = 0
+        more_data = True
+        entities = []
+        while more_data:
+            lskip, limit = self.get_skip_query(skip)
+            skip_filter = Filter(name="skip", value=str(lskip))
+            limit_filter = Filter(name="limit", value=str(limit))
+            entity_filters = [skip_filter, limit_filter]
+            if filters is not None:
+                entity_filters.extend(filters)
+            response = self.get_entities(entity_type, filters=entity_filters)
+            entities, more_data = self.handle_entity_response_data(response, entities)
+            skip += 1
+            if not more_data:
+                break
+            if skip >= max_pages:
+                break
+        return entities
 
     # Utility functions to get a single entity of a certain type
 
