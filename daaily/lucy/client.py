@@ -129,7 +129,7 @@ class Client(daaily.lucy.Client):
         self,
         entity_type: EntityType,
         filters: list[Filter] | None = None,
-        max_pages: int = 10,
+        max_pages: int | None = None,
     ) -> list[dict]:
         """
         This function is used to get all entities of a certain type while using
@@ -155,7 +155,7 @@ class Client(daaily.lucy.Client):
             skip += 1
             if not more_data:
                 break
-            if skip >= max_pages:
+            if max_pages and skip >= max_pages:
                 break
         return entities
 
