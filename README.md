@@ -2,10 +2,18 @@
 
 This package ought to include all clients of the services provided by Daaily. We will start with the `lucy` client.
 This will be a rapper around the `lucy` service. Based on HTTP requests.
-## Installation
 
 
 ## Installation
+
+<b>Requires local pytho version: ">=3.10"</b>
+
+Initialize & activate virtual environment:
+```bash
+python -m venv venv
+venv/bin/activate
+```
+
 Latest unstable release
 ```bash
 pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
@@ -16,15 +24,14 @@ Latest stable release
 pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v1.3.0
 ```
 
-## Usage
-For usage please have a look at the samples part of the samples folder.
-
-## Development
-
+Install required python packages:
 ```bash
 cp .env.example .env
 pip install -r tests/requirements.txt
 ```
+
+## Usage
+For usage please have a look at the samples part of the samples readme file: [SAMPLES.md](./SAMPLES.md)
 
 ## Push New Version
 
