@@ -6,7 +6,7 @@ This will be a rapper around the `lucy` service. Based on HTTP requests.
 
 ## Installation
 
-<b>Requires local pytho version: ">=3.10"</b>
+<b>Requires local python version: ">=3.10"</b>
 
 Initialize & activate virtual environment:
 ```bash
