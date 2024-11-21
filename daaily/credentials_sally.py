@@ -2,6 +2,7 @@ import datetime
 import http.client as http_client
 import json
 import os
+import time
 
 import daaily.credentials
 import daaily.exceptions
@@ -53,26 +54,42 @@ class Credentials(daaily.credentials.Credentials):
     def _make_request(
         self, request, headers: dict | None = None, request_body: dict | None = None
     ):
-        body = request_body
-        if request_body is not None:
-            body = json.dumps(request_body)
-        response = request(
-            url=self._token_exchange_endpoint,
-            method="POST",
-            headers=headers,
-            body=body,
-        )
-        if response.status != http_client.OK:
-            raise daaily.transport.exceptions.TransportException(
-                response, response.data
+        max_retries = 10
+        retry_delay = 1
+        attempt = 0
+        while attempt < max_retries:
+            body = request_body
+            if request_body is not None:
+                body = json.dumps(request_body)
+            response = request(
+                url=self._token_exchange_endpoint,
+                method="POST",
+                headers=headers,
+                body=body,
             )
-        response_body = (
-            response.data.decode("utf-8")
-            if hasattr(response.data, "decode")
-            else response.data
+            if response.status == http_client.OK:
+                response_body = (
+                    response.data.decode("utf-8")
+                    if hasattr(response.data, "decode")
+                    else response.data
+                )
+                response_data = json.loads(response_body)
+                return response_data
+            elif response.status == 429: # Too Many Requests
+                attempt += 1
+                retry_after = response.headers.get("Retry-After")
+                if retry_after:
+                    retry_delay = int(retry_after)
+                else:
+                    retry_delay *= 2
+                time.sleep(retry_delay)
+            else:
+                raise daaily.transport.exceptions.TransportException(
+                    response, response.data
+                )
+        raise daaily.transport.exceptions.TransportException(
+            response, response.data
         )
-        response_data = json.loads(response_body)
-        return response_data
 
     def refresh(self, request):
         if self.id_token and self.refresh_token:
