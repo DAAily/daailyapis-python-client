@@ -1,15 +1,18 @@
 import json
 from dataclasses import dataclass, field
+from typing import Mapping
+
+from daaily.transport import Response
 
 
 @dataclass
 class PredictGroupResponse:
-    status: str = field()
-    headers: dict = field()
+    status: int = field()
+    headers: Mapping[str, str] = field()
     data: dict = field()
 
     @classmethod
-    def from_response(cls, response):
+    def from_response(cls, response: Response) -> "PredictGroupResponse":
         return cls(
             status=response.status,
             headers=response.headers,
