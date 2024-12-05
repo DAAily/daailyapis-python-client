@@ -31,11 +31,9 @@ dynamic = ["version"]
 [project.urls]
 "Source code" = "https://github.com/DAAily/daailyapis-python-client"
 
-
 [tool.ruff]
-select = ["E", "F", "B", "Q", "C", "I"]
-fixable = ["E", "F", "B", "Q", "C", "I"]
-unfixable = ["F841","F401"]
+target-version = "py312"
+line-length = 88
 exclude = [
     ".bzr",
     ".direnv",
@@ -56,13 +54,13 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
-    "cms",
-    "sheets",
 ]
-per-file-ignores = {}
-line-length = 88
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-target-version = "py312"
 
-[tool.ruff.mccabe]
+[tool.ruff.lint]
+select = ["E", "F", "B", "Q", "C", "I"]
+fixable = ["E", "F", "B", "Q", "C", "I"]
+unfixable = ["F841","F401"]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.mccabe]
 max-complexity = 10

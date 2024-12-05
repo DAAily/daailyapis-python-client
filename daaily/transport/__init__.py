@@ -13,6 +13,7 @@ for the return value of :class:`Request`.
 
 import abc
 import http.client as http_client
+from typing import Mapping
 
 DEFAULT_RETRYABLE_STATUS_CODES = (
     http_client.INTERNAL_SERVER_ERROR,
@@ -36,18 +37,21 @@ DEFAULT_MAX_REFRESH_ATTEMPTS = 2
 class Response(metaclass=abc.ABCMeta):
     """HTTP Response data."""
 
-    @abc.abstractproperty
-    def status(self):
+    @property
+    @abc.abstractmethod
+    def status(self) -> int:
         """int: The HTTP status code."""
         raise NotImplementedError("status must be implemented.")
 
-    @abc.abstractproperty
-    def headers(self):
+    @property
+    @abc.abstractmethod
+    def headers(self) -> Mapping[str, str]:
         """Mapping[str, str]: The HTTP response headers."""
         raise NotImplementedError("headers must be implemented.")
 
-    @abc.abstractproperty
-    def data(self):
+    @property
+    @abc.abstractmethod
+    def data(self) -> bytes:
         """bytes: The response body."""
         raise NotImplementedError("data must be implemented.")
 
