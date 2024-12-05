@@ -1,4 +1,4 @@
-from daaily.franklin.client import Client
+from daaily.franklin import Client
 
 
 def main():
