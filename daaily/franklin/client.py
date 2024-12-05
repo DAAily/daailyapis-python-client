@@ -9,10 +9,6 @@ FRANKLIN_V1_BASE_URL = "https://franklin.daaily.com/api/v1"
 class Client:
     """
     The Franklin client is used to interact with the Franklin server.
-    It provides functionality in order to make requests to each of Franklin's endpoints
-    including the ability to create, update, and delete objects.
-    You will also be able to specify to either use the client in a synchronous or
-    asynchronous manner.
     """
 
     def __init__(
