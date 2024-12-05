@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass, field
 
 
@@ -12,5 +13,5 @@ class PredictGroupResponse:
         return cls(
             status=response.status,
             headers=response.headers,
-            data=response.data,
+            data=json.loads(response.data.decode("utf-8")),
         )

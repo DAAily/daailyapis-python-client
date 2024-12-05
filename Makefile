@@ -7,8 +7,11 @@ install:
 test:
 	venv/bin/python -m pytest
 
-sample-1:
-	venv/bin/python -m samples.get_entities_from_lucy
+sample-lucy-1:
+	venv/bin/python -m samples.lucy.get_entities_from_lucy
+
+sample-franklin-1:
+	venv/bin/python -m samples.franklin.predict_group
 
 build:
 	$(info NOTE: Keep in mind to increment the version when doing a new build)

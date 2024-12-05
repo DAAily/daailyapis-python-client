@@ -46,7 +46,7 @@ class Client:
         r = self._auth_http.request(method, url, **kwargs)
         return r
 
-    def predict_group(
+    def predict_product_group(
         self,
         image_path: str,
         product_name: str,
@@ -106,18 +106,20 @@ class Client:
             ```
 
         Raises:
-            TransportException: Such as connection errors, timeouts,
-            or invalid server responses.
+            json.JSONDecodeError: If the response body cannot be parsed as valid JSON
+            TransportException: Connection errors, timeouts,or invalid server responses.
         """
-        url = f"{self._base_url}/predict-group"
+        url = f"{self._base_url}/products/predict-group"
         response = self._do_request(
             "POST",
             url,
-            json={
-                "image_path": image_path,
-                "product_name": product_name,
-                "product_text": product_text,
-                "model_type": model_type,
-            },
+            json=[
+                {
+                    "image_path": image_path,
+                    "name": product_name,
+                    "text": product_text,
+                    "model_type": model_type,
+                }
+            ],
         )
         return PredictGroupResponse.from_response(response)
