@@ -21,7 +21,7 @@ pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 
 Latest stable release
 ```bash
-pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v1.3.0
+pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@latest
 ```
 
 Install required python packages:
