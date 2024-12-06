@@ -6,6 +6,7 @@ import urllib3
 import daaily.credentials
 import daaily.credentials_sally
 import daaily.lucy.client
+import daaily.lucy.utils
 import daaily.transport.urllib3_http
 import tests.fixtures as fixtures
 
@@ -34,7 +35,7 @@ class TestLucyClient:
     def test_get_entity_endpoint(self):
         credentials = CredentialsStub()
         lucy = daaily.lucy.client.Client(credentials=credentials)
-        endpoint = lucy._get_entity_endpoint("product")  # type: ignore
+        endpoint = daaily.lucy.utils.get_entity_endpoint(lucy._base_url, "product")  # type: ignore
         assert endpoint == "https://lucy.daaily.com/api/v2/products"
 
 

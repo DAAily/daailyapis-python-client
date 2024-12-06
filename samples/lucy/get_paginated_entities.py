@@ -39,7 +39,7 @@ def main():
         limit_filter = Filter(name="limit", value=str(limit))
 
         start_time = time.perf_counter()
-        response = lucy_client.get_materials(
+        response = lucy_client.materials.get(
             filters=[skip_filter, limit_filter],
         )
 

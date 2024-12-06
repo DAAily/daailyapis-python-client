@@ -1,6 +1,6 @@
+import daaily.transport
 from daaily.credentials_sally import Credentials
-from daaily.franklin.responses import PredictGroupResponse
-from daaily.transport import Response
+from daaily.franklin.response import Response
 from daaily.transport.urllib3_http import AuthorizedHttp
 
 FRANKLIN_V1_BASE_URL = "https://franklin.daaily.com/api/v1"
@@ -35,7 +35,7 @@ class Client:
             raise NotImplementedError("Custom request handlers are not supported yet.")
         self._auth_http = AuthorizedHttp(self._credentials)
 
-    def _do_request(self, method, url, **kwargs) -> Response:
+    def _do_request(self, method, url, **kwargs) -> daaily.transport.Response:
         """
         Makes a request to the server.
         """
@@ -48,7 +48,7 @@ class Client:
         product_name: str,
         product_text: str,
         model_type: str = "furniture",
-    ) -> PredictGroupResponse:
+    ) -> Response:
         """
         Predicts the group of a product based on its image, name, and descriptive text.
 
@@ -118,4 +118,4 @@ class Client:
                 }
             ],
         )
-        return PredictGroupResponse.from_response(response)
+        return Response.from_response(response)
