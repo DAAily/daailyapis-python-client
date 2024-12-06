@@ -10,6 +10,9 @@ test:
 sample-lucy-1:
 	venv/bin/python -m samples.lucy.get_entities_from_lucy
 
+sample-lucy-2:
+	venv/bin/python -m samples.lucy.get_filtered_manufacturers
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
