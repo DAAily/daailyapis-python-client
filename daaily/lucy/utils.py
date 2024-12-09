@@ -33,3 +33,14 @@ def handle_entity_response_data(
     else:
         more_data = False
     return entities, more_data
+
+
+def add_image_to_product(product: dict, image: dict) -> dict:
+    if "images" not in product:
+        product["images"] = []
+    product["images"].append(image)
+    return product
+
+
+def gen_new_image_object(blob_id, usage: str = "pro-g"):
+    return {"blob_id": blob_id, "image_usages": [usage]}

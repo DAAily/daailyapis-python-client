@@ -13,8 +13,12 @@ sample-lucy-1:
 sample-lucy-2:
 	venv/bin/python -m samples.lucy.get_filtered_manufacturers
 
+sample-lucy-3:
+	venv/bin/python -m samples.lucy.add_image_to_product
+	
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
+
 
 build:
 	$(info NOTE: Keep in mind to increment the version when doing a new build)

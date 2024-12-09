@@ -84,13 +84,13 @@ class Client:
         r = self._auth_http.request(method, url, **kwargs)
         return r
 
-    def get_entity(self, entity_type: EntityType, entity_id: int):
+    def get_entity(self, entity_type: EntityType, entity_id: int) -> Response:
         """
         Gets a entity of a certain type.
         """
         url = get_entity_endpoint(self._base_url, entity_type)
         entity_url = f"{url}/{entity_id}"
-        return self._do_request("GET", entity_url)
+        return Response.from_response(self._do_request("GET", entity_url))
 
     def get_entities(
         self, entity_type: EntityType, filters: list[Filter] | None = None
