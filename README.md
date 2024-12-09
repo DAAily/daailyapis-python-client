@@ -3,6 +3,8 @@
 This package ought to include all clients of the services provided by Daaily. We will start with the `lucy` client.
 This will be a rapper around the `lucy` service. Based on HTTP requests.
 
+Official Documentation: [DaailyAPIs Python Client Documentation](https://docs.google.com/document/d/1fHtorz-6bWObdFUTnX11r9TcU_Nq0AxWujec6NxcZkw/edit?tab=t.0)
+
 
 ## Installation
 
