@@ -70,7 +70,7 @@ class Request(daaily.transport.Request):
         return _Response(response)
 
 
-class AuthorizedHttp(urllib3._request_methods.RequestMethods): # type: ignore
+class AuthorizedHttp(urllib3._request_methods.RequestMethods):  # type: ignore
     """
     A urllib3 HTTP class with credentials.
 
@@ -125,7 +125,7 @@ class AuthorizedHttp(urllib3._request_methods.RequestMethods): # type: ignore
             headers = self.headers
         # Make a copy of the headers. They will be modified by the credentials
         # and we want to pass the original headers if we recurse.
-        request_headers = headers.copy() # type: ignore
+        request_headers = headers.copy()  # type: ignore
         self.credentials.before_request(self._request, request_headers)
         response = self.http.urlopen(
             method, url, body=body, headers=request_headers, **kwargs

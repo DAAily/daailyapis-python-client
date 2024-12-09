@@ -13,7 +13,7 @@ def main():
         + "and is designed to withstand the elements. The set is available in a variety"
         + " of colors and is sure to add style and comfort to your outdoor space.",
     )
-    print(response.data)
+    print(response.json())
 
 
 if __name__ == "__main__":
