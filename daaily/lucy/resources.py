@@ -77,9 +77,9 @@ class ManufacturersResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.MANUFACTURER, filters)
-            if response.status == 404:
+            if response.status != 200:
                 break
-            for item in response.json():
+            for item in response.json():  # type: ignore
                 yield item
             skip = int(skip_filter.value) + int(limit_filter.value)
             skip_filter.value = str(skip)
@@ -224,9 +224,9 @@ class ProductsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.PRODUCT, filters)
-            if response.status == 404:
+            if response.status == 200:
                 break
-            for item in response.json():
+            for item in response.json():  # type: ignore
                 yield item
             skip = int(skip_filter.value) + int(limit_filter.value)
             skip_filter.value = str(skip)
@@ -320,8 +320,10 @@ class ProductsResource(BaseResource):
         generation = resp.headers["x-goog-generation"]
         blob_id = response_data["blob_name"] + "/" + str(generation)
         product = self._client.get_entity(EntityType.PRODUCT, product_id)
+        if product.status != 200:
+            raise Exception(f"Failed to get product: {product.data}")
         new_image = gen_new_image_object(blob_id, usage)
-        product = add_image_to_product(product.json(), new_image)
+        product = add_image_to_product(product.json(), new_image)  # type: ignore
         return self._client.update_entities(EntityType.PRODUCT, [product])
 
 

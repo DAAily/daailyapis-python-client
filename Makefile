@@ -15,7 +15,10 @@ sample-lucy-2:
 
 sample-lucy-3:
 	venv/bin/python -m samples.lucy.add_image_to_product
-	
+
+sample-lucy-4:
+	venv/bin/python -m samples.lucy.get_product_by_id
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
