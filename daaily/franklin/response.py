@@ -26,7 +26,23 @@ class Response(daaily.transport.Response):
         return self._data
 
     def json(self):
-        """Parses the response body as JSON and returns the resulting object."""
+        """
+        Parses the response body as JSON and returns the resulting object.
+
+        This method attempts to decode the response body as a JSON object and
+        returns the resulting dictionary. It only performs this operation if
+        the HTTP status code is between 200 and 299 (inclusive). If the status
+        code is outside this range, the method returns None.
+
+        Returns:
+            dict | None: The parsed JSON object if the status code is 200-299,
+            otherwise None.
+
+        Raises:
+            json.JSONDecodeError: If the response body cannot be decoded as JSON.
+        """
+        if self._status < 200 or self._status >= 300:
+            return None
         return json.loads(self._data.decode("utf-8"))
 
     @classmethod
