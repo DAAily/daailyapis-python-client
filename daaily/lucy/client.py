@@ -1,3 +1,5 @@
+import json
+
 import daaily.transport
 from daaily.credentials_sally import Credentials
 from daaily.lucy.enums import EntityType
@@ -164,3 +166,34 @@ class Client:
             if max_pages and skip >= max_pages:
                 break
         return entities
+
+    def upload_file(
+        self,
+        file_data: bytes,
+        mime_type: str,
+        endpoint: str,
+        metadata: dict | None = None,
+        short_uuid: str | None = None,
+    ) -> str:
+        """
+        Uploads a file to the server.
+        """
+        headers = {"Content-Type": mime_type}
+        if metadata:
+            headers.update(metadata)
+        file_upload_url = f"{self._base_url}/{endpoint}"
+        request_method = "POST"
+        if short_uuid:
+            file_upload_url += f"/{short_uuid}"
+            request_method = "PUT"
+        resp = self._do_request(
+            request_method, file_upload_url, body=file_data, headers=headers
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload image. Status code: {resp.status}. {resp.data}"
+            )
+        response_data = json.loads(resp.data.decode("utf-8"))
+        if "blob_id" not in response_data:
+            raise Exception(f"Failed to get signed url: {response_data}")
+        return response_data["blob_id"]
