@@ -82,3 +82,13 @@ def gen_new_file_object(blob_id, **kwargs):
     Gets all of the extra args and generates a new file object
     """
     return {"blob_id": blob_id, **kwargs}
+
+
+def add_x_goog_metadata_to_headers(metadata: dict) -> dict:
+    """
+    Adds the x-goog-metadata header to the headers
+    """
+    headers = {}
+    for key, value in metadata.items():
+        headers[f"x-goog-meta-{key}"] = value
+    return headers
