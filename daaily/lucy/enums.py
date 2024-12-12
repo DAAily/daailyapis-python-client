@@ -26,3 +26,9 @@ class EntityType(str, Enum):
     GROUP = "group"
     STORY = "story"
     FAIR = "fair"
+
+
+class AssetType(str, Enum):
+    IMAGE = "image"
+    PDF = "pdf"
+    CAD = "cad"

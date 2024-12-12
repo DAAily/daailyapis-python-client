@@ -1,17 +1,26 @@
 import json
 import mimetypes
+import os
 from typing import TYPE_CHECKING, Any, Dict, Generator
 
 import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
-from daaily.lucy.utils import add_image_to_product, gen_new_image_object
+from daaily.lucy.utils import (
+    add_image_to_product,
+    gen_new_file_object,
+    gen_new_image_object,
+    get_asset_type_from_mime_type,
+    get_entity_asset_type_endpoint,
+    get_file_data_and_mimetype,
+)
 
 if TYPE_CHECKING:
     from daaily.lucy.client import Client
 
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
+FILE_UPLOADS_UNSPECIFIC_ENDPOINT = "/files/uploads/temp/unspecific"
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
@@ -242,6 +251,132 @@ class ProductsResource(BaseResource):
     def create(self, products: list[dict], filters: list[Filter] | None = None):
         return self._client.create_entities(EntityType.PRODUCT, products, filters)
 
+    def replace_existing_file_by_path(
+        self,
+        product_id: int,
+        short_uuid: str,
+        path: str,
+        metadata: dict | None = None,
+        extra: dict | None = None,
+    ):
+        """
+        Adds an image to a product by uploading the image from a specified file path.
+
+        This method reads the image file, determines its MIME type, and uploads it to a
+        signed URL obtained from the server. After uploading, it updates the product
+        with the new file information. By leveraging the `extra` parameter, you can
+        add a wide range of additional fields depending on the file type being set
+        (e.g., CAD files, PDFs, or images).
+
+        Args:
+            product_id (int): ID of the product to which the file will be associated.
+            short_uuid (str): Short UUID extracted from the existing blob ID.
+            image_path (str): File path of the asset (image, CAD, PDF) to be uploaded.
+            usage (str | None): DEPRECATED. Usage string (e.g., "pro-g"). Default: None.
+            metadata (dict | None): Optional metadata associated with the asset.
+            extra (dict | None): An optional dictionary of additional fields to include
+            in the uploaded file object. The structure and allowed fields depend on
+            the file type.
+
+            Possible keys include, but are not limited to, the following structures:
+
+            Extra Args For CAD Files:
+                {
+                    "file_type": "cad",
+                    "file_name_original": str,
+                    "description": str,
+                    "title": str,
+                    "release_datetime": str (ISO 8601 datetime),
+                    "direct_link": {
+                        "url": str,
+                        "is_enabled": bool
+                    }
+                }
+
+            Extra Args For PDF File:
+                {
+                    "file_name_original": str,
+                    "description": str,
+                    "title": str,
+                    "release_datetime": str (ISO 8601 datetime),
+                    "direct_link": {
+                        "url": str,
+                        "is_enabled": bool
+                    },
+                    "pdf_type": str (e.g., "manual"),
+                    "page_count": int,
+                    "languages": [str, ...],
+                    "preview_image": {
+                        "description": str,
+                        "direct_link": {
+                            "url": str,
+                            "is_enabled": bool
+                        }
+                    }
+                }
+
+            Extra Args For images:
+                {
+                    "description": str,
+                    "list_order": int,
+                    "image_usages": list[str] (e.g., ["pro-sq"]),
+                    "direct_link": {
+                        "url": str,
+                        "is_enabled": bool
+                }
+
+        Raises:
+            Exception: If the content type of the image cannot be determined, if the
+                signed URL request fails, or if the product cannot be retrieved/updated.
+
+        Returns:
+            dict: The updated product information after adding the file.
+
+        Example:
+            ```python
+            # Define product ID and image path
+            product_id = 12345
+            short_uuid = "123e4567" # short uuid extracted from the existing blob id
+            image_path = "/path/to/image.jpg"
+
+            # Add image to product with some extra parameters
+            extra_params = {
+                "file_name_original": "image.jpg",
+                "description": "A sample image",
+                "title": "Sample Title"
+            }
+
+            updated_product = client.products.replace_existing_file_by_path(
+                product_id, short_uuid, image_path, extra=extra_params
+            )
+
+            # Print updated product information
+            print(updated_product)
+            ```
+        """
+        raise NotImplementedError
+        file_data, mime_type = get_file_data_and_mimetype(path)
+        asset_type = get_asset_type_from_mime_type(mime_type)
+        if not asset_type:
+            raise Exception(
+                f"Could not determine asset type from the following: {mime_type}"
+            )
+        endpoint = get_entity_asset_type_endpoint(
+            EntityType.PRODUCT, product_id, asset_type
+        )
+        if not endpoint:
+            raise Exception(f"Could not determine url for product & asset {asset_type}")
+        blob_id = self._client.upload_file(
+            file_data, mime_type, endpoint, metadata, short_uuid
+        )
+        product = self._client.get_entity(EntityType.PRODUCT, product_id)
+        if product.status != 200:
+            raise Exception(f"Failed to get product: {product.data}")
+        extra = extra or {}
+        new_image = gen_new_file_object(blob_id, **extra)
+        product = add_image_to_product(product.json(), new_image)  # type: ignore
+        return self._client.update_entities(EntityType.PRODUCT, [product])
+
     def add_image_by_path(
         self,
         product_id: int,
@@ -431,3 +566,48 @@ class FairsResource(BaseResource):
 
     def create(self, fairs: list[dict], filters: list[Filter] | None = None):
         return self._client.create_entities(EntityType.FAIR, fairs, filters)
+
+
+class FilesResource(BaseResource):
+    def upload_file_to_temp_bucket_by_file_path(
+        self, file_path: str, metadata: dict | None = None
+    ) -> str:
+        """
+        Uploads a file to a temporary bucket using the file path.
+
+        Args:
+            file_path (str): The path to the file to be uploaded.
+            metadata (dict, optional): Additional metadata for the file. Default: None
+
+        Returns:
+            str: The blob ID of the uploaded file.
+
+        Example:
+            import os
+            from daaily.lucy import Client
+
+            # Get the directory of the current file
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+
+            # Instantiate the client and overwrite the base URL with staging environment
+            client = Client(base_url="https://lucy.staging.daaily.com/api/v2")
+
+            product_id = 1032360
+
+            # Construct the path to the file in the neighboring directory
+            file_path = os.path.join(script_dir, "..", "assets", "vitra.jpeg")
+
+            blob_id = client.files.upload_file_to_temp_bucket_by_file_path(file_path)
+            print("This is the blob_id of the uploaded asset:", blob_id)
+        """
+        file_data, mime_type = get_file_data_and_mimetype(file_path)
+        asset_type = get_asset_type_from_mime_type(mime_type)
+        if not asset_type:
+            raise Exception(
+                f"Could not determine asset type from the following: {mime_type}"
+            )
+        file_name = os.path.basename(file_path)
+        blob_id = self._client.upload_file(
+            file_data, file_name, mime_type, FILE_UPLOADS_UNSPECIFIC_ENDPOINT, metadata
+        )
+        return blob_id

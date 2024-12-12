@@ -19,6 +19,9 @@ sample-lucy-3:
 sample-lucy-4:
 	venv/bin/python -m samples.lucy.get_product_by_id
 
+sample-lucy-5:
+	venv/bin/python -m samples.lucy.add_file_to_temp_bucket
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 

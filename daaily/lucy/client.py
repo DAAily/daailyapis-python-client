@@ -1,3 +1,7 @@
+import json
+
+from urllib3 import filepost
+
 import daaily.transport
 from daaily.credentials_sally import Credentials
 from daaily.lucy.enums import EntityType
@@ -8,6 +12,7 @@ from daaily.lucy.resources import (
     DistributorsResource,
     FairsResource,
     FamiliesResource,
+    FilesResource,
     FiltersResource,
     GroupsResource,
     JournalistsResource,
@@ -20,6 +25,7 @@ from daaily.lucy.resources import (
 )
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
+    add_x_goog_metadata_to_headers,
     build_query_string,
     get_entity_endpoint,
     get_skip_query,
@@ -76,6 +82,7 @@ class Client:
         self.spaces = SpacesResource(self)
         self.groups = GroupsResource(self)
         self.fairs = FairsResource(self)
+        self.files = FilesResource(self)
 
     def _do_request(self, method, url, **kwargs) -> daaily.transport.Response:
         """
@@ -164,3 +171,42 @@ class Client:
             if max_pages and skip >= max_pages:
                 break
         return entities
+
+    def upload_file(
+        self,
+        file_data: bytes,
+        file_name: str,
+        mime_type: str,
+        endpoint: str,
+        metadata: dict | None = None,
+        short_uuid: str | None = None,
+    ) -> str:
+        """
+        Uploads a file to the server.
+        """
+        file_upload_url = f"{self._base_url}/{endpoint}"
+        request_method = "POST"
+        if short_uuid:
+            file_upload_url += f"/{short_uuid}"
+            request_method = "PUT"
+        fields = {"file": (file_name, file_data, mime_type)}
+        encoded_data, content_type = filepost.encode_multipart_formdata(fields)
+        headers = {"Content-Type": content_type}
+        if metadata:
+            metadata_header_ready = add_x_goog_metadata_to_headers(metadata)
+            headers.update(metadata_header_ready)
+        resp = self._do_request(
+            request_method,
+            file_upload_url,
+            body=encoded_data,
+            headers=headers,
+            encode_multipart=True,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload image. Status code: {resp.status}. {resp.data}"
+            )
+        response_data = json.loads(resp.data.decode("utf-8"))
+        if "blob_id" not in response_data:
+            raise Exception(f"Failed to get signed url: {response_data}")
+        return response_data["blob_id"]
