@@ -41,7 +41,7 @@ def handle_entity_response_data(
 
 
 def add_image_to_product(product: dict, image: dict) -> dict:
-    if "images" not in product:
+    if "images" not in product or not isinstance(product["images"], list):
         product["images"] = []
     product["images"].append(image)
     return product
