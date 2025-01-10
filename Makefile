@@ -25,6 +25,9 @@ sample-lucy-5:
 sample-lucy-6:
 	venv/bin/python -m samples.lucy.get_products_async
 
+sample-lucy-7:
+	venv/bin/python -m samples.lucy.get_filtered_materials
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
