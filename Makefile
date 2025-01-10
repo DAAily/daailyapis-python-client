@@ -22,9 +22,11 @@ sample-lucy-4:
 sample-lucy-5:
 	venv/bin/python -m samples.lucy.add_file_to_temp_bucket
 
+sample-lucy-6:
+	venv/bin/python -m samples.lucy.get_products_async
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
-
 
 build:
 	$(info NOTE: Keep in mind to increment the version when doing a new build)
