@@ -110,8 +110,57 @@ class ManufacturersResource(BaseResource):
 
 
 class DistributorsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.DISTRIBUTOR, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves distributors with optional filtering, returning them as a generator
+        that yields each distributor one at a time.
+
+        Available filters:
+            - distributor_ids (str): Filter by comma separated distributor IDs.
+            - distributor_name (str): Filter by regex name search.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single distributor.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("distributor_name", "minotti munich")]
+
+            # Get distributors (pagination handled internally)
+            distributors = client.distributors.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for d in distributors:
+                print(f"ID: {d['distributor_id']}, Name: {d['name']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.DISTRIBUTOR, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, distributor_id: int):
         return self._client.get_entity(EntityType.DISTRIBUTOR, distributor_id)
@@ -128,8 +177,57 @@ class DistributorsResource(BaseResource):
 
 
 class CollectionsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.COLLECTION, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves collections with optional filtering, returning them as a generator
+        that yields each collection one at a time.
+
+        Available filters:
+            - manufacturer_id (int): Filter by manufacturer ID.
+            - collection_ids (str): Filter by comma separated collection IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single collection.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("manufacturer_id", "12345")]
+
+            # Get collections (pagination handled internally)
+            collections = client.collections.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for c in collections:
+                print(f"ID: {c['collection_id']}, Name: {c['name_en']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.COLLECTION, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, collection_id: int):
         return self._client.get_entity(EntityType.COLLECTION, collection_id)
@@ -142,8 +240,56 @@ class CollectionsResource(BaseResource):
 
 
 class JournalistsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.JOURNALIST, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves journalists with optional filtering, returning them as a generator
+        that yields each journalist one at a time.
+
+        Available filters:
+            - journalist_ids (str): Filter by comma separated journalist IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single journalist.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("journalist_ids", "12345, 12322")]
+
+            # Get journalists (pagination handled internally)
+            journalists = client.journalists.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for j in journalists:
+                print(f"ID: {j['journalist_id']}, Name: {j['name']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.JOURNALIST, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, journalist_id: int):
         return self._client.get_entity(EntityType.JOURNALIST, journalist_id)
@@ -156,8 +302,57 @@ class JournalistsResource(BaseResource):
 
 
 class MaterialsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.MATERIAL, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves materials with optional filtering, returning them as a generator
+        that yields each material one at a time.
+
+        Available filters:
+            - manufacturer_id (int): Filter by manufacturer ID.
+            - material_ids (str): Filter by comma separated material IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single material.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("manufacturer_id", "12345")]
+
+            # Get materials (pagination handled internally)
+            materials = client.materials.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for m in materials:
+                print(f"ID: {m['material_id']}, Name: {m['name_en']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.MATERIAL, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, material_id: int):
         return self._client.get_entity(EntityType.MATERIAL, material_id)
@@ -170,8 +365,56 @@ class MaterialsResource(BaseResource):
 
 
 class ProjectsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.PROJECT, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves project with optional filtering, returning them as a generator
+        that yields each project one at a time.
+
+        Available filters:
+            - project_ids (str): Filter by comma separated project IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single project.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("manufacturer_id", "12345")]
+
+            # Get materials (pagination handled internally)
+            projects = client.projects.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for p in projects:
+                print(f"ID: {p['project_id']}, Name: {p['name']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.PROJECT, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, project_id: int):
         return self._client.get_entity(EntityType.PROJECT, project_id)
@@ -463,8 +706,56 @@ class ProductsResource(BaseResource):
 
 
 class CreatorsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.CREATOR, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves creators with optional filtering, returning them as a generator
+        that yields each creator one at a time.
+
+        Available filters:
+            - creator_ids (str): Filter by comma separated creator IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single creator.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("creator_ids", "12345, 78910")]
+
+            # Get creators (pagination handled internally)
+            creators = client.creators.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for c in creators:
+                print(f"ID: {c['creator_id']}, Name: {c['name']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.CREATOR, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, creator_id: int):
         return self._client.get_entity(EntityType.CREATOR, creator_id)
@@ -477,8 +768,56 @@ class CreatorsResource(BaseResource):
 
 
 class FamiliesResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.FAMILY, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves families with optional filtering, returning them as a generator
+        that yields each family one at a time.
+
+        Available filters:
+            - family_ids (str): Filter by comma separated family IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single family.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("family_ids", "12345, 78910")]
+
+            # Get families (pagination handled internally)
+            families = client.families.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for f in families:
+                print(f"ID: {f['family_id']}, Name: {f['name_en']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.FAMILY, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, family_id: int):
         return self._client.get_entity(EntityType.FAMILY, family_id)
@@ -491,8 +830,56 @@ class FamiliesResource(BaseResource):
 
 
 class FiltersResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.FILTER, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves filters with optional filtering, returning them as a generator
+        that yields each filter one at a time.
+
+        Available filters:
+            - filter_ids (str): Filter by comma separated filter IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single filter.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("filter_ids", "12345, 78910")]
+
+            # Get filters (pagination handled internally)
+            filters = client.filters.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for f in filters:
+                print(f"ID: {f['filter_id']}, Name: {f['name_en']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.FILTER, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, filter_id: int):
         return self._client.get_entity(EntityType.FILTER, filter_id)
@@ -513,8 +900,56 @@ class FiltersResource(BaseResource):
 
 
 class StoriesResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.STORY, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves stories with optional filtering, returning them as a generator
+        that yields each story one at a time.
+
+        Available filters:
+            - story_ids (str): Filter by comma separated story IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single story.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("story_ids", "12345, 78910")]
+
+            # Get stories (pagination handled internally)
+            stories = client.stories.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for s in stories:
+                print(f"ID: {s['story_id']}, Name: {s['name']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.STORY, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, story_id: int):
         return self._client.get_entity(EntityType.STORY, story_id)
@@ -527,8 +962,56 @@ class StoriesResource(BaseResource):
 
 
 class SpacesResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.SPACE, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves spaces with optional filtering, returning them as a generator
+        that yields each space one at a time.
+
+        Available filters:
+            - space_ids (str): Filter by comma separated space IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single space.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("space_ids", "12345, 78910")]
+
+            # Get spaces (pagination handled internally)
+            spaces = client.spaces.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for s in spaces:
+                print(f"ID: {s['space_id']}, Space Type: {s['space_type']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.SPACE, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, space_id: int):
         return self._client.get_entity(EntityType.SPACE, space_id)
@@ -541,8 +1024,56 @@ class SpacesResource(BaseResource):
 
 
 class GroupsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.GROUP, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves groups with optional filtering, returning them as a generator
+        that yields each group one at a time.
+
+        Available filters:
+            - group_ids (str): Filter by comma separated group IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single space.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("group_ids", "12345, 78910")]
+
+            # Get groups (pagination handled internally)
+            groups = client.groups.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for g in groups:
+                print(f"ID: {g['group_id']}, Name: {g['name_en']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.GROUP, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, group_id: int):
         return self._client.get_entity(EntityType.GROUP, group_id)
@@ -555,8 +1086,56 @@ class GroupsResource(BaseResource):
 
 
 class FairsResource(BaseResource):
-    def get(self, filters: list[Filter] | None = None):
-        return self._client.get_entities(EntityType.FAIR, filters)
+    def get(
+        self, filters: list[Filter] | None = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves fairs with optional filtering, returning them as a generator
+        that yields each fair one at a time.
+
+        Available filters:
+            - fair_ids (str): Filter by comma separated fair IDs.
+
+        Note that the following filters are automatically added to the query:
+            - skip (int): Number of records to skip.
+            - limit (int): Maximum number of records to retrieve.
+
+        Args:
+            filters (list[Filter] | None): A list of filters to apply to the query.
+
+        Yields:
+            dict: A dictionary representing a single fair.
+
+        Example:
+            ```python
+            # Define filters
+            filters = [Filter("fair_ids", "12345, 78910")]
+
+            # Get fairs (pagination handled internally)
+            fairs = client.fairs.get(filters=filters)
+
+            # Iterate over the results without worrying about pagination
+            for f in fairs:
+                print(f"ID: {f['fair_id']}, Name: {f['name']}")
+            ```
+        """
+        if filters is None:
+            filters = []
+        filters = [f for f in filters if f.name not in ["limit", "skip"]]
+        limit_filter = Filter(name="limit", value="100")
+        skip_filter = Filter(name="skip", value="0")
+        filters.append(limit_filter)
+        filters.append(skip_filter)
+        while True:
+            response = self._client.get_entities(EntityType.FAIR, filters)
+            if response.status == 200:
+                break
+            for item in response.json():  # type: ignore
+                yield item
+            skip = int(skip_filter.value) + int(limit_filter.value)
+            skip_filter.value = str(skip)
+            filters = [f for f in filters if f.name != "skip"]
+            filters.append(skip_filter)
 
     def get_by_id(self, fair_id: int):
         return self._client.get_entity(EntityType.FAIR, fair_id)
