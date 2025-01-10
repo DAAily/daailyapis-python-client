@@ -153,7 +153,7 @@ class DistributorsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.DISTRIBUTOR, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -220,7 +220,7 @@ class CollectionsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.COLLECTION, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -282,7 +282,7 @@ class JournalistsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.JOURNALIST, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -345,7 +345,7 @@ class MaterialsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.MATERIAL, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -407,7 +407,7 @@ class ProjectsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.PROJECT, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -476,7 +476,7 @@ class ProductsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.PRODUCT, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -748,7 +748,7 @@ class CreatorsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.CREATOR, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -810,7 +810,7 @@ class FamiliesResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.FAMILY, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -872,7 +872,7 @@ class FiltersResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.FILTER, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -942,7 +942,7 @@ class StoriesResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.STORY, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -1004,7 +1004,7 @@ class SpacesResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.SPACE, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -1066,7 +1066,7 @@ class GroupsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.GROUP, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
@@ -1128,7 +1128,7 @@ class FairsResource(BaseResource):
         filters.append(skip_filter)
         while True:
             response = self._client.get_entities(EntityType.FAIR, filters)
-            if response.status == 200:
+            if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
