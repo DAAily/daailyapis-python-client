@@ -35,49 +35,11 @@ pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 
 ### Lucy Client
 
-The `LucyClient` is the primary interface for interacting with the `lucy` service.
+The LucyClient is the primary interface for interacting with the `lucy` service.
 
----
+### Franklin Client
 
-## Classes and Methods
-
-### LucyClient
-
-#### Methods
-
-- **`__init__(api_key: str)`**
-  - Initializes the client with your API key.
-
-- **`search(query: str) -> dict`**
-  - Executes a search request.
-
-- **`get_resource(resource_id: str) -> dict`**
-  - Fetches a resource by ID.
-
-- **`create_resource(data: dict) -> dict`**
-  - Creates a new resource.
-
-#### Example Usage
-
-```python
-from daailyapis import LucyClient
-
-client = LucyClient(api_key="your_api_key")
-results = client.search(query="example")
-print(results)
-```
-
----
-
-## Usage Examples
-
-### Searching with LucyClient
-
-```python
-client = LucyClient(api_key="your_api_key")
-response = client.search(query="data science")
-print(response)
-```
+The FranklinClient is the primary interface for interacting with the `franklin` service.
 
 ---
 
