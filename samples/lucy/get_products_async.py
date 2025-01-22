@@ -1,6 +1,7 @@
 import asyncio
 
 from daaily.lucy import Client
+from daaily.lucy.constants import LUCY_V2_BASE_URL_STAGING
 
 
 # An async helper to fetch a single product
@@ -17,7 +18,7 @@ async def main():
     product_ids = [20290832, 20290822, 20290820]
 
     # Initialize the client
-    client = Client(base_url="https://lucy.staging.daaily.com/api/v2")
+    client = Client(base_url=LUCY_V2_BASE_URL_STAGING)
 
     # Create a list of tasks for concurrent/parallel fetching
     tasks = [asyncio.create_task(fetch_product(client, pid)) for pid in product_ids]

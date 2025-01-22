@@ -1,12 +1,13 @@
 import os
 
 from daaily.lucy import Client
+from daaily.lucy.constants import LUCY_V2_BASE_URL_STAGING
 
 # Get the directory of the current file
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Instantiate the client and overwrite the base URL with staging environment
-client = Client(base_url="https://lucy.staging.daaily.com/api/v2")
+client = Client(base_url=LUCY_V2_BASE_URL_STAGING)
 
 product_id = 1032360
 

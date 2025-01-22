@@ -31,6 +31,9 @@ sample-lucy-7:
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
+sample-score-1:
+	venv/bin/python -m samples.score.get_product_scores
+
 build:
 	$(info NOTE: Keep in mind to increment the version when doing a new build)
 	python3 -m build

@@ -10,12 +10,6 @@ Official Documentation: [DaailyAPIs Python Client Documentation](https://docs.go
 
 <b>Requires local python version: ">=3.10"</b>
 
-Initialize & activate virtual environment:
-```bash
-python -m venv venv
-venv/bin/activate
-```
-
 Latest unstable release
 ```bash
 pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
@@ -23,17 +17,28 @@ pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 
 Latest stable release
 ```bash
-pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git@v1.7.0
+pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.11.1#egg=daaily
 ```
 
-Install required python packages:
-```bash
-cp .env.example .env
-pip install -r tests/requirements.txt
-```
 
 ## Usage
 For usage please have a look at the samples part of the samples readme file: [SAMPLES.md](./SAMPLES.md)
+
+## Development
+### Install Extra Dependencies
+```bash
+python -m venv venv
+venv/bin/activate
+pip install -e ".[score]"
+```
+
+### Run Tests
+```bash
+python -m venv venv
+venv/bin/activate
+cp .env.example .env
+pip install -r tests/requirements.txt
+```
 
 ## Push New Version
 
