@@ -10,14 +10,19 @@ Official Documentation: [DaailyAPIs Python Client Documentation](https://docs.go
 
 <b>Requires local python version: ">=3.10"</b>
 
-Latest unstable release
+Latest unstable release:
 ```bash
 pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 ```
 
-Latest stable release
+Latest stable release:
 ```bash
-pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.11.1#egg=daaily
+pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.0#egg=daaily
+```
+  
+In case you want to work with the score client you need to install additional dependencies:
+```bash
+pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.0#egg=daaily[score]
 ```
 
 
