@@ -98,6 +98,9 @@ class ManufacturersResource(BaseResource):
     def get_by_id(self, manufacturer_id: int):
         return self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)
 
+    def get_by_domain(self, domain: str):
+        return self._client.get_entity_custom(EntityType.MANUFACTURER, domain, "domain")
+
     def update(self, manufacturers: list[dict], filters: list[Filter] | None = None):
         return self._client.update_entities(
             EntityType.MANUFACTURER, manufacturers, filters

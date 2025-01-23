@@ -31,6 +31,9 @@ sample-lucy-7:
 sample-lucy-8:
 	venv/bin/python -m samples.lucy.create_manufacturer
 
+sample-lucy-9:
+	venv/bin/python -m samples.lucy.get_manufacturer_by_domain
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
