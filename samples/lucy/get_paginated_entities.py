@@ -2,6 +2,7 @@ import json
 import time
 
 from daaily.lucy.client import Client
+from daaily.lucy.constants import LUCY_V2_BASE_URL_STAGING
 from daaily.lucy.models import Filter
 from daaily.transport import Response
 
@@ -25,7 +26,7 @@ def handle_entity_response_data(
 
 
 def main():
-    lucy_client = Client()
+    lucy_client = Client(base_url=LUCY_V2_BASE_URL_STAGING)
     """Get entity data from Lucy while using pagination for mass retrieval"""
     skip = 0
     more_data = True

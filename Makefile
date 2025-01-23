@@ -28,8 +28,14 @@ sample-lucy-6:
 sample-lucy-7:
 	venv/bin/python -m samples.lucy.get_filtered_materials
 
+sample-lucy-8:
+	venv/bin/python -m samples.lucy.create_manufacturer
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
+
+sample-score-1:
+	venv/bin/python -m samples.score.get_product_scores
 
 build:
 	$(info NOTE: Keep in mind to increment the version when doing a new build)

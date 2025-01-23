@@ -1,7 +1,8 @@
 from daaily.lucy import Client, Filter
+from daaily.lucy.constants import LUCY_V2_BASE_URL_STAGING
 
 # Initialize the client
-client = Client(base_url="https://lucy.staging.daaily.com/api/v2")
+client = Client(base_url=LUCY_V2_BASE_URL_STAGING)
 
 # Define filters
 filters = [Filter("manufacturer_ids", "3100099,3100100,3100101")]

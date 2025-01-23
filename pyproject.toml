@@ -25,8 +25,23 @@ description = "Daaily API Library"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["urllib3>=2.1.0,<3.0"]
-
 dynamic = ["version"]
+
+[project.optional-dependencies]
+score = [
+  "colorlog>=6.9.0",
+  "google-cloud-language>=2.16.0",
+  "language-tool-python>=2.8.1",
+  "openai>=1.59.8",
+  "pre-commit>=4.0.1",
+  "pyspellchecker>=0.8.2",
+  "python-dotenv>=1.0.1",
+  "sentence-transformers>=3.3.1",
+  "spacy>=3.8.4",
+  "textstat>=0.7.4",
+]
+
+
 
 [project.urls]
 "Source code" = "https://github.com/DAAily/daailyapis-python-client"

@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 
 from daaily.credentials_sally import Credentials
+from daaily.lucy.constants import LUCY_V2_BASE_URL_STAGING
 from daaily.transport.urllib3_http import AuthorizedHttp
 
 
@@ -9,5 +10,5 @@ def main():
     creds = Credentials()
     s = AuthorizedHttp(creds)
 
-    r = s.request("GET", "https://lucy.daaily.com/api/v2/products")
+    r = s.request("GET", f"{LUCY_V2_BASE_URL_STAGING}/products")
     print(r.data)

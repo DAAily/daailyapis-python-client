@@ -1,8 +1,9 @@
 from daaily.franklin import Client
+from daaily.franklin.constants import FRANKLIN_V1_BASE_URL_STAGING
 
 
 def main():
-    client = Client()
+    client = Client(base_url=FRANKLIN_V1_BASE_URL_STAGING)
     response = client.predict_product_group(
         image_path="https://storage.googleapis.com/m-on-staging/3100860/product/20306"
         + "985/royal-botania_alura-lounge-set02a_alrl02apbpg_seating_8474ccde.jpeg",
