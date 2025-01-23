@@ -22,5 +22,4 @@ for i, p in enumerate(products):
     p["name_en"] = p.get("name_en", "").replace("\n", "")
     score_results = score.score(p)
     print(score_results)
-    # print(f"{i} Product: {p['product_id']}-{p['name_en']} - score:{record_score}")
     print("")
