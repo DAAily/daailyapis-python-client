@@ -98,6 +98,16 @@ class Client:
         entity_url = f"{url}/{entity_id}"
         return Response.from_response(self._do_request("GET", entity_url))
 
+    def get_entity_custom(
+        self, entity_type: EntityType, identifier: str, identfier_field: str
+    ) -> Response:
+        """
+        Gets a entity of a certain type.
+        """
+        url = get_entity_endpoint(self._base_url, entity_type)
+        entity_url = f"{url}/{identfier_field}/{identifier}"
+        return Response.from_response(self._do_request("GET", entity_url))
+
     def get_entities(
         self, entity_type: EntityType, filters: list[Filter] | None = None
     ) -> Response:
