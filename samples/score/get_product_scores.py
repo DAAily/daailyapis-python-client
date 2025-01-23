@@ -1,8 +1,9 @@
 from daaily.lucy import Client, Filter
+from daaily.lucy.constants import LUCY_V2_BASE_URL_STAGING
 from daaily.score import Product
 
 # Initialize the client
-client = Client(base_url="https://lucy.staging.daaily.com/api/v2")
+client = Client(base_url=LUCY_V2_BASE_URL_STAGING)
 
 # Initialize the score client
 score = Product()
