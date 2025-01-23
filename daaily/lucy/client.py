@@ -114,7 +114,7 @@ class Client:
         entity_type: EntityType,
         entities: list[dict],
         filters: list[Filter] | None = None,
-    ):
+    ) -> Response:
         """
         Creates entities of a certain type.
         """
@@ -128,14 +128,14 @@ class Client:
         entity_type: EntityType,
         entities: list[dict],
         filters: list[Filter] | None = None,
-    ):
+    ) -> Response:
         """
         Updates entities of a certain type.
         """
         url = get_entity_endpoint(self._base_url, entity_type)
         if filters is not None:
             url += build_query_string(filters)
-        return self._do_request("PUT", url, json=entities)
+        return Response.from_response(self._do_request("PUT", url, json=entities))
 
     def get_paginated_entities(
         self,
