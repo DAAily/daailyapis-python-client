@@ -28,6 +28,9 @@ sample-lucy-6:
 sample-lucy-7:
 	venv/bin/python -m samples.lucy.get_filtered_materials
 
+sample-lucy-8:
+	venv/bin/python -m samples.lucy.create_manufacturer
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 

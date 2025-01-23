@@ -121,7 +121,7 @@ class Client:
         url = get_entity_endpoint(self._base_url, entity_type)
         if filters is not None:
             url += build_query_string(filters)
-        return self._do_request("POST", url, json=entities)
+        return Response.from_response(self._do_request("POST", url, json=entities))
 
     def update_entities(
         self,
