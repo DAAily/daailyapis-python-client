@@ -22,5 +22,20 @@ for i, p in enumerate(products):
     print(f"{i} Product: {p['product_id']}")
     p["name_en"] = p.get("name_en", "").replace("\n", "")
     score_results = score.score(p)
-    print(score_results)
+    for sr in score_results.score_results:
+        print(f"Field Name: {sr.field_name}")
+        print(f"Score: {sr.score}")
+        print(f"Weight: {sr.weight}")
+        if sr.details:
+            print(f"Richness: {sr.details.richness}")
+            print(f"Completeness: {sr.details.completeness}")
+            print(f"Length Factor: {sr.details.length_factor}")
+            print(f"Flesch: {sr.details.flesch}")
+            print(f"Grammar: {sr.details.grammar}")
+            print(f"Spelling: {sr.details.spelling}")
+        if sr.issues:
+            print(f"Spelling: {sr.issues.spelling}")
+            print(f"Grammar: {sr.issues.grammar}")
+            print(f"Text: {sr.issues.text}")
+        print(sr.to_dict())
     print("")
