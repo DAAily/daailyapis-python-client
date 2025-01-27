@@ -1,4 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from typing import Any
+
+
+@dataclass
+class Serializable:
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
 
 class BalancedScore:
@@ -13,20 +20,20 @@ class BalancedScore:
 
 
 @dataclass
-class ScoreWeight:
+class ScoreWeight(Serializable):
     field_name: str
     weight: float
 
 
 @dataclass
-class ScoreResultIssues:
+class ScoreResultIssues(Serializable):
     spelling: int | None = None
     grammar: list[str] | None = None
     text: str | None = None
 
 
 @dataclass
-class ScoreResultDetails:
+class ScoreResultDetails(Serializable):
     richness: float
     completeness: dict[str, float]
     length_factor: float
@@ -36,7 +43,7 @@ class ScoreResultDetails:
 
 
 @dataclass
-class ScoreResult:
+class ScoreResult(Serializable):
     field_name: str
     details: ScoreResultDetails | None = None
     issues: ScoreResultIssues | None = None
@@ -45,7 +52,7 @@ class ScoreResult:
 
 
 @dataclass
-class ScoreSummary:
+class ScoreSummary(Serializable):
     score_results: list[ScoreResult]
     sum_score: float = 0.0
 
