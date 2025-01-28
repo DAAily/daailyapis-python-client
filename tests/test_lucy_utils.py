@@ -28,3 +28,13 @@ class TestLucyUtils:
             "product_id": 234243,
             "images": [{"blob_id": "blob_id_string"}, {"blob_id": "blob_id_string_2"}],
         }
+
+    def test_gen_new_image_object_with_extras(self):
+        new_image_object = daaily.lucy.utils.gen_new_image_object_with_extras(
+            "blob_id_string", image_usages=["pro-g"], extra_key="extra_value"
+        )
+        assert new_image_object == {
+            "blob_id": "blob_id_string",
+            "image_usages": ["pro-g"],
+            "extra_key": "extra_value",
+        }
