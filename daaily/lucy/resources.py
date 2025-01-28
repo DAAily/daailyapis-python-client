@@ -1,16 +1,20 @@
 import json
 import mimetypes
 import os
-from typing import TYPE_CHECKING, Any, Dict, Generator
+from typing import TYPE_CHECKING, Any, Dict, Generator, Literal
 
 import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
+from daaily.lucy.response import Response
 from daaily.lucy.utils import (
+    add_image_to_manufacturer,
     add_image_to_product,
+    check_field_content_set,
     gen_new_file_object,
     gen_new_image_object,
+    gen_new_image_object_with_extras,
     get_asset_type_from_mime_type,
     get_entity_asset_type_endpoint,
     get_file_data_and_mimetype,
@@ -21,6 +25,7 @@ if TYPE_CHECKING:
 
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
 FILE_UPLOADS_UNSPECIFIC_ENDPOINT = "/files/uploads/temp/unspecific"
+MANUFACTURER_IMAGE_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/image/upload"
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
@@ -110,6 +115,109 @@ class ManufacturersResource(BaseResource):
         return self._client.create_entities(
             EntityType.MANUFACTURER, manufacturers, filters
         )
+
+    def add_new_image_by_path(
+        self,
+        manufacturer_id: int,
+        image_path: str,
+        image_type: Literal["logo", "header"],
+        image_desciption: str | None = None,
+        **kwargs,
+    ) -> Response:
+        """
+        Adds an image to a manufacturer by uploading the image from a specified file
+        path.
+
+        This method reads the image file, determines its MIME type, and uploads it to a
+        lucy and then afterwards adds it to the image object on the manufacturer.
+
+        Args:
+            manufacturer_id (int): The ID of the manufacturer to which the image will
+                be added.
+            image_path (str): The file path of the image to be uploaded.
+            image_type (str): The type of image to be uploaded (e.g., "logo", "header").
+            image_desciption (str | None): Optional description of the image.
+            kwargs (dict | None): Optional fields and metadata add to the image.
+
+        Raises:
+            Exception: If the content type of the image cannot be determined or if the
+            signed URL request fails.
+            Exception: If the manufacturer cannot be retrieved or updated.
+
+        Returns:
+            dict: The updated manufacturer information after adding the image.
+
+        Example:
+            ```python
+            # Define manufacturer ID and image path
+            man_id = 12345
+            image_path = "/path/to/image.jpg"
+
+            # Add image to manufacturer
+            man = client.manufacturers.add_new_image_by_path(man_id, image_path, "logo")
+
+            # Print updated manufacturer information
+            print(man)
+            ```
+        """
+        try:
+            with open(image_path, "rb") as image_file:
+                image_data = image_file.read()
+        except (IOError, OSError) as e:
+            raise Exception(f"Failed to open image file at {image_path}: {e}") from e
+        content_type, _ = mimetypes.guess_type(image_path)
+        if content_type is None:
+            raise Exception(f"Could not determine content type for {image_path}")
+        if not content_type.startswith("image/"):
+            raise Exception(
+                f"File at {image_path} is not an image. Detected: {content_type}"
+            )
+        manufacturer = self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)
+        if manufacturer.status != 200:
+            raise Exception(f"Failed to get manufacturer: {manufacturer.data}")
+        old_image = check_field_content_set(
+            manufacturer.json(),  # type: ignore
+            f"{image_type}_image",
+        )
+        if kwargs:
+            headers = dict(kwargs.items())
+        else:
+            headers = {}
+        man_image_upload_url = MANUFACTURER_IMAGE_UPLOAD_ENDPOINT.format(
+            manufacturer_id=manufacturer_id
+        )
+        url = f"{self._client._base_url}{man_image_upload_url}"
+        if old_image:
+            url += f"/{old_image['blob_id']}"
+        url += f"&usage={image_type}"
+        resp = self._client._do_request(
+            "POST",
+            url,
+            fields={
+                "file": (image_path.split("/")[-1:][0], image_data, content_type),
+            },
+            headers=headers,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload image. Status code: {resp.status}. {resp.data}"
+            )
+        resp_data = json.loads(resp.data.decode("utf-8"))
+        new_image = gen_new_image_object_with_extras(
+            resp_data["image_blob_id"],
+            size=resp_data["image_size"],
+            height=resp_data["image_height"],
+            width=resp_data["image_width"],
+            file_type=resp_data["image_mime_type"],
+            description=image_desciption,
+            **kwargs,
+        )
+        manufacturer = add_image_to_manufacturer(
+            manufacturer.json(),  # type: ignore
+            new_image,
+            image_type,
+        )
+        return self._client.update_entities(EntityType.MANUFACTURER, [manufacturer])
 
 
 class DistributorsResource(BaseResource):

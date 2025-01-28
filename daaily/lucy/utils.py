@@ -1,5 +1,6 @@
 import json
 import mimetypes
+from typing import Any
 
 import daaily.transport
 from daaily.lucy.config import (
@@ -47,8 +48,27 @@ def add_image_to_product(product: dict, image: dict) -> dict:
     return product
 
 
+def add_image_to_manufacturer(man: dict, image: dict, image_type: str) -> dict:
+    if f"{image_type}_image" not in man:
+        raise ValueError(f"Image type {image_type} not supported")
+    man[f"{image_type}_image"] = image
+    return man
+
+
 def gen_new_image_object(blob_id, usage: str = "pro-g"):
     return {"blob_id": blob_id, "image_usages": [usage]}
+
+
+def gen_new_image_object_with_extras(blob_id, **kwargs):
+    """
+    Gets all of the extra args and generates a new image object
+    """
+    return {"blob_id": blob_id, **kwargs}
+
+
+def check_field_content_set(object: dict, field: str) -> Any:
+    if field in object:
+        return object[field]
 
 
 def get_asset_type_from_mime_type(mime_type: str) -> AssetType | None:

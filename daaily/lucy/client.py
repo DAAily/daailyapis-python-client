@@ -83,11 +83,15 @@ class Client:
         self.fairs = FairsResource(self)
         self.files = FilesResource(self)
 
-    def _do_request(self, method, url, **kwargs) -> daaily.transport.Response:
+    def _do_request(
+        self, method, url, body=None, fields=None, headers=None, json=None, **kwargs
+    ) -> daaily.transport.Response:
         """
         Makes a request to the server.
         """
-        r = self._auth_http.request(method, url, **kwargs)
+        r = self._auth_http.request(
+            method, url, headers=headers, body=body, fields=fields, json=json, **kwargs
+        )
         return r
 
     def get_entity(self, entity_type: EntityType, entity_id: int) -> Response:
