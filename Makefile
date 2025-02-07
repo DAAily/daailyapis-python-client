@@ -37,6 +37,9 @@ sample-lucy-9:
 sample-lucy-10:
 	venv/bin/python -m samples.lucy.add_image_to_manufacturer
 
+sample-lucy-11:
+	venv/bin/python -m samples.lucy.determine_field_owner_on_product
+	
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
