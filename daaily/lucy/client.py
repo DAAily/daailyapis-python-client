@@ -112,6 +112,21 @@ class Client:
         entity_url = f"{url}/{identfier_field}/{identifier}"
         return Response.from_response(self._do_request("GET", entity_url))
 
+    def get_entity_audits(
+        self,
+        entity_type: EntityType,
+        entity_id: int,
+        filters: list[Filter] | None = None,
+    ) -> Response:
+        """
+        Gets a entity audits of a certain entity type.
+        """
+        url = get_entity_endpoint(self._base_url, entity_type)
+        entity_url = f"{url}/{entity_id}/audits"
+        if filters is not None:
+            entity_url += build_query_string(filters)
+        return Response.from_response(self._do_request("GET", entity_url))
+
     def get_entities(
         self, entity_type: EntityType, filters: list[Filter] | None = None
     ) -> Response:
