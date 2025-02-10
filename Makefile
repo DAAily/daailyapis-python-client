@@ -39,6 +39,15 @@ sample-lucy-10:
 
 sample-lucy-11:
 	venv/bin/python -m samples.lucy.determine_field_owner_on_product
+
+sample-lucy-12:
+	venv/bin/python -m samples.lucy.upload_product_image_to_gcs
+
+sample-lucy-13:
+	venv/bin/python -m samples.lucy.upload_product_pdf_to_gcs
+
+sample-lucy-14:
+	venv/bin/python -m samples.lucy.upload_product_cad_to_gcs
 	
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
