@@ -4,6 +4,7 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, Generator, Literal
 
 import urllib3
+from typing_extensions import deprecated
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
@@ -26,6 +27,9 @@ if TYPE_CHECKING:
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
 FILE_UPLOADS_UNSPECIFIC_ENDPOINT = "/files/uploads/temp/unspecific"
 MANUFACTURER_IMAGE_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/image/upload"
+PRODUCT_IMAGE_UPLOAD_ENDPOINT = "/products/{product_id}/image/upload"
+PRODUCT_PDF_UPLOAD_ENDPOINT = "/products/{product_id}/pdf/upload"
+PRODUCT_CAD_UPLOAD_ENDPOINT = "/products/{product_id}/cad/upload"
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
@@ -186,10 +190,9 @@ class ManufacturersResource(BaseResource):
         man_image_upload_url = MANUFACTURER_IMAGE_UPLOAD_ENDPOINT.format(
             manufacturer_id=manufacturer_id
         )
-        url = f"{self._client._base_url}{man_image_upload_url}"
+        url = f"{self._client._base_url}{man_image_upload_url}?image_type={image_type}"
         if old_image:
-            url += f"/{old_image['blob_id']}"
-        url += f"&usage={image_type}"
+            url += f"&old_blob_id={old_image['blob_id']}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -605,6 +608,139 @@ class ProductsResource(BaseResource):
     def create(self, products: list[dict], filters: list[Filter] | None = None):
         return self._client.create_entities(EntityType.PRODUCT, products, filters)
 
+    def upload_image(
+        self,
+        product_id: int,
+        filename: str,
+        image_path: str | None = None,
+        image_bytes: bytes | None = None,
+        mime_type: str | None = None,
+        **kwargs,
+    ) -> Any:
+        """ """
+        if not image_path and not image_bytes:
+            raise Exception("Either image_path or image_bytes must be provided")
+        if image_path:
+            image_data, content_type = get_file_data_and_mimetype(image_path)
+        else:
+            if not mime_type:
+                raise ValueError(
+                    "If 'image_bytes' is provided, 'mime_type' must be specified."
+                )
+            image_data = image_bytes
+            content_type = mime_type
+        if content_type is None:
+            raise Exception("Could not determine content type for image")
+        if not content_type.startswith("image/"):
+            raise Exception(f"File is not an image type. Detected: {content_type}")
+        if kwargs:
+            headers = dict(kwargs.items())
+        else:
+            headers = {}
+        prod_image_upload_url = PRODUCT_IMAGE_UPLOAD_ENDPOINT.format(
+            product_id=product_id
+        )
+        url = f"{self._client._base_url}{prod_image_upload_url}"
+        resp = self._client._do_request(
+            "POST",
+            url,
+            fields={"file": (filename, image_data, content_type)},
+            headers=headers,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload image. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def upload_pdf(
+        self,
+        product_id: int,
+        filename: str,
+        pdf_path: str | None = None,
+        pdf_bytes: bytes | None = None,
+        mime_type: str | None = None,
+        **kwargs,
+    ) -> Any:
+        """ """
+        if not pdf_path and not pdf_bytes:
+            raise Exception("Either pdf_path or pdf_bytes must be provided")
+        if pdf_path:
+            pdf_data, content_type = get_file_data_and_mimetype(pdf_path)
+        else:
+            if not mime_type:
+                raise ValueError(
+                    "If 'pdf_bytes' is provided, 'mime_type' must be specified."
+                )
+            pdf_data = pdf_bytes
+            content_type = mime_type
+        if content_type is None:
+            raise Exception("Could not determine content type for pdf")
+        if content_type != "application/pdf":
+            raise Exception(f"File is not pdf type. Detected: {content_type}")
+        if kwargs:
+            headers = dict(kwargs.items())
+        else:
+            headers = {}
+        prod_pdf_upload_url = PRODUCT_PDF_UPLOAD_ENDPOINT.format(product_id=product_id)
+        url = f"{self._client._base_url}{prod_pdf_upload_url}"
+        resp = self._client._do_request(
+            "POST",
+            url,
+            fields={"file": (filename, pdf_data, content_type)},
+            headers=headers,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload pdf. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def upload_cad(
+        self,
+        product_id: int,
+        filename: str,
+        cad_path: str | None = None,
+        cad_bytes: bytes | None = None,
+        mime_type: str | None = None,
+        **kwargs,
+    ) -> Any:
+        """ """
+        if not cad_path and not cad_bytes:
+            raise Exception("Either cad_path or cad_bytes must be provided")
+        if cad_path:
+            cad_data, content_type = get_file_data_and_mimetype(cad_path)
+        else:
+            if not mime_type:
+                raise ValueError(
+                    "If 'cad_bytes' is provided, 'mime_type' must be specified."
+                )
+            cad_data = cad_bytes
+            content_type = mime_type
+        if content_type is None:
+            raise Exception("Could not determine content type for cad")
+        if not content_type.startswith("application/") and not content_type.startswith(
+            "image/"
+        ):
+            raise Exception(f"File is not cad type. Detected: {content_type}")
+        if kwargs:
+            headers = dict(kwargs.items())
+        else:
+            headers = {}
+        prod_cad_upload_url = PRODUCT_CAD_UPLOAD_ENDPOINT.format(product_id=product_id)
+        url = f"{self._client._base_url}{prod_cad_upload_url}"
+        resp = self._client._do_request(
+            "POST",
+            url,
+            fields={"file": (filename, cad_data, content_type)},
+            headers=headers,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload cad. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
     def deter_ownership_of_fields(
         self, product_id: int, changed_fields: list[str], owner_email: str
     ) -> dict | None:
@@ -833,7 +969,8 @@ class ProductsResource(BaseResource):
         product = add_image_to_product(product.json(), new_image)  # type: ignore
         return self._client.update_entities(EntityType.PRODUCT, [product])
 
-    def add_image_by_path(
+    @deprecated("This method is deprecated. Use add_image_by_path instead.")
+    def add_image_by_path_through_lydia(
         self,
         product_id: int,
         image_path: str,

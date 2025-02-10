@@ -15,7 +15,9 @@ product_id = 1032360
 image_path = os.path.join(script_dir, "..", "assets", "vitra.jpeg")
 
 try:
-    updated_product = client.products.add_image_by_path(product_id, image_path)
+    updated_product = client.products.add_image_by_path_through_lydia(
+        product_id, image_path
+    )
     print("Updated product information:", updated_product)
 except Exception as e:
     print(f"An error occurred: {e}")
