@@ -95,6 +95,7 @@ class ManufacturersResource(BaseResource):
         manufacturer_id: int,
         address: dict,
         country_code: str | None,
+        country_of_user_code: str | None = None,
     ):
         """
         Adds an address to a manufacturer.
@@ -164,8 +165,17 @@ class ManufacturersResource(BaseResource):
                 f"Invalid country code: {country_code}. "
                 + f"Must be one of: {COUNTRY_CODE_TO_COUNTRY_ID_MAPPING.keys()}"
             )
-        address["country_of_user_id"] = country_id
         address["country_id"] = country_id
+        if country_of_user_code:
+            country_of_user_id = COUNTRY_CODE_TO_COUNTRY_ID_MAPPING.get(
+                country_of_user_code
+            )
+            if country_of_user_id is None:
+                raise ValueError(
+                    f"Invalid country code: {country_of_user_code}. "
+                    + f"Must be one of: {COUNTRY_CODE_TO_COUNTRY_ID_MAPPING.keys()}"
+                )
+            address["country_of_user_id"] = country_of_user_id
         response = self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)
         if response.status != 200:
             raise Exception(f"Failed to get manufacturer: {response.data}")
