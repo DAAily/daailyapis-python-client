@@ -49,6 +49,9 @@ sample-lucy-13:
 sample-lucy-14:
 	venv/bin/python -m samples.lucy.upload_product_cad_to_gcs
 	
+sample-lucy-15:
+	venv/bin/python -m samples.lucy.add_address_to_manufacturer
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 

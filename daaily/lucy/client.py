@@ -7,23 +7,21 @@ from daaily.credentials_sally import Credentials
 from daaily.lucy.constants import LUCY_V2_BASE_URL_PRODUCTION
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
-from daaily.lucy.resources import (
-    CollectionsResource,
-    CreatorsResource,
-    DistributorsResource,
-    FairsResource,
-    FamiliesResource,
-    FilesResource,
-    FiltersResource,
-    GroupsResource,
-    JournalistsResource,
-    ManufacturersResource,
-    MaterialsResource,
-    ProductsResource,
-    ProjectsResource,
-    SpacesResource,
-    StoriesResource,
-)
+from daaily.lucy.resources.collection import CollectionsResource
+from daaily.lucy.resources.creator import CreatorsResource
+from daaily.lucy.resources.distributor import DistributorsResource
+from daaily.lucy.resources.fair import FairsResource
+from daaily.lucy.resources.family import FamiliesResource
+from daaily.lucy.resources.file import FilesResource
+from daaily.lucy.resources.filter import FiltersResource
+from daaily.lucy.resources.group import GroupsResource
+from daaily.lucy.resources.journalist import JournalistsResource
+from daaily.lucy.resources.manufacturer import ManufacturersResource
+from daaily.lucy.resources.material import MaterialsResource
+from daaily.lucy.resources.product import ProductsResource
+from daaily.lucy.resources.project import ProjectsResource
+from daaily.lucy.resources.space import SpacesResource
+from daaily.lucy.resources.story import StoriesResource
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_x_goog_metadata_to_headers,
@@ -103,13 +101,13 @@ class Client:
         return Response.from_response(self._do_request("GET", entity_url))
 
     def get_entity_custom(
-        self, entity_type: EntityType, identifier: str, identfier_field: str
+        self, entity_type: EntityType, identifier: str, identifier_field: str
     ) -> Response:
         """
         Gets a entity of a certain type.
         """
         url = get_entity_endpoint(self._base_url, entity_type)
-        entity_url = f"{url}/{identfier_field}/{identifier}"
+        entity_url = f"{url}/{identifier_field}/{identifier}"
         return Response.from_response(self._do_request("GET", entity_url))
 
     def get_entity_audits(
