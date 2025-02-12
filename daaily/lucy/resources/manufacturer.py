@@ -9,6 +9,7 @@ from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
+    add_about_to_manufacturer,
     add_image_to_manufacturer,
     check_field_content_set,
     gen_new_image_object_with_extras,
@@ -17,6 +18,9 @@ from daaily.lucy.utils import (
 from . import BaseResource
 
 MANUFACTURER_IMAGE_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/image/upload"
+MANUFACTURER_ABOUT_IMAGE_UPLOAD_ENDPOINT = (
+    "/manufacturers/{manufacturer_id}/about/upload"
+)
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
@@ -292,3 +296,174 @@ class ManufacturersResource(BaseResource):
             image_type,
         )
         return self._client.update_entities(EntityType.MANUFACTURER, [manufacturer])
+
+    def add_about(  # noqa: C901
+        self,
+        manufacturer_id: int,
+        about: dict,
+        content_type: Literal["text", "picture", "video", "quote", "link", "pre_text"],
+        image_path: str | None = None,
+    ) -> Response:
+        """
+        Adds an about section to a manufacturer.
+
+        This method adds or updates the "about" section in a manufacturer's profile.
+        The content of the about section is provided as a dictionary and its structure
+        depends on the specified content_type. The following keys may be included in the
+        about dictionary:
+
+            - status (str): The status of the about section, e.g., "online".
+            - title_en (str): Title in English.
+            - title_de (str): Title in German.
+            - title_it (str): Title in Italian.
+            - title_es (str): Title in Spanish.
+            - title_fr (str): Title in French.
+            - text_en (str): Description text in English.
+            - text_de (str): Description text in German.
+            - text_it (str): Description text in Italian.
+            - text_es (str): Description text in Spanish.
+            - text_fr (str): Description text in French.
+            - list_order (int): The display order of the about section.
+            - video_source (str): (Required for content_type "video") Video platform,
+                e.g., "youtube" or "vimeo".
+            - video_key (str): (Required for content_type "video") Unique identifier for
+                the video.
+
+        When the content_type is "video", the about dictionary must include both
+        video_source and video_key. For content_type "picture", an image file must be
+        provided via the image_path parameter, and the about dictionary should not
+        contain video_key or video_source.
+
+        Args:
+            manufacturer_id (int): ID of the manufacturer to which about will be added.
+            about (dict): A dictionary containing about section details. Expected keys:
+                - "status": "online"
+                - "title_en": "string"
+                - "title_de": "string"
+                - "title_it": "string"
+                - "title_es": "string"
+                - "title_fr": "string"
+                - "text_en": "string"
+                - "text_de": "string"
+                - "text_it": "string"
+                - "text_es": "string"
+                - "text_fr": "string"
+                - "list_order": 1
+                - "video_source": "youtube" (for video type)
+                - "video_key": "string" (for video type)
+            content_type (Literal["text","picture","video","quote","link","pre_text"]):
+                The type of content for the about section.
+            image_path (str | None): The file path of the image to be uploaded when
+                content_type is "picture".
+
+        Raises:
+            ValueError: If content_type is "video" and either video_key or video_source
+                is missing, if content_type is "picture" and image_path is not provided,
+                or if video-related keys are present when content_type is "picture".
+            Exception: If there is an error opening the image file, determining its MIME
+                type, or retrieving/updating the manufacturer.
+
+        Returns:
+            Response: The response object from updating the manufacturer with the new
+                about section.
+
+        Example:
+            ```python
+            # Define about section details for a text-based about section
+            about_data = {
+                "status": "online",
+                "title_en": "About Our Company",
+                "title_de": "Über unser Unternehmen",
+                "title_it": "Chi siamo",
+                "title_es": "Sobre nosotros",
+                "title_fr": "À propos",
+                "text_en": "Information in English",
+                "text_de": "Information in German",
+                "text_it": "Information in Italian",
+                "text_es": "Information in Spanish",
+                "text_fr": "Information in French",
+                "list_order": 1,
+            }
+            response = client.manufacturers.add_about(
+                manufacturer_id=12345,
+                about=about_data,
+                content_type="text"
+            )
+
+            # Define about section details for a video-based about section
+            about_data["video_source"] = "youtube"
+            about_data["video_key"] = "abc123"
+            response = client.manufacturers.add_about(
+                manufacturer_id=12345,
+                about=about_data,
+                content_type="video"
+            )
+
+            # Define about section details for a picture-based about section
+            # Note: video_source and video_key should not be included when using
+            # "picture" content type.
+            response = client.manufacturers.add_about(
+                manufacturer_id=12345,
+                about=about_data,
+                content_type="picture",
+                image_path="/path/to/image.jpg"
+            )
+            ```
+        """
+        if content_type == "video":
+            if not about.get("video_key") or not about.get("video_source"):
+                raise ValueError("Video key is required for content type 'video'")
+        if content_type == "picture":
+            if about.get("video_key") or about.get("video_source"):
+                raise ValueError(
+                    "Video key and source are not allowed for content type 'picture'"
+                )
+            if not image_path:
+                raise ValueError("Image path is required for content type 'picture'")
+            try:
+                with open(image_path, "rb") as image_file:
+                    image_data = image_file.read()
+            except (IOError, OSError) as e:
+                raise Exception(
+                    f"Failed to open image file at {image_path}: {e}"
+                ) from e
+            mime_type, _ = mimetypes.guess_type(image_path)
+            if mime_type is None:
+                raise Exception(f"Could not determine content type for {image_path}")
+            if not mime_type.startswith("image/"):
+                raise Exception(
+                    f"File at {image_path} is not an image. Detected: {mime_type}"
+                )
+            man_image_upload_url = MANUFACTURER_ABOUT_IMAGE_UPLOAD_ENDPOINT.format(
+                manufacturer_id=manufacturer_id
+            )
+            url = f"{self._client._base_url}{man_image_upload_url}"
+            resp = self._client._do_request(
+                "POST",
+                url,
+                fields={
+                    "file": (image_path.split("/")[-1:][0], image_data, mime_type),
+                },
+            )
+            if resp.status != 200:
+                raise Exception(
+                    f"Failed to upload image. Status code: {resp.status}. {resp.data}"
+                )
+            resp_data = json.loads(resp.data.decode("utf-8"))
+            new_image = gen_new_image_object_with_extras(
+                resp_data["image_blob_id"],
+                size=resp_data["image_size"],
+                height=resp_data["image_height"],
+                width=resp_data["image_width"],
+                file_type=resp_data["image_mime_type"],
+            )
+            about["image"] = new_image
+        about["content_type"] = content_type
+        response = self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)
+        if response.status != 200:
+            raise Exception(f"Failed to get manufacturer: {response.data}")
+        m = response.json()
+        if not m:
+            raise Exception(f"Manufacturer with ID {manufacturer_id} not found.")
+        m = add_about_to_manufacturer(m, about)
+        return self._client.update_entities(EntityType.MANUFACTURER, [m])

@@ -14,7 +14,7 @@ sample-lucy-2:
 	venv/bin/python -m samples.lucy.get_filtered_manufacturers
 
 sample-lucy-3:
-	venv/bin/python -m samples.lucy.add_image_to_product
+	venv/bin/python -m samples.lucy.add_about_to_manufacturer
 
 sample-lucy-4:
 	venv/bin/python -m samples.lucy.get_product_by_id
