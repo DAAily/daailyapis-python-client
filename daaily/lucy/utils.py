@@ -55,6 +55,13 @@ def add_image_to_manufacturer(man: dict, image: dict, image_type: str) -> dict:
     return man
 
 
+def add_about_to_manufacturer(man: dict, about: dict) -> dict:
+    if "abouts" not in man or not isinstance(man["abouts"], list):
+        man["abouts"] = []
+    man["abouts"].append(about)
+    return man
+
+
 def gen_new_image_object(blob_id, usage: str = "pro-g"):
     return {"blob_id": blob_id, "image_usages": [usage]}
 
