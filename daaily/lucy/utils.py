@@ -67,6 +67,25 @@ def add_image_to_product_by_blob_id(
     return product
 
 
+def add_image_to_family_by_blob_id(
+    family: dict, image: dict, old_blob_id: str | None = None
+) -> dict:
+    """
+    Adds or replaces images if already exists
+    """
+    if not image.get("blob_id"):
+        raise ValueError("Image object must contain a blob")
+    if "images" not in family or not isinstance(family["images"], list):
+        family["images"] = []
+    for i, img in enumerate(family["images"]):
+        if img["blob_id"] == image["blob_id"] or img["blob_id"] == old_blob_id:
+            family["images"][i] = image
+            break
+    else:
+        family["images"].append(image)
+    return family
+
+
 def add_image_to_manufacturer(man: dict, image: dict, image_type: str) -> dict:
     if f"{image_type}_image" not in man:
         raise ValueError(f"Image type {image_type} not supported")
