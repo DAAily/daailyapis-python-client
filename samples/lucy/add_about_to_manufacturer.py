@@ -37,5 +37,4 @@ result = client.manufacturers.add_about(
     image_path=image_path,
 )
 
-print(f"{result.data}")
 print(f"created: {result.json()}")
