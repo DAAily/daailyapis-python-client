@@ -39,7 +39,7 @@ class FilesResource(BaseResource):
             blob_id = client.files.upload_file_to_temp_bucket_by_file_path(file_path)
             print("This is the blob_id of the uploaded asset:", blob_id)
         """
-        file_data, mime_type = get_file_data_and_mimetype(file_path)
+        file_data, mime_type, _ = get_file_data_and_mimetype(file_path)
         asset_type = get_asset_type_from_mime_type(mime_type)
         if not asset_type:
             raise Exception(

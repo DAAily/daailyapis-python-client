@@ -5,7 +5,11 @@ import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
-from daaily.lucy.utils import get_file_data_and_mimetype
+from daaily.lucy.utils import (
+    add_image_to_product_by_blob_id,
+    gen_new_image_object_with_extras,
+    get_file_data_and_mimetype,
+)
 
 from . import BaseResource
 
@@ -88,17 +92,17 @@ class ProductsResource(BaseResource):
     def upload_image(
         self,
         product_id: int,
-        filename: str,
         image_path: str | None = None,
         image_bytes: bytes | None = None,
         mime_type: str | None = None,
+        old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
         """ """
         if not image_path and not image_bytes:
             raise Exception("Either image_path or image_bytes must be provided")
         if image_path:
-            image_data, content_type = get_file_data_and_mimetype(image_path)
+            image_data, content_type, filename = get_file_data_and_mimetype(image_path)
         else:
             if not mime_type:
                 raise ValueError(
@@ -111,13 +115,15 @@ class ProductsResource(BaseResource):
         if not content_type.startswith("image/"):
             raise Exception(f"File is not an image type. Detected: {content_type}")
         if kwargs:
-            headers = dict(kwargs.items())
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
         else:
             headers = {}
         prod_image_upload_url = PRODUCT_IMAGE_UPLOAD_ENDPOINT.format(
             product_id=product_id
         )
         url = f"{self._client._base_url}{prod_image_upload_url}"
+        if old_blob_id:
+            url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -133,17 +139,17 @@ class ProductsResource(BaseResource):
     def upload_pdf(
         self,
         product_id: int,
-        filename: str,
         pdf_path: str | None = None,
         pdf_bytes: bytes | None = None,
         mime_type: str | None = None,
+        old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
         """ """
         if not pdf_path and not pdf_bytes:
             raise Exception("Either pdf_path or pdf_bytes must be provided")
         if pdf_path:
-            pdf_data, content_type = get_file_data_and_mimetype(pdf_path)
+            pdf_data, content_type, filename = get_file_data_and_mimetype(pdf_path)
         else:
             if not mime_type:
                 raise ValueError(
@@ -156,11 +162,13 @@ class ProductsResource(BaseResource):
         if content_type != "application/pdf":
             raise Exception(f"File is not pdf type. Detected: {content_type}")
         if kwargs:
-            headers = dict(kwargs.items())
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
         else:
             headers = {}
         prod_pdf_upload_url = PRODUCT_PDF_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_pdf_upload_url}"
+        if old_blob_id:
+            url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -176,17 +184,17 @@ class ProductsResource(BaseResource):
     def upload_cad(
         self,
         product_id: int,
-        filename: str,
         cad_path: str | None = None,
         cad_bytes: bytes | None = None,
         mime_type: str | None = None,
+        old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
         """ """
         if not cad_path and not cad_bytes:
             raise Exception("Either cad_path or cad_bytes must be provided")
         if cad_path:
-            cad_data, content_type = get_file_data_and_mimetype(cad_path)
+            cad_data, content_type, filename = get_file_data_and_mimetype(cad_path)
         else:
             if not mime_type:
                 raise ValueError(
@@ -201,11 +209,13 @@ class ProductsResource(BaseResource):
         ):
             raise Exception(f"File is not cad type. Detected: {content_type}")
         if kwargs:
-            headers = dict(kwargs.items())
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
         else:
             headers = {}
         prod_cad_upload_url = PRODUCT_CAD_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_cad_upload_url}"
+        if old_blob_id:
+            url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -319,3 +329,132 @@ class ProductsResource(BaseResource):
                     for field in changed_fields:
                         ownership_results[field] = product_data.get(field)
         return ownership_results or None
+
+    def add_or_update_product_image(
+        self,
+        product_id: int,
+        image_path: str | None = None,
+        old_blob_id: str | None = None,
+        **kwargs,
+    ):
+        """
+        Adds or updates a product image.
+
+        This function handles the addition or update of a product image. When updating
+        an image, an old blob ID must be provided. When creating a new image, the image
+        path must be provided. To replace the image file, both the image path and the
+        old blob ID must be provided.
+
+        The following keys may be included in the kwargs dictionary:
+
+
+            - blob_id (str): The blob ID of the image.
+            - image_usages (list[str] | None): List of image usages eg. "pro-g", "pro-b"
+            - image_type (str | None): The type of image, e.g., "Cut-out image",
+                "Ambient image", "Drawing image", "Material image", "Detail image".
+            - list_order (int | None): The display order of the image.
+            - direct_link (dict | None): Dictionary containing the direct link to image.
+            - description (str | None): Description of the image.
+            - color (dict | None): Dictionary containing the color of the image.
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            image_path (str | None): The path to the new image file. Required when
+                creating a new image or replacing an existing image.
+            old_blob_id (str | None): The blob ID of the existing image. Required when
+                updating an image.
+            **kwargs: Additional keyword arguments containing image metadata.
+
+        Raises:
+            Exception: If the image path or old blob ID is not provided as required.
+            Exception: If the product retrieval fails.
+            Exception: If the product deserialization fails.
+            Exception: If the old blob ID does not match the blob ID in the image object
+            Exception: If the image upload fails.
+            ValueError: If the image object does not contain a blob ID.
+
+        Returns:
+            Any: The updated product object.
+
+        Example:
+            ```python
+            # Define image details
+            image_data = {
+                "image_usages": ["pro-b"],
+                "image_type": "Cut-out image",
+                "list_order": 1,
+                "direct_link": {"url": "https://example.com/image.jpg"},
+                "description": "A sample product image",
+            }
+
+            # Add a new product image
+            response = client.products.add_or_update_product_image(
+                product_id=12345,
+                image_path="/path/to/image.jpg",
+                **image_data
+            )
+
+            # Update an existing product image
+            response = client.products.add_or_update_product_image(
+                product_id=12345,
+                old_blob_id="existing-blob-id",
+                **image_data
+            )
+
+            # Replace an existing product image with a new one
+            response = client.products.add_or_update_product_image(
+                product_id=12345,
+                image_path="/path/to/new_image.jpg",
+                old_blob_id="existing-blob-id",
+                **image_data
+            )
+            ```
+        """
+        if not image_path and not old_blob_id:
+            raise Exception(
+                "When updating the image an old blob id must be provided. "
+                + "However, when creating a new image the image path must be provided. "
+                + "To replace the image file both the image path and the old blob id "
+                + "must be provided."
+            )
+        response = self._client.get_entity(EntityType.PRODUCT, product_id)
+        if response.status != 200:
+            raise Exception(
+                f"Failed to retrieve product. Status code: {response.status}. "
+                + f"{response.data}"
+            )
+        product = response.json()
+        if not product:
+            raise Exception("Could not deserialize product")
+        if (
+            old_blob_id
+            and kwargs.get("blob_id")
+            and kwargs.get("blob_id") != old_blob_id
+        ):
+            raise Exception(
+                "The old blob id provided does not match the blob id provided in the "
+                + "image object"
+            )
+        image = dict(kwargs.items())
+        if image_path:
+            resp_data = self.upload_image(
+                product_id=product_id,
+                image_path=image_path,
+                old_blob_id=old_blob_id,
+                **kwargs,
+            )
+            new_kwargs = {k: v for k, v in kwargs.items() if k != "blob_id"}
+            image = gen_new_image_object_with_extras(
+                resp_data["image_blob_id"],
+                size=resp_data["image_size"],
+                height=resp_data["image_height"],
+                width=resp_data["image_width"],
+                file_type=resp_data["image_mime_type"],
+                **new_kwargs,
+            )
+        if not image.get("blob_id"):
+            raise ValueError("Image object must contain a blob_id")
+        product = add_image_to_product_by_blob_id(
+            product, image, old_blob_id=old_blob_id
+        )
+        return self.update([product])

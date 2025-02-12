@@ -259,7 +259,7 @@ class ManufacturersResource(BaseResource):
             f"{image_type}_image",
         )
         if kwargs:
-            headers = dict(kwargs.items())
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
         else:
             headers = {}
         man_image_upload_url = MANUFACTURER_IMAGE_UPLOAD_ENDPOINT.format(

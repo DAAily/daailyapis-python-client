@@ -52,6 +52,9 @@ sample-lucy-14:
 sample-lucy-15:
 	venv/bin/python -m samples.lucy.add_address_to_manufacturer
 
+sample-lucy-16:
+	venv/bin/python -m samples.lucy.add_or_update_product_image
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
