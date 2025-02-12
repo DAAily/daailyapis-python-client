@@ -48,6 +48,25 @@ def add_image_to_product(product: dict, image: dict) -> dict:
     return product
 
 
+def add_image_to_product_by_blob_id(
+    product: dict, image: dict, old_blob_id: str | None = None
+) -> dict:
+    """
+    Adds or replaces images if already exists
+    """
+    if not image.get("blob_id"):
+        raise ValueError("Image object must contain a blob")
+    if "images" not in product or not isinstance(product["images"], list):
+        product["images"] = []
+    for i, img in enumerate(product["images"]):
+        if img["blob_id"] == image["blob_id"] or img["blob_id"] == old_blob_id:
+            product["images"][i] = image
+            break
+    else:
+        product["images"].append(image)
+    return product
+
+
 def add_image_to_manufacturer(man: dict, image: dict, image_type: str) -> dict:
     if f"{image_type}_image" not in man:
         raise ValueError(f"Image type {image_type} not supported")
@@ -85,7 +104,7 @@ def get_entity_asset_type_endpoint(
         return endpoint.format(entity_id=entity_id)
 
 
-def get_file_data_and_mimetype(path: str) -> tuple[bytes, str]:
+def get_file_data_and_mimetype(path: str) -> tuple[bytes, str, str]:
     try:
         with open(path, "rb") as file:
             file_data = file.read()
@@ -94,7 +113,7 @@ def get_file_data_and_mimetype(path: str) -> tuple[bytes, str]:
     mime_type, _ = mimetypes.guess_type(path)
     if mime_type is None:
         raise Exception(f"Could not determine content type for {path}")
-    return file_data, mime_type
+    return file_data, mime_type, file.name.split("/")[-1]
 
 
 def gen_new_file_object(blob_id, **kwargs):
