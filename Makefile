@@ -55,6 +55,9 @@ sample-lucy-15:
 sample-lucy-16:
 	venv/bin/python -m samples.lucy.add_or_update_product_image
 
+sample-lucy-17:
+	venv/bin/python -m samples.lucy.add_or_update_family_image
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
