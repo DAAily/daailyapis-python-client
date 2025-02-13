@@ -144,6 +144,7 @@ class ProductsResource(BaseResource):
         pdf_path: str | None = None,
         pdf_bytes: bytes | None = None,
         mime_type: str | None = None,
+        filename: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
@@ -189,6 +190,7 @@ class ProductsResource(BaseResource):
         cad_path: str | None = None,
         cad_bytes: bytes | None = None,
         mime_type: str | None = None,
+        filename: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
