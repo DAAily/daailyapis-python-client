@@ -36,6 +36,9 @@ class ManufacturersResource(BaseResource):
         Available filters:
             - manufacturer_ids (str): Filter by comma separated manufacturer IDs.
             - manufacturer_name (str): Filter by manufacturer name.
+            - status (str): Filter by status. Can hold multiple values as a comma
+                separated string eg. "online,preview".
+                Possible values: online, preview, offline, deleted
 
         Note that the following filters are automatically added to the query:
             - skip (int): Number of records to skip.
