@@ -25,7 +25,9 @@ class FamiliesResource(BaseResource):
         Available filters:
             - family_ids (str): Filter by comma separated family IDs.
             - manufacturer_id (str): Filter by manufacturer ID.
-            - status (str): Filter by status.
+            - status (str): Filter by status. Can hold multiple values as a comma
+                separated string eg. "online,preview".
+                Possible values: online, preview, offline, deleted
 
         Note that the following filters are automatically added to the query:
             - skip (int): Number of records to skip.
