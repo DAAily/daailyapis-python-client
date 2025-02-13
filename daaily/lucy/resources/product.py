@@ -332,7 +332,7 @@ class ProductsResource(BaseResource):
                         ownership_results[field] = product_data.get(field)
         return ownership_results or None
 
-    def add_or_update_product_image(
+    def add_or_update_product_image(  # noqa: C901
         self,
         product_id: int,
         image_path: str | None = None,
@@ -480,7 +480,12 @@ class ProductsResource(BaseResource):
                     )
                 content_type = resp.headers.get("Content-Type")
                 image_data = resp.data
-                disposition = resp.headers["content-disposition"]
+                disposition = resp.headers.get("content-disposition")
+                if not disposition:
+                    raise ValueError(
+                        "The 'content-disposition' header is missing in the response "
+                        + "when trying to download image from image url"
+                    )
                 filename = re.findall("filename=(.+)", disposition)[0]
             resp_data = self.upload_image(
                 product_id=product_id,
