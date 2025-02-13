@@ -1,5 +1,8 @@
 import json
+import re
 from typing import Any, Dict, Generator
+
+import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
@@ -12,6 +15,8 @@ from daaily.lucy.utils import (
 from . import BaseResource
 
 FAMILY_IMAGE_UPLOAD_ENDPOINT = "/families/{family_id}/image/upload"
+
+http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
 
 class FamiliesResource(BaseResource):
@@ -85,6 +90,7 @@ class FamiliesResource(BaseResource):
         image_path: str | None = None,
         image_bytes: bytes | None = None,
         mime_type: str | None = None,
+        filename: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
@@ -124,10 +130,11 @@ class FamiliesResource(BaseResource):
             )
         return json.loads(resp.data.decode("utf-8"))
 
-    def add_or_update_family_image(
+    def add_or_update_family_image(  # noqa: C901
         self,
         family_id: int,
         image_path: str | None = None,
+        image_url: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
     ):
@@ -135,37 +142,49 @@ class FamiliesResource(BaseResource):
         Adds or updates a family image.
 
         This function handles the addition or update of a family image. When updating
-        an image, an old blob ID must be provided. When creating a new image, the image
-        path must be provided. To replace the image file, both the image path and the
-        old blob ID must be provided.
+        an image, an old blob ID must be provided. When creating a new image, either an
+        image_path or an image_url must be provided. To replace the image file, both an
+        image_path (or image_url) and the old_blob_id must be provided. Only one of
+        image_path or image_url should be supplied.
+
+        The image can be provided in one of two ways:
+            - As a local file using 'image_path'
+            - As a remote file using 'image_url'
 
         The following keys may be included in the kwargs dictionary:
 
-
             - blob_id (str): The blob ID of the image.
-            - image_usages (list[str] | None): List of image usages eg. "pro-g", "pro-b"
+            - image_usages (list[str] | None): List of image usages, e.g., "fam-g",
+                "fam-sq".
             - image_type (str | None): The type of image, e.g., "Cut-out image",
                 "Ambient image", "Drawing image", "Material image", "Detail image".
             - list_order (int | None): The display order of the image.
-            - direct_link (dict | None): Dictionary containing the direct link to image.
+            - direct_link (dict | None): Dictionary containing the direct link to the
+                image.
             - description (str | None): Description of the image.
-            - color (dict | None): Dictionary containing the color of the image.
+            - color (dict | None): Dictionary containing the color details of the image.
 
         Args:
             family_id (int): The unique identifier of the family.
-            image_path (str | None): The path to the new image file. Required when
-                creating a new image or replacing an existing image.
+            image_path (str | None): The local file path to the new image file. Required
+                when creating a new image or replacing an existing image using a local
+                file.
+            image_url (str | None): The URL of the new image file. Required when
+                creating a new image or replacing an existing image using a remote image
+                source.
             old_blob_id (str | None): The blob ID of the existing image. Required when
                 updating an image.
             **kwargs: Additional keyword arguments containing image metadata.
 
         Raises:
-            Exception: If the image path or old blob ID is not provided as required.
+            ValueError: If both image_path and image_url are provided.
+            Exception: If neither image_path nor image_url is provided when required,
+                or if the old_blob_id is missing when updating an image.
             Exception: If the family retrieval fails.
             Exception: If the family deserialization fails.
-            Exception: If the old blob ID does not match the blob ID in the image object
-            Exception: If the image upload fails.
-            ValueError: If the image object does not contain a blob ID.
+            Exception: If the old_blob_id does not match the blob_id in the image object
+            Exception: If the image download (from image_url) or upload fails.
+            ValueError: If the image object does not contain a blob_id.
 
         Returns:
             Any: The updated family object.
@@ -181,35 +200,54 @@ class FamiliesResource(BaseResource):
                 "description": "A sample family image",
             }
 
-            # Add a new families image
+            # Add a new family image using a local file
             response = client.families.add_or_update_family_image(
                 family_id=12345,
                 image_path="/path/to/image.jpg",
                 **image_data
             )
 
-            # Update an existing family image
+            # Add a new family image using a URL
+            response = client.families.add_or_update_family_image(
+                family_id=12345,
+                image_url="https://example.com/image.jpg",
+                **image_data
+            )
+
+            # Update an existing family image (without replacing the image file)
             response = client.families.add_or_update_family_image(
                 family_id=12345,
                 old_blob_id="existing-blob-id",
                 **image_data
             )
 
-            # Replace an existing family image with a new one
+            # Replace an existing family image with a new one using a local file
             response = client.families.add_or_update_family_image(
                 family_id=12345,
                 image_path="/path/to/new_image.jpg",
                 old_blob_id="existing-blob-id",
                 **image_data
             )
+
+            # Replace an existing family image with a new one using a URL
+            response = client.families.add_or_update_family_image(
+                family_id=12345,
+                image_url="https://example.com/new_image.jpg",
+                old_blob_id="existing-blob-id",
+                **image_data
+            )
             ```
         """
-        if not image_path and not old_blob_id:
+        if image_path and image_url:
+            raise ValueError(
+                "Only one of 'image_path' or 'image_url' should be provided"
+            )
+        if not (image_path or image_url) and not old_blob_id:
             raise Exception(
                 "When updating the image an old blob id must be provided. "
-                + "However, when creating a new image the image path must be provided. "
-                + "To replace the image file both the image path and the old blob id "
-                + "must be provided."
+                + "However, when creating a new image the image path or image url must "
+                + "be provided. To replace the image file both an image path "
+                + "(or image url) and the old blob id must be provided."
             )
         response = self._client.get_entity(EntityType.FAMILY, family_id)
         if response.status != 200:
@@ -229,11 +267,32 @@ class FamiliesResource(BaseResource):
                 "The old blob id provided does not match the blob id provided in the "
                 + "image object"
             )
-        image = dict(kwargs.items())
-        if image_path:
+        image = kwargs.copy()
+        if image_path or image_url:
+            image_data = None
+            content_type = None
+            filename = None
+            if image_url:
+                resp = http.request("GET", image_url)
+                if resp.status != 200:
+                    raise Exception(
+                        f"Failed to downloading image. Code: {resp.status}. {resp.data}"
+                    )
+                content_type = resp.headers.get("Content-Type")
+                image_data = resp.data
+                disposition = resp.headers.get("content-disposition")
+                if not disposition:
+                    raise ValueError(
+                        "The 'content-disposition' header is missing in the response "
+                        + "when trying to download image from image url"
+                    )
+                filename = re.findall("filename=(.+)", disposition)[0]
             resp_data = self.upload_image(
                 family_id=family_id,
                 image_path=image_path,
+                image_bytes=image_data,
+                mime_type=content_type,
+                filename=filename,
                 old_blob_id=old_blob_id,
                 **kwargs,
             )
