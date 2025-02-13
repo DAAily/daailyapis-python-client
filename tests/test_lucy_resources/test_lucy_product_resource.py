@@ -475,7 +475,13 @@ class TestProductResource:
         )
         assert result.json() == final_product_data
         client.products.upload_image.assert_called_once_with(
-            product_id=product_id, image_path=image_path, old_blob_id=None, **image_data
+            product_id=product_id,
+            image_path=image_path,
+            image_bytes=None,
+            mime_type=None,
+            filename=None,
+            old_blob_id=None,
+            **image_data,
         )
         client.products.update.assert_called_once()
 
@@ -633,7 +639,6 @@ class TestProductResource:
 
         # Capture the product data before the update call
         def update_side_effect(products):
-            print(products)
             assert products[0]["images"][0] == {
                 "blob_id": f"m-on/123345/p/{product_id}/seat_e1be67b1.jpeg/17393",
                 "image_usages": ["pro-g"],
@@ -660,6 +665,9 @@ class TestProductResource:
         client.products.upload_image.assert_called_once_with(
             product_id=product_id,
             image_path=new_image_path,
+            image_bytes=None,
+            mime_type=None,
+            filename=None,
             old_blob_id=old_blob_id,
             **image_data,
         )

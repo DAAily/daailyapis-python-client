@@ -1,5 +1,8 @@
 import json
+import re
 from typing import Any, Dict, Generator
+
+import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
@@ -12,6 +15,8 @@ from daaily.lucy.utils import (
 from . import BaseResource
 
 FAMILY_IMAGE_UPLOAD_ENDPOINT = "/families/{family_id}/image/upload"
+
+http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
 
 class FamiliesResource(BaseResource):
@@ -85,6 +90,7 @@ class FamiliesResource(BaseResource):
         image_path: str | None = None,
         image_bytes: bytes | None = None,
         mime_type: str | None = None,
+        filename: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
@@ -128,6 +134,7 @@ class FamiliesResource(BaseResource):
         self,
         family_id: int,
         image_path: str | None = None,
+        image_url: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
     ):
@@ -204,12 +211,16 @@ class FamiliesResource(BaseResource):
             )
             ```
         """
-        if not image_path and not old_blob_id:
+        if image_path and image_url:
+            raise ValueError(
+                "Only one of 'image_path' or 'image_url' should be provided"
+            )
+        if not (image_path or image_url) and not old_blob_id:
             raise Exception(
                 "When updating the image an old blob id must be provided. "
-                + "However, when creating a new image the image path must be provided. "
-                + "To replace the image file both the image path and the old blob id "
-                + "must be provided."
+                + "However, when creating a new image the image path or image url must "
+                + "be provided. To replace the image file both an image path "
+                + "(or image url) and the old blob id must be provided."
             )
         response = self._client.get_entity(EntityType.FAMILY, family_id)
         if response.status != 200:
@@ -230,10 +241,26 @@ class FamiliesResource(BaseResource):
                 + "image object"
             )
         image = dict(kwargs.items())
-        if image_path:
+        if image_path or image_url:
+            image_data = None
+            content_type = None
+            filename = None
+            if image_url:
+                resp = http.request("GET", image_url)
+                if resp.status != 200:
+                    raise Exception(
+                        f"Failed to downloading image. Code: {resp.status}. {resp.data}"
+                    )
+                content_type = resp.headers.get("Content-Type")
+                image_data = resp.data
+                disposition = resp.headers["content-disposition"]
+                filename = re.findall("filename=(.+)", disposition)[0]
             resp_data = self.upload_image(
                 family_id=family_id,
                 image_path=image_path,
+                image_bytes=image_data,
+                mime_type=content_type,
+                filename=filename,
                 old_blob_id=old_blob_id,
                 **kwargs,
             )
