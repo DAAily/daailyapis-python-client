@@ -9,6 +9,8 @@ from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_image_to_product_by_blob_id,
+    extract_extension_from_blob_id,
+    extract_mime_type_from_extension,
     gen_new_image_object_with_extras,
     get_file_data_and_mimetype,
 )
@@ -171,7 +173,10 @@ class ProductsResource(BaseResource):
         )
         url = f"{self._client._base_url}{prod_image_upload_url}"
         if old_blob_id:
-            url += f"&old_blob_id={old_blob_id}"
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -266,7 +271,10 @@ class ProductsResource(BaseResource):
         prod_pdf_upload_url = PRODUCT_PDF_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_pdf_upload_url}"
         if old_blob_id:
-            url += f"&old_blob_id={old_blob_id}"
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -360,7 +368,10 @@ class ProductsResource(BaseResource):
         prod_cad_upload_url = PRODUCT_CAD_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_cad_upload_url}"
         if old_blob_id:
-            url += f"&old_blob_id={old_blob_id}"
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
