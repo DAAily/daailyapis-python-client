@@ -6,6 +6,7 @@ import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
+from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_image_to_product_by_blob_id,
     gen_new_image_object_with_extras,
@@ -474,14 +475,14 @@ class ProductsResource(BaseResource):
                         ownership_results[field] = product_data.get(field)
         return ownership_results or None
 
-    def add_or_update_product_image(  # noqa: C901
+    def add_or_update_image(  # noqa: C901
         self,
         product_id: int,
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
-    ):
+    ) -> Response:
         """
         Adds or updates a product image.
 
@@ -543,28 +544,28 @@ class ProductsResource(BaseResource):
             }
 
             # Add a new product image using a local file
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_path="/path/to/image.jpg",
                 **image_data
             )
 
             # Add a new product image using a URL
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_url="https://example.com/image.jpg",
                 **image_data
             )
 
             # Update an existing product image (without replacing the image file)
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 old_blob_id="existing-blob-id",
                 **image_data
             )
 
             # Replace an existing product image with a new one using a local file
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_path="/path/to/new_image.jpg",
                 old_blob_id="existing-blob-id",
@@ -572,7 +573,7 @@ class ProductsResource(BaseResource):
             )
 
             # Replace an existing product image with a new one using a URL
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_url="https://example.com/new_image.jpg",
                 old_blob_id="existing-blob-id",

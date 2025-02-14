@@ -35,7 +35,7 @@ sample-lucy-9:
 	venv/bin/python -m samples.lucy.get_manufacturer_by_domain
 
 sample-lucy-10:
-	venv/bin/python -m samples.lucy.add_image_to_manufacturer
+	venv/bin/python -m samples.lucy.add_or_update_manufacturer_image
 
 sample-lucy-11:
 	venv/bin/python -m samples.lucy.determine_field_owner_on_product

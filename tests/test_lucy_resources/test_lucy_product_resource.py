@@ -471,7 +471,7 @@ class TestProductResource:
             return DummyResponse(final_product_data)
 
         client.update_entity.side_effect = update_side_effect
-        result = client.products.add_or_update_product_image(
+        result = client.products.add_or_update_image(
             product_id=product_id, image_path=image_path, **image_data
         )
         assert result.json() == final_product_data
@@ -564,7 +564,7 @@ class TestProductResource:
 
         client.update_entity.side_effect = update_side_effect
 
-        result = client.products.add_or_update_product_image(
+        result = client.products.add_or_update_image(
             product_id=product_id, old_blob_id=old_blob_id, **image_data
         )
         assert result.json() == final_product_data
@@ -658,7 +658,7 @@ class TestProductResource:
             return DummyResponse(final_product_data)
 
         client.update_entity.side_effect = update_side_effect
-        result = client.products.add_or_update_product_image(
+        result = client.products.add_or_update_image(
             product_id=product_id,
             image_path=new_image_path,
             old_blob_id=old_blob_id,

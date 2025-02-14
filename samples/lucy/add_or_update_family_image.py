@@ -14,9 +14,10 @@ family_id = 2014285
 # Construct the path to the file in the neighboring directory
 image_path = os.path.join(script_dir, "..", "assets", "vitra.jpeg")
 
-updated_family = client.families.add_or_update_family_image(
+# Test with image_url if image_path is None
+updated_family = client.families.add_or_update_image(
     family_id,
-    image_path,
+    image_path=image_path,
     description="Vitra Chair Family",
     image_type="Ambient image",
     image_usages=["fam-g"],

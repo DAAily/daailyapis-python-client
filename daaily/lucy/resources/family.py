@@ -6,6 +6,7 @@ import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
+from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_image_to_family_by_blob_id,
     gen_new_image_object_with_extras,
@@ -94,7 +95,52 @@ class FamiliesResource(BaseResource):
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
-        """ """
+        """
+        Uploads an image file to a family and returns the blob ID.
+        Does not add the image file to the family.
+
+        Args:
+            family_id (int): The unique identifier of the family.
+            image_path (str | None): The local file path to the image file.
+            image_bytes (bytes | None): The binary data of the image file.
+            mime_type (str | None): The MIME type of the image file.
+            filename (str | None): The name of the image file.
+            old_blob_id (str | None): The blob ID of the existing image file.
+            **kwargs: Additional keyword arguments containing image metadata.
+
+        Returns:
+            Any: The response data from the server.
+            For example:
+                {
+                    "image_blob_id": "m-on/310089/families/12345/image/file.jpg",
+                    "image_mime_type": "image/jpeg",
+                    "image_size": 123456,
+                    "image_height": 600,
+                    "image_width": 800
+                }
+
+        Raises:
+            Exception: If neither image_path nor image_bytes is provided.
+            Exception: If the content type of the image file is not an image type.
+            Exception: If the upload fails.
+
+        Example:
+            ```python
+            # Upload an image file using a local file
+            response = client.families.upload_image(
+                family_id=12345,
+                image_path="/path/to/image_file.jpg"
+            )
+
+            # Upload an image file using binary data
+            response = client.families.upload_image(
+                family_id=12345,
+                image_bytes=b"binary_data",
+                mime_type="image/jpeg",
+                filename="image_file.jpg"
+            )
+            ```
+        """
         if not image_path and not image_bytes:
             raise Exception("Either image_path or image_bytes must be provided")
         if image_path:
@@ -130,14 +176,14 @@ class FamiliesResource(BaseResource):
             )
         return json.loads(resp.data.decode("utf-8"))
 
-    def add_or_update_family_image(  # noqa: C901
+    def add_or_update_image(  # noqa: C901
         self,
         family_id: int,
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
-    ):
+    ) -> Response:
         """
         Adds or updates a family image.
 
@@ -201,28 +247,28 @@ class FamiliesResource(BaseResource):
             }
 
             # Add a new family image using a local file
-            response = client.families.add_or_update_family_image(
+            response = client.families.add_or_update_image(
                 family_id=12345,
                 image_path="/path/to/image.jpg",
                 **image_data
             )
 
             # Add a new family image using a URL
-            response = client.families.add_or_update_family_image(
+            response = client.families.add_or_update_image(
                 family_id=12345,
                 image_url="https://example.com/image.jpg",
                 **image_data
             )
 
             # Update an existing family image (without replacing the image file)
-            response = client.families.add_or_update_family_image(
+            response = client.families.add_or_update_image(
                 family_id=12345,
                 old_blob_id="existing-blob-id",
                 **image_data
             )
 
             # Replace an existing family image with a new one using a local file
-            response = client.families.add_or_update_family_image(
+            response = client.families.add_or_update_image(
                 family_id=12345,
                 image_path="/path/to/new_image.jpg",
                 old_blob_id="existing-blob-id",
@@ -230,7 +276,7 @@ class FamiliesResource(BaseResource):
             )
 
             # Replace an existing family image with a new one using a URL
-            response = client.families.add_or_update_family_image(
+            response = client.families.add_or_update_image(
                 family_id=12345,
                 image_url="https://example.com/new_image.jpg",
                 old_blob_id="existing-blob-id",
@@ -308,4 +354,4 @@ class FamiliesResource(BaseResource):
         if not image.get("blob_id"):
             raise ValueError("Image object must contain a blob_id")
         family = add_image_to_family_by_blob_id(family, image, old_blob_id=old_blob_id)
-        return self.update([family])
+        return self._client.update_entity(EntityType.FAMILY, family)
