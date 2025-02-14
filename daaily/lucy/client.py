@@ -224,7 +224,7 @@ class Client:
             + f"?target_status={target_status}"
         )
         if query_string:
-            entity_url += query_string
+            entity_url += f"&{query_string}"
         return Response.from_response(self._do_request("POST", entity_url))
 
     def upload_file(
