@@ -40,7 +40,10 @@ score = [
   "spacy>=3.8.4",
   "textstat>=0.7.4",
 ]
-
+similarity = [
+  "pillow>=11.1.0",
+  "imagehash>=4.3.2",
+]
 
 
 [project.urls]

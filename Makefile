@@ -70,6 +70,9 @@ sample-franklin-1:
 sample-score-1:
 	venv/bin/python -m samples.score.get_product_scores
 
+sample-similarity-1:
+	venv/bin/python -m samples.lucy.compare_lucy_images
+
 build:
 	$(info NOTE: Keep in mind to increment the version when doing a new build)
 	python3 -m build
