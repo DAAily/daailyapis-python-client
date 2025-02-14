@@ -103,7 +103,7 @@ class ManufacturersResource(BaseResource):
         address: dict,
         country_code: str | None,
         country_of_user_code: str | None = None,
-    ):
+    ) -> Response:
         """
         Adds an address to a manufacturer.
 
@@ -196,7 +196,7 @@ class ManufacturersResource(BaseResource):
                 a for a in m["addresses"] if a["address_type"] != "headquarter"
             ]
         m["addresses"].append(address)
-        return self._client.update_entities(EntityType.MANUFACTURER, [m])
+        return self._client.update_entity(EntityType.MANUFACTURER, m)
 
     def add_new_image_by_path(
         self,
@@ -298,7 +298,7 @@ class ManufacturersResource(BaseResource):
             new_image,
             image_type,
         )
-        return self._client.update_entities(EntityType.MANUFACTURER, [manufacturer])
+        return self._client.update_entity(EntityType.MANUFACTURER, manufacturer)
 
     def add_about(  # noqa: C901
         self,
@@ -469,4 +469,4 @@ class ManufacturersResource(BaseResource):
         if not m:
             raise Exception(f"Manufacturer with ID {manufacturer_id} not found.")
         m = add_about_to_manufacturer(m, about)
-        return self._client.update_entities(EntityType.MANUFACTURER, [m])
+        return self._client.update_entity(EntityType.MANUFACTURER, m)

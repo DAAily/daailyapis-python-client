@@ -1,4 +1,4 @@
-# Python Client For Daaily Services Apis
+# Sparky: Python Client For Daaily Services
 
 This package ought to include all clients of the services provided by Daaily. We will start with the `lucy` client.
 This will be a rapper around the `lucy` service. Based on HTTP requests.
@@ -17,12 +17,12 @@ pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 
 Latest stable release:
 ```bash
-pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.0#egg=daaily
+pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.13#egg=daaily
 ```
   
 In case you want to work with the score client you need to install additional dependencies:
 ```bash
-pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.0#egg=daaily[score]
+pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.13#egg=daaily[score]
 ```
 
 
@@ -49,7 +49,7 @@ pip install -r tests/requirements.txt
 
 Increment version by doing the following steps (ensure you have gcloud installed and authenticated):
 
-- Manually increment the version in `daaily/version.py`. Check the naming convension at https://github.com/DAAily/daailyapis-python-client/releases
+- Manually increment the version in `daaily/version.py`. Check the naming convention at https://github.com/DAAily/daailyapis-python-client/releases
 - Merge the new changes (including the version increment) into the main branch (production).
 - Run the following:
 
