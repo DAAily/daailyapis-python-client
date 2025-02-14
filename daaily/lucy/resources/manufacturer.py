@@ -1,5 +1,6 @@
 import json
 import mimetypes
+import re
 from typing import Any, Dict, Generator, Literal
 
 import urllib3
@@ -12,7 +13,10 @@ from daaily.lucy.utils import (
     add_about_to_manufacturer,
     add_image_to_manufacturer,
     check_field_content_set,
+    extract_extension_from_blob_id,
+    extract_mime_type_from_extension,
     gen_new_image_object_with_extras,
+    get_file_data_and_mimetype,
 )
 
 from . import BaseResource
@@ -97,13 +101,290 @@ class ManufacturersResource(BaseResource):
             EntityType.MANUFACTURER, manufacturers, filters
         )
 
+    def upload_image(  # noqa: C901
+        self,
+        manufacturer_id: int,
+        image_type: Literal["logo", "header"],
+        image_path: str | None = None,
+        image_bytes: bytes | None = None,
+        mime_type: str | None = None,
+        filename: str | None = None,
+        **kwargs,
+    ) -> Any:
+        """
+        Uploads an image file to a manufacturer and returns the blob ID.
+        Does not add the image file to the manufacturer.
+
+        Args:
+            manufacturer_id (int): The unique identifier of the manufacturer.
+            image_type (str): The type of image to be uploaded (e.g., "logo", "header").
+            image_path (str | None): The local file path to the image file.
+            image_bytes (bytes | None): The binary data of the image file.
+            mime_type (str | None): The MIME type of the image file.
+            filename (str | None): The name of the image file.
+            **kwargs: Additional keyword arguments containing image metadata.
+
+        Returns:
+            Any: The response data from the server.
+            For example:
+                {
+                    "image_blob_id": "m-on/310089/manufacturers/12345/image/file.jpg",
+                    "image_mime_type": "image/jpeg",
+                    "image_size": 123456,
+                    "image_height": 600,
+                    "image_width": 800
+                }
+
+        Raises:
+            Exception: If neither image_path nor image_bytes is provided.
+            Exception: If the content type of the image file is not an image type.
+            Exception: If the upload fails.
+
+        Example:
+            ```python
+            # Upload an image file using a local file
+            response = client.manufacturers.upload_image(
+                manufacturer_id=12345,
+                image_path="/path/to/image_file.jpg"
+            )
+
+            # Upload an image file using binary data
+            response = client.manufacturers.upload_image(
+                manufacturer_id=12345,
+                image_bytes=b"binary_data",
+                mime_type="image/jpeg",
+                filename="image_file.jpg"
+            )
+            ```
+        """
+        if not image_path and not image_bytes:
+            raise Exception("Either image_path or image_bytes must be provided")
+        if image_path:
+            image_data, content_type, filename = get_file_data_and_mimetype(image_path)
+        else:
+            if not mime_type:
+                raise ValueError(
+                    "If 'image_bytes' is provided, 'mime_type' must be specified."
+                )
+            image_data = image_bytes
+            content_type = mime_type
+        if content_type is None:
+            raise Exception("Could not determine content type for image")
+        if not content_type.startswith("image/"):
+            raise Exception(f"File is not an image type. Detected: {content_type}")
+        response = self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)
+        if response.status != 200:
+            raise Exception(
+                f"Failed to retrieve manufacturer. Status code: {response.status}. "
+                + f"{response.data}"
+            )
+        manufacturer = response.json()
+        if not manufacturer:
+            raise Exception("Could not deserialize manufacturer")
+        if kwargs:
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
+        else:
+            headers = {}
+        old_image = check_field_content_set(
+            manufacturer,
+            f"{image_type}_image",
+        )
+        if kwargs:
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
+        else:
+            headers = {}
+        image_upload_url = MANUFACTURER_IMAGE_UPLOAD_ENDPOINT.format(
+            manufacturer_id=manufacturer_id
+        )
+        url = f"{self._client._base_url}{image_upload_url}?image_type={image_type}"
+        if old_image:
+            old_extension = extract_extension_from_blob_id(old_image["blob_id"])
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_image['blob_id']}"
+        resp = self._client._do_request(
+            "POST",
+            url,
+            fields={"file": (filename, image_data, content_type)},
+            headers=headers,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload image. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def add_or_update_image(  # noqa: C901
+        self,
+        manufacturer_id: int,
+        image_type: Literal["logo", "header"],
+        image_path: str | None = None,
+        image_url: str | None = None,
+        old_blob_id: str | None = None,
+        **kwargs,
+    ) -> Response:
+        """
+        Adds or updates a manufacturer image.
+
+        This function handles the addition or update of a manufacturer image. When
+        updating an image, an old blob ID must be provided. When creating a new image,
+        either an image_path or an image_url must be provided. To replace the image
+        file, both an image_path (or image_url) and the old_blob_id must be provided.
+        Only one of image_path or image_url should be supplied.
+
+        The image can be provided in one of two ways:
+            - As a local file using 'image_path'
+            - As a remote file using 'image_url'
+
+        The following keys may be included in the kwargs dictionary:
+
+            - blob_id (str): The blob ID of the image.
+            - direct_link (dict | None): Dictionary containing the direct link to the
+                image.
+            - description (str | None): Description of the image.
+            - color (dict | None): Dictionary containing the color details of the image.
+
+        Args:
+            manufacturer_id (int): The unique identifier of the manufacturer.
+            image_type (str): The type of image to be uploaded (e.g., "logo", "header").
+            image_path (str | None): The local file path to the new image file. Required
+                when creating a new image or replacing an existing image using a local
+                file.
+            image_url (str | None): The URL of the new image file. Required when
+                creating a new image or replacing an existing image using a remote image
+                source.
+            old_blob_id (str | None): The blob ID of the existing image. Required when
+                updating an image.
+            **kwargs: Additional keyword arguments containing image metadata.
+
+        Raises:
+            ValueError: If both image_path and image_url are provided.
+            Exception: If neither image_path nor image_url is provided when required,
+                or if the old_blob_id is missing when updating an image.
+            Exception: If the manufacturer retrieval fails.
+            Exception: If the manufacturer deserialization fails.
+            Exception: If the old_blob_id does not match the blob_id in the image object
+            Exception: If the image download (from image_url) or upload fails.
+            ValueError: If the image object does not contain a blob_id.
+
+        Returns:
+            Any: The updated manufacturer object.
+
+        Example:
+            ```python
+            # Define image details
+            image_data = {
+                "direct_link": {"url": "https://example.com/image.jpg"},
+                "description": "A sample manufacturer image",
+            }
+
+            # Add new or replace existing manufacturer image using a local file
+            response = client.manufacturers.add_or_update_image(
+                manufacturer_id=12345,
+                image_type="logo",
+                image_path="/path/to/image.jpg",
+                **image_data
+            )
+
+            # Add new or replace existing manufacturer image using a URL
+            response = client.manufacturers.add_or_update_image(
+                manufacturer_id=12345,
+                image_type="logo",
+                image_url="https://example.com/image.jpg",
+                **image_data
+            )
+
+            # Update an existing manufacturer image (without replacing the image file)
+            response = client.manufacturers.add_or_update_image(
+                manufacturer_id=12345,
+                image_type="logo",
+                **image_data
+            )
+            ```
+        """
+        if image_path and image_url:
+            raise ValueError(
+                "Only one of 'image_path' or 'image_url' should be provided"
+            )
+        if not (image_path or image_url) and not old_blob_id:
+            raise Exception(
+                "When updating the image an old blob id must be provided. "
+                + "However, when creating a new image the image path or image url must "
+                + "be provided. To replace the image file both an image path "
+                + "(or image url) and the old blob id must be provided."
+            )
+        response = self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)
+        if response.status != 200:
+            raise Exception(
+                f"Failed to retrieve manufacturer. Status code: {response.status}. "
+                + f"{response.data}"
+            )
+        manufacturer = response.json()
+        if not manufacturer:
+            raise Exception("Could not deserialize manufacturer")
+        if (
+            old_blob_id
+            and kwargs.get("blob_id")
+            and kwargs.get("blob_id") != old_blob_id
+        ):
+            raise Exception(
+                "The old blob id provided does not match the blob id provided in the "
+                + "image object"
+            )
+        image = kwargs.copy()
+        if image_path or image_url:
+            image_data = None
+            content_type = None
+            filename = None
+            if image_url:
+                resp = http.request("GET", image_url)
+                if resp.status != 200:
+                    raise Exception(
+                        f"Failed to downloading image. Code: {resp.status}. {resp.data}"
+                    )
+                content_type = resp.headers.get("Content-Type")
+                image_data = resp.data
+                disposition = resp.headers.get("content-disposition")
+                if not disposition:
+                    raise ValueError(
+                        "The 'content-disposition' header is missing in the response "
+                        + "when trying to download image from image url"
+                    )
+                filename = re.findall("filename=(.+)", disposition)[0]
+            resp_data = self.upload_image(
+                manufacturer_id=manufacturer_id,
+                image_type=image_type,
+                image_path=image_path,
+                image_bytes=image_data,
+                mime_type=content_type,
+                filename=filename,
+                **kwargs,
+            )
+            new_kwargs = {k: v for k, v in kwargs.items() if k != "blob_id"}
+            image = gen_new_image_object_with_extras(
+                resp_data["image_blob_id"],
+                size=resp_data["image_size"],
+                height=resp_data["image_height"],
+                width=resp_data["image_width"],
+                file_type=resp_data["image_mime_type"],
+                **new_kwargs,
+            )
+        if not image.get("blob_id"):
+            raise ValueError("Image object must contain a blob_id")
+        manufacturer = add_image_to_manufacturer(
+            manufacturer,
+            image,
+            image_type,
+        )
+        return self._client.update_entity(EntityType.MANUFACTURER, manufacturer)
+
     def add_address(
         self,
         manufacturer_id: int,
         address: dict,
         country_code: str | None,
         country_of_user_code: str | None = None,
-    ):
+    ) -> Response:
         """
         Adds an address to a manufacturer.
 
@@ -196,7 +477,7 @@ class ManufacturersResource(BaseResource):
                 a for a in m["addresses"] if a["address_type"] != "headquarter"
             ]
         m["addresses"].append(address)
-        return self._client.update_entities(EntityType.MANUFACTURER, [m])
+        return self._client.update_entity(EntityType.MANUFACTURER, m)
 
     def add_new_image_by_path(
         self,
@@ -298,7 +579,7 @@ class ManufacturersResource(BaseResource):
             new_image,
             image_type,
         )
-        return self._client.update_entities(EntityType.MANUFACTURER, [manufacturer])
+        return self._client.update_entity(EntityType.MANUFACTURER, manufacturer)
 
     def add_about(  # noqa: C901
         self,
@@ -469,4 +750,4 @@ class ManufacturersResource(BaseResource):
         if not m:
             raise Exception(f"Manufacturer with ID {manufacturer_id} not found.")
         m = add_about_to_manufacturer(m, about)
-        return self._client.update_entities(EntityType.MANUFACTURER, [m])
+        return self._client.update_entity(EntityType.MANUFACTURER, m)

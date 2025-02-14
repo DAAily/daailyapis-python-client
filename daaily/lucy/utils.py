@@ -8,7 +8,7 @@ from daaily.lucy.config import (
     MIME_TYPE_TO_ASSET_TYPE,
     entity_type_endpoint_mapping,
 )
-from daaily.lucy.enums import AssetType, EntityType
+from daaily.lucy.enums import AssetType, EntityType, MimeType
 from daaily.lucy.models import Filter
 
 
@@ -157,3 +157,13 @@ def add_x_goog_metadata_to_headers(metadata: dict) -> dict:
     for key, value in metadata.items():
         headers[f"x-goog-meta-{key}"] = value
     return headers
+
+
+def extract_extension_from_blob_id(blob_id: str):
+    return "/".join(blob_id.split("/")[:-1]).split(".")[-1]
+
+
+def extract_mime_type_from_extension(extension: str) -> str | None:
+    mime_type = MimeType.extract_from_extension(extension)
+    if mime_type:
+        return mime_type.value

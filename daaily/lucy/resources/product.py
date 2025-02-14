@@ -6,8 +6,11 @@ import urllib3
 
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
+from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_image_to_product_by_blob_id,
+    extract_extension_from_blob_id,
+    extract_mime_type_from_extension,
     gen_new_image_object_with_extras,
     get_file_data_and_mimetype,
 )
@@ -100,7 +103,52 @@ class ProductsResource(BaseResource):
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
-        """ """
+        """
+        Uploads an image file to a product and returns the blob ID.
+        Does not add the image file to the product.
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            image_path (str | None): The local file path to the image file.
+            image_bytes (bytes | None): The binary data of the image file.
+            mime_type (str | None): The MIME type of the image file.
+            filename (str | None): The name of the image file.
+            old_blob_id (str | None): The blob ID of the existing image file.
+            **kwargs: Additional keyword arguments containing image metadata.
+
+        Returns:
+            Any: The response data from the server.
+            For example:
+                {
+                    "image_blob_id": "m-on/310089/products/12345/image/file.jpg",
+                    "image_mime_type": "image/jpeg",
+                    "image_size": 123456,
+                    "image_height": 600,
+                    "image_width": 800
+                }
+
+        Raises:
+            Exception: If neither image_path nor image_bytes is provided.
+            Exception: If the content type of the image file is not an image type.
+            Exception: If the upload fails.
+
+        Example:
+            ```python
+            # Upload an image file using a local file
+            response = client.products.upload_image(
+                product_id=12345,
+                image_path="/path/to/image_file.jpg"
+            )
+
+            # Upload an image file using binary data
+            response = client.products.upload_image(
+                product_id=12345,
+                image_bytes=b"binary_data",
+                mime_type="image/jpeg",
+                filename="image_file.jpg"
+            )
+            ```
+        """
         if not image_path and not image_bytes:
             raise Exception("Either image_path or image_bytes must be provided")
         if image_path:
@@ -125,7 +173,10 @@ class ProductsResource(BaseResource):
         )
         url = f"{self._client._base_url}{prod_image_upload_url}"
         if old_blob_id:
-            url += f"&old_blob_id={old_blob_id}"
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -148,7 +199,56 @@ class ProductsResource(BaseResource):
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
-        """ """
+        """
+        Uploads a PDF file to a product and returns the blob ID.
+        Does not add the PDF file to the product.
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            pdf_path (str | None): The local file path to the PDF file.
+            pdf_bytes (bytes | None): The binary data of the PDF file.
+            mime_type (str | None): The MIME type of the PDF file.
+            filename (str | None): The name of the PDF file.
+            old_blob_id (str | None): The blob ID of the existing PDF file.
+            **kwargs: Additional keyword arguments containing PDF metadata.
+
+        Returns:
+            Any: The response data from the server.
+            For example:
+                {
+                    "pdf_blob_id": "m-on/310089/products/12345/pdf/file.pdf",
+                    "pdf_mime_type": "application/pdf",
+                    "pdf_size": 123456,
+                    "pdf_page_count": 3,
+                    "preview_image_blob_id": "m-on/310089/products/12345/pdf/image.jpg",
+                    "preview_image_size": 1234,
+                    "preview_image_mime_type": "image/jpeg",
+                    "preview_image_height": 600,
+                    "preview_image_width": 200
+                }
+
+        Raises:
+            Exception: If neither pdf_path nor pdf_bytes is provided.
+            Exception: If the content type of the PDF file is not application/pdf.
+            Exception: If the upload fails.
+
+        Example:
+            ```python
+            # Upload a PDF file using a local file
+            response = client.products.upload_pdf(
+                product_id=12345,
+                pdf_path="/path/to/pdf_file.pdf"
+            )
+
+            # Upload a PDF file using binary data
+            response = client.products.upload_pdf(
+                product_id=12345,
+                pdf_bytes=b"binary_data",
+                mime_type="application/pdf",
+                filename="pdf_file.pdf"
+            )
+            ```
+        """
         if not pdf_path and not pdf_bytes:
             raise Exception("Either pdf_path or pdf_bytes must be provided")
         if pdf_path:
@@ -171,7 +271,10 @@ class ProductsResource(BaseResource):
         prod_pdf_upload_url = PRODUCT_PDF_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_pdf_upload_url}"
         if old_blob_id:
-            url += f"&old_blob_id={old_blob_id}"
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -194,7 +297,53 @@ class ProductsResource(BaseResource):
         old_blob_id: str | None = None,
         **kwargs,
     ) -> Any:
-        """ """
+        """
+        Uploads a CAD file to a product and returns the blob ID.
+        Does not add the CAD file to the product.
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            cad_path (str | None): The local file path to the CAD file.
+            cad_bytes (bytes | None): The binary data of the CAD file.
+            mime_type (str | None): The MIME type of the CAD file.
+            filename (str | None): The name of the CAD file.
+            old_blob_id (str | None): The blob ID of the existing CAD file.
+            **kwargs: Additional keyword arguments containing CAD metadata.
+
+        Returns:
+            Any: The response data from the server.
+            For example:
+                {
+                    "cad_blob_id": "m-on/3100089/products/123456/cad/some-cad-file",
+                    "cad_mime_type": "application/...",
+                    "cad_file_extension": "dwg",
+                    "cad_file_name_original": "string",
+                    "cad_size": 123456,
+                }
+
+        Raises:
+            Exception: If neither cad_path nor cad_bytes is provided.
+            Exception: If the content type of the CAD file is not application/ or image/
+            Exception: If the upload fails.
+
+        Example:
+            ```python
+            # Upload a CAD file using a local file
+            response = client.products.upload_cad(
+                product_id=12345,
+                cad_path="/path/to/cad_file.dwg",
+                filename="cad_file.dwg"
+            )
+
+            # Upload a CAD file using binary data
+            response = client.products.upload_cad(
+                product_id=12345,
+                cad_bytes=b"binary_data",
+                mime_type="application/dwg",
+                filename="cad_file.dwg"
+            )
+            ```
+        """
         if not cad_path and not cad_bytes:
             raise Exception("Either cad_path or cad_bytes must be provided")
         if cad_path:
@@ -219,7 +368,10 @@ class ProductsResource(BaseResource):
         prod_cad_upload_url = PRODUCT_CAD_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_cad_upload_url}"
         if old_blob_id:
-            url += f"&old_blob_id={old_blob_id}"
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
         resp = self._client._do_request(
             "POST",
             url,
@@ -334,14 +486,14 @@ class ProductsResource(BaseResource):
                         ownership_results[field] = product_data.get(field)
         return ownership_results or None
 
-    def add_or_update_product_image(  # noqa: C901
+    def add_or_update_image(  # noqa: C901
         self,
         product_id: int,
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
-    ):
+    ) -> Response:
         """
         Adds or updates a product image.
 
@@ -403,28 +555,28 @@ class ProductsResource(BaseResource):
             }
 
             # Add a new product image using a local file
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_path="/path/to/image.jpg",
                 **image_data
             )
 
             # Add a new product image using a URL
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_url="https://example.com/image.jpg",
                 **image_data
             )
 
             # Update an existing product image (without replacing the image file)
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 old_blob_id="existing-blob-id",
                 **image_data
             )
 
             # Replace an existing product image with a new one using a local file
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_path="/path/to/new_image.jpg",
                 old_blob_id="existing-blob-id",
@@ -432,7 +584,7 @@ class ProductsResource(BaseResource):
             )
 
             # Replace an existing product image with a new one using a URL
-            response = client.products.add_or_update_product_image(
+            response = client.products.add_or_update_image(
                 product_id=12345,
                 image_url="https://example.com/new_image.jpg",
                 old_blob_id="existing-blob-id",
@@ -512,4 +664,4 @@ class ProductsResource(BaseResource):
         product = add_image_to_product_by_blob_id(
             product, image, old_blob_id=old_blob_id
         )
-        return self.update([product])
+        return self._client.update_entity(EntityType.PRODUCT, product)

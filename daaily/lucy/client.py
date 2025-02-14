@@ -150,6 +150,14 @@ class Client:
             url += build_query_string(filters)
         return Response.from_response(self._do_request("POST", url, json=entities))
 
+    def update_entity(self, entity_type: EntityType, entity: dict) -> Response:
+        """
+        Updates a entity of a certain type.
+        """
+        url = get_entity_endpoint(self._base_url, entity_type)
+        response = self._do_request("PUT", url, json=[entity])
+        return Response.from_response(response, single_entity=True)
+
     def update_entities(
         self,
         entity_type: EntityType,

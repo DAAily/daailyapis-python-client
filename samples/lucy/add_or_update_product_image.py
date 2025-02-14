@@ -21,7 +21,7 @@ image_path = None
 # Define the image URL
 image_url = "https://static.vitra.com/media-resized/dhL2lB0ZNN0glu8Gd_XqcH-2M7clCCI5bru3CZJ9yEI/fill/1440/810/ce/0/aHR0cHM6Ly9zdGF0aWMudml0cmEuY29tL21lZGlhL2Fzc2V0LzUzNTAyMDAvc3RvcmFnZS92X2Z1bGxibGVlZF8xNDQweC81ODkxMTcyNC5qcGc.jpg"
 
-updated_product = client.products.add_or_update_product_image(
+updated_product = client.products.add_or_update_image(
     product_id,
     image_path=image_path,
     image_url=image_url,

@@ -69,3 +69,26 @@ class TestLucyUtils:
             daaily.lucy.utils.add_image_to_product_by_blob_id(
                 product, {"extra_key": "missing_blob_id"}
             )
+
+    def test_extract_extension_from_blob_id(self):
+        assert (
+            daaily.lucy.utils.extract_extension_from_blob_id(
+                "path/to/file.jpg/3242432234234"
+            )
+            == "jpg"
+        )
+        assert (
+            daaily.lucy.utils.extract_extension_from_blob_id(
+                "path/to/file.tar.gz/3242432234234"
+            )
+            == "gz"
+        )
+        assert (
+            daaily.lucy.utils.extract_extension_from_blob_id("file.txt/3242432234234")
+            == "txt"
+        )
+
+    def test_extract_mime_type_from_extension(self):
+        assert daaily.lucy.utils.extract_mime_type_from_extension("jpg") == "image/jpeg"
+        assert daaily.lucy.utils.extract_mime_type_from_extension("png") == "image/png"
+        assert daaily.lucy.utils.extract_mime_type_from_extension("unknown") is None

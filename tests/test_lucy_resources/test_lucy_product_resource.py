@@ -450,12 +450,13 @@ class TestProductResource:
                 "image_size": 87335,
             }
         )
-        client.products.update = mock.MagicMock(
+        client.update_entity = mock.MagicMock(
             return_value=DummyResponse(final_product_data)
         )
 
-        def update_side_effect(products):
-            assert products[0]["images"][0] == {
+        def update_side_effect(entity_type, product):
+            assert entity_type == EntityType.PRODUCT
+            assert product["images"][0] == {
                 "blob_id": f"m-on/123345/p/{product_id}/seat_e1be67b1.jpeg/17393",
                 "image_usages": ["pro-g"],
                 "image_type": "Cut-out image",
@@ -469,8 +470,8 @@ class TestProductResource:
             }
             return DummyResponse(final_product_data)
 
-        client.products.update.side_effect = update_side_effect
-        result = client.products.add_or_update_product_image(
+        client.update_entity.side_effect = update_side_effect
+        result = client.products.add_or_update_image(
             product_id=product_id, image_path=image_path, **image_data
         )
         assert result.json() == final_product_data
@@ -483,7 +484,7 @@ class TestProductResource:
             old_blob_id=None,
             **image_data,
         )
-        client.products.update.assert_called_once()
+        client.update_entity.assert_called_once()
 
     def test_update_existing_product_image(self):
         """
@@ -535,7 +536,7 @@ class TestProductResource:
         client.get_entity = mock.MagicMock(
             return_value=DummyResponse(initial_product_data)
         )
-        client.products.update = mock.MagicMock(
+        client.update_entity = mock.MagicMock(
             return_value=DummyResponse(final_product_data)
         )
         client.products.upload_image = mock.MagicMock(
@@ -549,8 +550,9 @@ class TestProductResource:
         )
 
         # Capture the product data before the update call
-        def update_side_effect(products):
-            assert products[0]["images"][0] == {
+        def update_side_effect(entity_type, product):
+            assert entity_type == EntityType.PRODUCT
+            assert product["images"][0] == {
                 "blob_id": old_blob_id,
                 "image_usages": ["pro-g"],
                 "image_type": "Cut-out image",
@@ -560,14 +562,14 @@ class TestProductResource:
             }
             return DummyResponse(final_product_data)
 
-        client.products.update.side_effect = update_side_effect
+        client.update_entity.side_effect = update_side_effect
 
-        result = client.products.add_or_update_product_image(
+        result = client.products.add_or_update_image(
             product_id=product_id, old_blob_id=old_blob_id, **image_data
         )
         assert result.json() == final_product_data
         client.products.upload_image.assert_not_called()
-        client.products.update.assert_called_once()
+        client.update_entity.assert_called_once()
 
     def test_update_existing_product_image_with_new_image_path(self):
         """
@@ -624,7 +626,7 @@ class TestProductResource:
         client.get_entity = mock.MagicMock(
             return_value=DummyResponse(initial_product_data)
         )
-        client.products.update = mock.MagicMock(
+        client.update_entity = mock.MagicMock(
             return_value=DummyResponse(final_product_data)
         )
         client.products.upload_image = mock.MagicMock(
@@ -638,8 +640,9 @@ class TestProductResource:
         )
 
         # Capture the product data before the update call
-        def update_side_effect(products):
-            assert products[0]["images"][0] == {
+        def update_side_effect(entity_type, product):
+            assert entity_type == EntityType.PRODUCT
+            assert product["images"][0] == {
                 "blob_id": f"m-on/123345/p/{product_id}/seat_e1be67b1.jpeg/17393",
                 "image_usages": ["pro-g"],
                 "image_type": "Cut-out image",
@@ -654,8 +657,8 @@ class TestProductResource:
 
             return DummyResponse(final_product_data)
 
-        client.products.update.side_effect = update_side_effect
-        result = client.products.add_or_update_product_image(
+        client.update_entity.side_effect = update_side_effect
+        result = client.products.add_or_update_image(
             product_id=product_id,
             image_path=new_image_path,
             old_blob_id=old_blob_id,
@@ -671,4 +674,4 @@ class TestProductResource:
             old_blob_id=old_blob_id,
             **image_data,
         )
-        client.products.update.assert_called_once()
+        client.update_entity.assert_called_once()
