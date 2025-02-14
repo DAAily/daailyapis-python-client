@@ -4,7 +4,8 @@ from typing import Any, Dict, Generator
 
 import urllib3
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.constants import ENTITY_STATUS
+from daaily.lucy.enums import AssetType, EntityType
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -665,3 +666,128 @@ class ProductsResource(BaseResource):
             product, image, old_blob_id=old_blob_id
         )
         return self._client.update_entity(EntityType.PRODUCT, product)
+
+    def change_image_status(
+        self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
+    ) -> Response:
+        """
+        Changes the status of an image associated with a product.
+
+        This function updates the status of a specified image (identified by its blob
+        ID) for a given product. The status can be set to "online", "preview", or
+        "deleted".
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            blob_id (str): The blob ID of the image whose status is to be changed.
+            target_status (Literal["online", "preview", "deleted"]): The target status
+                for the image.
+
+        Returns:
+            Response: Response from the server indicating the result of the operation.
+            For example:
+                {
+                    "blob_id": "string",
+                    "move_operation": "string",
+                    "meta": {
+                        "application": "lucy-api",
+                        "topic_name": "entity-preview-staging"
+                    }
+                }
+
+        Example:
+            ```python
+            # Change the status of an image to "online"
+            response = client.products.change_image_status(
+                product_id=12345,
+                blob_id="m-on/310089/products/12345/image/file.jpg",
+                target_status="deleted"
+            )
+            ```
+        """
+        return self._client.move_asset(
+            EntityType.PRODUCT, product_id, AssetType.IMAGE, blob_id, target_status
+        )
+
+    def change_pdf_status(
+        self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
+    ) -> Response:
+        """
+        Changes the status of a PDF associated with a product.
+
+        This function updates the status of a specified PDF (identified by its blob ID)
+        for a given product. The status can be set to "online", "preview", or "deleted".
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            blob_id (str): The blob ID of the PDF whose status is to be changed.
+            target_status (Literal["online", "preview", "deleted"]): The target status
+                for the PDF.
+
+        Returns:
+            Response: Response from the server indicating the result of the operation.
+            For example:
+                {
+                    "blob_id": "string",
+                    "move_operation": "string",
+                    "meta": {
+                        "application": "lucy-api",
+                        "topic_name": "entity-preview-staging"
+                    }
+                }
+
+        Example:
+            ```python
+            # Change the status of a PDF to "online"
+            response = client.products.change_pdf_status(
+                product_id=12345,
+                blob_id="m-on/310089/products/12345/pdf/file.pdf",
+                target_status="deleted"
+            )
+            ```
+        """
+        return self._client.move_asset(
+            EntityType.PRODUCT, product_id, AssetType.PDF, blob_id, target_status
+        )
+
+    def change_cad_status(
+        self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
+    ) -> Response:
+        """
+        Changes the status of a CAD file associated with a product.
+
+        This function updates the status of a specified CAD file (identified by its
+        blob ID) for a given product. The status can be set to "online", "preview",
+        or "deleted".
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            blob_id (str): The blob ID of the CAD file whose status is to be changed.
+            target_status (Literal["online", "preview", "deleted"]): The target status
+                for the CAD file.
+
+        Returns:
+            Response: Response from the server indicating the result of the operation.
+            For example:
+                {
+                    "blob_id": "string",
+                    "move_operation": "string",
+                    "meta": {
+                        "application": "lucy-api",
+                        "topic_name": "entity-preview-staging"
+                    }
+                }
+
+        Example:
+            ```python
+            # Change the status of a CAD file to "online"
+            response = client.products.change_cad_status(
+                product_id=12345,
+                blob_id="m-on/310089/products/12345/cad/file.dwg",
+                target_status="deleted"
+            )
+            ```
+        """
+        return self._client.move_asset(
+            EntityType.PRODUCT, product_id, AssetType.CAD, blob_id, target_status
+        )

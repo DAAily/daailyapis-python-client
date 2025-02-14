@@ -61,6 +61,9 @@ sample-lucy-17:
 sample-lucy-18:
 	venv/bin/python -m samples.lucy.get_filtered_families
 
+sample-lucy-19:
+	venv/bin/python -m samples.lucy.change_status_manufacturer_image
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 

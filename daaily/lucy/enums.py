@@ -32,6 +32,7 @@ class AssetType(str, Enum):
     IMAGE = "image"
     PDF = "pdf"
     CAD = "cad"
+    ABOUT = "about"  # relates to the images of the about section
 
 
 class MimeType(Enum):
