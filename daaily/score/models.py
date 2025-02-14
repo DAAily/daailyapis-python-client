@@ -56,6 +56,6 @@ class ScoreSummary(Serializable):
     score_results: list[ScoreResult]
     sum_score: float = 0.0
 
-    def calcuate_sum_score(self):
+    def calculate_sum_score(self):
         for score in self.score_results:
             self.sum_score += score.score * score.weight
