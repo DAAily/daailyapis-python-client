@@ -278,16 +278,18 @@ class ManufacturersResource(BaseResource):
                 "description": "A sample manufacturer image",
             }
 
-            # Add a new manufacturer image using a local file
+            # Add new or replace existing manufacturer image using a local file
             response = client.manufacturers.add_or_update_image(
                 manufacturer_id=12345,
+                image_type="logo",
                 image_path="/path/to/image.jpg",
                 **image_data
             )
 
-            # Add a new manufacturer image using a URL
+            # Add new or replace existing manufacturer image using a URL
             response = client.manufacturers.add_or_update_image(
                 manufacturer_id=12345,
+                image_type="logo",
                 image_url="https://example.com/image.jpg",
                 **image_data
             )
@@ -295,23 +297,7 @@ class ManufacturersResource(BaseResource):
             # Update an existing manufacturer image (without replacing the image file)
             response = client.manufacturers.add_or_update_image(
                 manufacturer_id=12345,
-                old_blob_id="existing-blob-id",
-                **image_data
-            )
-
-            # Replace an existing manufacturer image with a new one using a local file
-            response = client.manufacturers.add_or_update_image(
-                manufacturer_id=12345,
-                image_path="/path/to/new_image.jpg",
-                old_blob_id="existing-blob-id",
-                **image_data
-            )
-
-            # Replace an existing manufacturer image with a new one using a URL
-            response = client.manufacturers.add_or_update_image(
-                manufacturer_id=12345,
-                image_url="https://example.com/new_image.jpg",
-                old_blob_id="existing-blob-id",
+                image_type="logo",
                 **image_data
             )
             ```
