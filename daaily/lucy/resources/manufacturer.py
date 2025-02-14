@@ -13,6 +13,8 @@ from daaily.lucy.utils import (
     add_about_to_manufacturer,
     add_image_to_manufacturer,
     check_field_content_set,
+    extract_extension_from_blob_id,
+    extract_mime_type_from_extension,
     gen_new_image_object_with_extras,
     get_file_data_and_mimetype,
 )
@@ -196,8 +198,10 @@ class ManufacturersResource(BaseResource):
         )
         url = f"{self._client._base_url}{image_upload_url}?image_type={image_type}"
         if old_image:
-            url += f"&old_blob_id={old_image['blob_id']}"
-        print(url)
+            old_extension = extract_extension_from_blob_id(old_image["blob_id"])
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_image['blob_id']}"
         resp = self._client._do_request(
             "POST",
             url,
