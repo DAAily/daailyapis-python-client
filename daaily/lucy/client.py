@@ -225,7 +225,6 @@ class Client:
         )
         if query_string:
             entity_url += f"{query_string}"
-        print(entity_url)
         return Response.from_response(self._do_request("POST", entity_url))
 
     def upload_file(
