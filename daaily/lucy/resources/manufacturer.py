@@ -5,8 +5,8 @@ from typing import Any, Dict, Generator, Literal
 
 import urllib3
 
-from daaily.lucy.constants import COUNTRY_CODE_TO_COUNTRY_ID_MAPPING
-from daaily.lucy.enums import AssetType, EntityStatus, EntityType, ManufacturerImageType
+from daaily.lucy.constants import COUNTRY_CODE_TO_COUNTRY_ID_MAPPING, ENTITY_STATUS
+from daaily.lucy.enums import AssetType, EntityType
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -21,6 +21,7 @@ from daaily.lucy.utils import (
 
 from . import BaseResource
 
+MANUFACTURER_IMAGE_TYPE = Literal["logo", "header"]
 MANUFACTURER_IMAGE_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/image/upload"
 MANUFACTURER_ABOUT_IMAGE_UPLOAD_ENDPOINT = (
     "/manufacturers/{manufacturer_id}/about/upload"
@@ -104,7 +105,7 @@ class ManufacturersResource(BaseResource):
     def upload_image(  # noqa: C901
         self,
         manufacturer_id: int,
-        image_type: ManufacturerImageType,
+        image_type: MANUFACTURER_IMAGE_TYPE,
         image_path: str | None = None,
         image_bytes: bytes | None = None,
         mime_type: str | None = None,
@@ -217,7 +218,7 @@ class ManufacturersResource(BaseResource):
     def add_or_update_image(  # noqa: C901
         self,
         manufacturer_id: int,
-        image_type: ManufacturerImageType,
+        image_type: MANUFACTURER_IMAGE_TYPE,
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
@@ -651,7 +652,7 @@ class ManufacturersResource(BaseResource):
         return self._client.update_entity(EntityType.MANUFACTURER, m)
 
     def change_pdf_status(
-        self, manufacturer_id: int, blob_id: str, target_status: EntityStatus
+        self, manufacturer_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
         """
         Changes the status of a PDF associated with a manufacturer.
@@ -700,8 +701,8 @@ class ManufacturersResource(BaseResource):
         self,
         manufacturer_id: int,
         blob_id: str,
-        image_type: ManufacturerImageType,
-        target_status: EntityStatus,
+        image_type: MANUFACTURER_IMAGE_TYPE,
+        target_status: ENTITY_STATUS,
     ) -> Response:
         """
         Changes the status of an image associated with a manufacturer.

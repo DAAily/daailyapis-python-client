@@ -4,7 +4,8 @@ from typing import Any, Dict, Generator
 
 import urllib3
 
-from daaily.lucy.enums import AssetType, EntityStatus, EntityType
+from daaily.lucy.constants import ENTITY_STATUS
+from daaily.lucy.enums import AssetType, EntityType
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -362,7 +363,7 @@ class FamiliesResource(BaseResource):
         return self._client.update_entity(EntityType.FAMILY, family)
 
     def change_image_status(
-        self, family_id: int, blob_id: str, target_status: EntityStatus
+        self, family_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
         """
         Changes the status of an image associated with a family.

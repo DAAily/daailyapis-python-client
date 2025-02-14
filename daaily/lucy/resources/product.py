@@ -4,7 +4,8 @@ from typing import Any, Dict, Generator
 
 import urllib3
 
-from daaily.lucy.enums import AssetType, EntityStatus, EntityType
+from daaily.lucy.constants import ENTITY_STATUS
+from daaily.lucy.enums import AssetType, EntityType
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -667,7 +668,7 @@ class ProductsResource(BaseResource):
         return self._client.update_entity(EntityType.PRODUCT, product)
 
     def change_image_status(
-        self, product_id: int, blob_id: str, target_status: EntityStatus
+        self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
         """
         Changes the status of an image associated with a product.
@@ -709,7 +710,7 @@ class ProductsResource(BaseResource):
         )
 
     def change_pdf_status(
-        self, product_id: int, blob_id: str, target_status: EntityStatus
+        self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
         """
         Changes the status of a PDF associated with a product.
@@ -750,7 +751,7 @@ class ProductsResource(BaseResource):
         )
 
     def change_cad_status(
-        self, product_id: int, blob_id: str, target_status: EntityStatus
+        self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
         """
         Changes the status of a CAD file associated with a product.

@@ -1,6 +1,9 @@
+from typing import Literal
+
 LUCY_V2_BASE_URL_STAGING = "https://lucy.staging.daaily.com/api/v2"
 LUCY_V2_BASE_URL_PRODUCTION = "https://lucy.daaily.com/api/v2"
 
+ENTITY_STATUS = Literal["online", "preview", "deleted"]
 
 COUNTRY_CODE_TO_COUNTRY_ID_MAPPING = {
     None: 10000016,

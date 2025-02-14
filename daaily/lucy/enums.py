@@ -87,14 +87,3 @@ class MimeType(Enum):
             return MimeType.CSV
         if extension == "json":
             return MimeType.JSON
-
-
-class ManufacturerImageType(Enum, str):
-    HEADER = "header"
-    LOGO = "logo"
-
-
-class EntityStatus(Enum, str):
-    ONLINE = "online"
-    PREVIEW = "preview"
-    DELETED = "deleted"
