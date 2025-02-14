@@ -6,7 +6,7 @@ from typing import Any, Dict, Generator, Literal
 import urllib3
 
 from daaily.lucy.constants import COUNTRY_CODE_TO_COUNTRY_ID_MAPPING
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import AssetType, EntityStatus, EntityType, ManufacturerImageType
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -104,7 +104,7 @@ class ManufacturersResource(BaseResource):
     def upload_image(  # noqa: C901
         self,
         manufacturer_id: int,
-        image_type: Literal["logo", "header"],
+        image_type: ManufacturerImageType,
         image_path: str | None = None,
         image_bytes: bytes | None = None,
         mime_type: str | None = None,
@@ -217,7 +217,7 @@ class ManufacturersResource(BaseResource):
     def add_or_update_image(  # noqa: C901
         self,
         manufacturer_id: int,
-        image_type: Literal["logo", "header"],
+        image_type: ManufacturerImageType,
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
@@ -479,108 +479,6 @@ class ManufacturersResource(BaseResource):
         m["addresses"].append(address)
         return self._client.update_entity(EntityType.MANUFACTURER, m)
 
-    def add_new_image_by_path(
-        self,
-        manufacturer_id: int,
-        image_path: str,
-        image_type: Literal["logo", "header"],
-        image_description: str | None = None,
-        **kwargs,
-    ) -> Response:
-        """
-        Adds an image to a manufacturer by uploading the image from a specified file
-        path.
-
-        This method reads the image file, determines its MIME type, and uploads it to a
-        lucy and then afterwards adds it to the image object on the manufacturer.
-
-        Args:
-            manufacturer_id (int): The ID of the manufacturer to which the image will
-                be added.
-            image_path (str): The file path of the image to be uploaded.
-            image_type (str): The type of image to be uploaded (e.g., "logo", "header").
-            image_description (str | None): Optional description of the image.
-            kwargs (dict | None): Optional fields and metadata add to the image.
-
-        Raises:
-            Exception: If the content type of the image cannot be determined or if the
-            signed URL request fails.
-            Exception: If the manufacturer cannot be retrieved or updated.
-
-        Returns:
-            dict: The updated manufacturer information after adding the image.
-
-        Example:
-            ```python
-            # Define manufacturer ID and image path
-            man_id = 12345
-            image_path = "/path/to/image.jpg"
-
-            # Add image to manufacturer
-            man = client.manufacturers.add_new_image_by_path(man_id, image_path, "logo")
-
-            # Print updated manufacturer information
-            print(man)
-            ```
-        """
-        try:
-            with open(image_path, "rb") as image_file:
-                image_data = image_file.read()
-        except (IOError, OSError) as e:
-            raise Exception(f"Failed to open image file at {image_path}: {e}") from e
-        content_type, _ = mimetypes.guess_type(image_path)
-        if content_type is None:
-            raise Exception(f"Could not determine content type for {image_path}")
-        if not content_type.startswith("image/"):
-            raise Exception(
-                f"File at {image_path} is not an image. Detected: {content_type}"
-            )
-        manufacturer = self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)
-        if manufacturer.status != 200:
-            raise Exception(f"Failed to get manufacturer: {manufacturer.data}")
-        old_image = check_field_content_set(
-            manufacturer.json(),  # type: ignore
-            f"{image_type}_image",
-        )
-        if kwargs:
-            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
-        else:
-            headers = {}
-        man_image_upload_url = MANUFACTURER_IMAGE_UPLOAD_ENDPOINT.format(
-            manufacturer_id=manufacturer_id
-        )
-        url = f"{self._client._base_url}{man_image_upload_url}?image_type={image_type}"
-        if old_image:
-            url += f"&old_blob_id={old_image['blob_id']}"
-        resp = self._client._do_request(
-            "POST",
-            url,
-            fields={
-                "file": (image_path.split("/")[-1:][0], image_data, content_type),
-            },
-            headers=headers,
-        )
-        if resp.status != 200:
-            raise Exception(
-                f"Failed to upload image. Status code: {resp.status}. {resp.data}"
-            )
-        resp_data = json.loads(resp.data.decode("utf-8"))
-        new_image = gen_new_image_object_with_extras(
-            resp_data["image_blob_id"],
-            size=resp_data["image_size"],
-            height=resp_data["image_height"],
-            width=resp_data["image_width"],
-            file_type=resp_data["image_mime_type"],
-            description=image_description,
-            **kwargs,
-        )
-        manufacturer = add_image_to_manufacturer(
-            manufacturer.json(),  # type: ignore
-            new_image,
-            image_type,
-        )
-        return self._client.update_entity(EntityType.MANUFACTURER, manufacturer)
-
     def add_about(  # noqa: C901
         self,
         manufacturer_id: int,
@@ -751,3 +649,100 @@ class ManufacturersResource(BaseResource):
             raise Exception(f"Manufacturer with ID {manufacturer_id} not found.")
         m = add_about_to_manufacturer(m, about)
         return self._client.update_entity(EntityType.MANUFACTURER, m)
+
+    def change_pdf_status(
+        self, manufacturer_id: int, blob_id: str, target_status: EntityStatus
+    ) -> Response:
+        """
+        Changes the status of a PDF associated with a manufacturer.
+
+        This function updates the status of a specified PDF (identified by its blob ID)
+        for a given manufacturer. The status can be set to "online", "preview", or
+        "deleted".
+
+        Args:
+            manufacturer_id (int): The unique identifier of the manufacturer.
+            blob_id (str): The blob ID of the PDF whose status is to be changed.
+            target_status (Literal["online", "preview", "deleted"]): The target status
+                for the PDF.
+
+        Returns:
+            Response: Response from the server indicating the result of the operation.
+            For example:
+                {
+                    "blob_id": "string",
+                    "move_operation": "string",
+                    "meta": {
+                        "application": "lucy-api",
+                        "topic_name": "entity-preview-staging"
+                    }
+                }
+
+        Example:
+            ```python
+            # Change the status of a PDF to "online"
+            response = client.manufacturers.change_pdf_status(
+                manufacturer_id=12345,
+                blob_id="m-on/310089/pdf/file.pdf",
+                target_status="deleted"
+            )
+            ```
+        """
+        return self._client.move_asset(
+            EntityType.MANUFACTURER,
+            manufacturer_id,
+            AssetType.PDF,
+            blob_id,
+            target_status,
+        )
+
+    def change_image_status(
+        self,
+        manufacturer_id: int,
+        blob_id: str,
+        image_type: ManufacturerImageType,
+        target_status: EntityStatus,
+    ) -> Response:
+        """
+        Changes the status of an image associated with a manufacturer.
+
+        This function updates the status of a specified image (identified by its blob
+        ID) for a given manufacturer. The status can be set to "online", "preview", or
+        "deleted".
+
+        Args:
+            manufacturer_id (int): The unique identifier of the manufacturer.
+            blob_id (str): The blob ID of the image whose status is to be changed.
+            target_status (Literal["online", "preview", "deleted"]): The target status
+                for the image.
+
+        Returns:
+            Response: Response from the server indicating the result of the operation.
+            For example:
+                {
+                    "blob_id": "string",
+                    "move_operation": "string",
+                    "meta": {
+                        "application": "lucy-api",
+                        "topic_name": "entity-preview-staging"
+                    }
+                }
+
+        Example:
+            ```python
+            # Change the status of an image to "online"
+            response = client.manufacturers.change_image_status(
+                manufacturer_id=12345,
+                blob_id="m-on/310089/12345/image/file.jpg",
+                target_status="deleted"
+            )
+            ```
+        """
+        return self._client.move_asset(
+            EntityType.MANUFACTURER,
+            manufacturer_id,
+            AssetType.IMAGE,
+            blob_id,
+            target_status,
+            query_string=f"&image_type={image_type}",
+        )

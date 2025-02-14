@@ -5,7 +5,7 @@ from urllib3 import filepost
 import daaily.transport
 from daaily.credentials_sally import Credentials
 from daaily.lucy.constants import LUCY_V2_BASE_URL_PRODUCTION
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import AssetType, EntityStatus, EntityType
 from daaily.lucy.models import Filter
 from daaily.lucy.resources.collection import CollectionsResource
 from daaily.lucy.resources.creator import CreatorsResource
@@ -205,6 +205,27 @@ class Client:
             if max_pages and skip >= max_pages:
                 break
         return entities
+
+    def move_asset(
+        self,
+        entity_type: EntityType,
+        entity_id: int,
+        asset_type: AssetType,
+        blob_id: str,
+        target_status: EntityStatus,
+        query_string: str | None = None,
+    ) -> Response:
+        """
+        Moves an asset from one entity to another.
+        """
+        url = get_entity_endpoint(self._base_url, entity_type)
+        entity_url = (
+            f"{url}/{entity_id}/{asset_type}/move/{blob_id}"
+            + f"?target_status={target_status}"
+        )
+        if query_string:
+            entity_url += query_string
+        return Response.from_response(self._do_request("POST", entity_url))
 
     def upload_file(
         self,

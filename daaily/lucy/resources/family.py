@@ -4,7 +4,7 @@ from typing import Any, Dict, Generator
 
 import urllib3
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import AssetType, EntityStatus, EntityType
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -360,3 +360,45 @@ class FamiliesResource(BaseResource):
             raise ValueError("Image object must contain a blob_id")
         family = add_image_to_family_by_blob_id(family, image, old_blob_id=old_blob_id)
         return self._client.update_entity(EntityType.FAMILY, family)
+
+    def change_image_status(
+        self, family_id: int, blob_id: str, target_status: EntityStatus
+    ) -> Response:
+        """
+        Changes the status of an image associated with a family.
+
+        This function updates the status of a specified image (identified by its blob
+        ID) for a given family. The status can be set to "online", "preview", or
+        "deleted".
+
+        Args:
+            family_id (int): The unique identifier of the family.
+            blob_id (str): The blob ID of the image whose status is to be changed.
+            target_status (Literal["online", "preview", "deleted"]): The target status
+                for the image.
+
+        Returns:
+            Response: Response from the server indicating the result of the operation.
+            For example:
+                {
+                    "blob_id": "string",
+                    "move_operation": "string",
+                    "meta": {
+                        "application": "lucy-api",
+                        "topic_name": "entity-preview-staging"
+                    }
+                }
+
+        Example:
+            ```python
+            # Change the status of an image to "online"
+            response = client.families.change_image_status(
+                family_id=12345,
+                blob_id="m-on/310089/families/12345/image/file.jpg",
+                target_status="deleted"
+            )
+            ```
+        """
+        return self._client.move_asset(
+            EntityType.FAMILY, family_id, AssetType.IMAGE, blob_id, target_status
+        )
