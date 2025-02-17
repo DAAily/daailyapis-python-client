@@ -220,7 +220,7 @@ class Client:
         """
         url = get_entity_endpoint(self._base_url, entity_type)
         entity_url = (
-            f"{url}/{entity_id}/{asset_type.value}/move/{blob_id}"
+            f"{url}/{entity_id}/{asset_type.value}/{blob_id}/move"
             + f"?target_status={target_status}"
         )
         if query_string:
