@@ -6,12 +6,14 @@ client = Client(base_url=LUCY_V2_BASE_URL_STAGING)
 
 # Define filters
 filters = [
-    Filter("type", "feature"),
-    Filter("status", "online"),
+    Filter("type", "category"),
+    # Filter("status", "online"),
 ]
 
 # Search for attributes matching the filters
 attributes = client.attributes.get(filters=filters)
+
+print(attributes)
 
 # Iterate over the results
 for a in attributes:

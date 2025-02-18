@@ -67,6 +67,9 @@ sample-lucy-19:
 sample-lucy-20:
 	venv/bin/python -m samples.lucy.create_attribute
 
+sample-lucy-21:
+	venv/bin/python -m samples.lucy.update_attributes
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
