@@ -64,6 +64,9 @@ sample-lucy-18:
 sample-lucy-19:
 	venv/bin/python -m samples.lucy.change_status_manufacturer_image
 
+sample-lucy-20:
+	venv/bin/python -m samples.lucy.create_attribute
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 

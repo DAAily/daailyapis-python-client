@@ -7,6 +7,7 @@ from daaily.credentials_sally import Credentials
 from daaily.lucy.constants import ENTITY_STATUS, LUCY_V2_BASE_URL_PRODUCTION
 from daaily.lucy.enums import AssetType, EntityType
 from daaily.lucy.models import Filter
+from daaily.lucy.resources.attribute import AttributesResource
 from daaily.lucy.resources.collection import CollectionsResource
 from daaily.lucy.resources.creator import CreatorsResource
 from daaily.lucy.resources.distributor import DistributorsResource
@@ -69,6 +70,7 @@ class Client:
         self.distributors = DistributorsResource(self)
         self.collections = CollectionsResource(self)
         self.journalists = JournalistsResource(self)
+        self.attributes = AttributesResource(self)
         self.materials = MaterialsResource(self)
         self.projects = ProjectsResource(self)
         self.products = ProductsResource(self)

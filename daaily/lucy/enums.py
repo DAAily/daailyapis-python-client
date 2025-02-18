@@ -16,6 +16,7 @@ class EntityType(str, Enum):
     DISTRIBUTOR = "distributor"
     COLLECTION = "collection"
     JOURNALIST = "journalist"
+    ATTRIBUTE = "attribute"
     MATERIAL = "material"
     PROJECT = "project"
     PRODUCT = "product"
