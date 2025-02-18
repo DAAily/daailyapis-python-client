@@ -5,6 +5,7 @@ entity_type_endpoint_mapping = {
     EntityType.DISTRIBUTOR: "distributors",
     EntityType.COLLECTION: "collections",
     EntityType.JOURNALIST: "journalists",
+    EntityType.ATTRIBUTE: "attributes",
     EntityType.MATERIAL: "materials",
     EntityType.PROJECT: "projects",
     EntityType.PRODUCT: "products",
