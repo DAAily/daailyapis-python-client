@@ -13,8 +13,6 @@ filters = [
 # Search for attributes matching the filters
 attributes = client.attributes.get(filters=filters)
 
-print(attributes)
-
 # Iterate over the results
 for a in attributes:
     if a["name_de"] is None:
