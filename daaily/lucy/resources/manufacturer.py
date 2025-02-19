@@ -1,7 +1,9 @@
 import json
 import mimetypes
+import os
 import re
 from typing import Any, Dict, Generator, Literal
+from urllib.parse import urlparse
 
 import urllib3
 
@@ -346,12 +348,17 @@ class ManufacturersResource(BaseResource):
                 content_type = resp.headers.get("Content-Type")
                 image_data = resp.data
                 disposition = resp.headers.get("content-disposition")
-                if not disposition:
-                    raise ValueError(
-                        "The 'content-disposition' header is missing in the response "
-                        + "when trying to download image from image url"
-                    )
-                filename = re.findall("filename=(.+)", disposition)[0]
+                if disposition:
+                    filename = re.findall("filename=(.+)", disposition)[0]
+                else:
+                    parsed_url = urlparse(image_url)
+                    filename = os.path.basename(parsed_url.path)
+                    if not filename:
+                        raise ValueError(
+                            "Could not determine filename from URL and "
+                            + "'content-disposition' header is missing in the response "
+                            + "when trying to download image from image url"
+                        )
             resp_data = self.upload_image(
                 manufacturer_id=manufacturer_id,
                 image_type=image_type,
