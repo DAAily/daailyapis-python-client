@@ -10,15 +10,13 @@ from daaily.score.utils import compute_score
 
 
 class Product(Client):
-    def __init__(self):
-        Client.__init__(
-            self,
-            type="Product",
-            weights=[
-                ScoreWeight(field_name=key, weight=PRODUCT_WEIGHTS[key])
-                for key in PRODUCT_WEIGHTS
-            ],
-        )
+    def __init__(self, score_weights: dict | None = None):
+        score_weights = score_weights or PRODUCT_WEIGHTS
+        weights = [
+            ScoreWeight(field_name=key, weight=score_weights[key])
+            for key in score_weights
+        ]
+        super().__init__(type="Product", weights=weights)
 
     def score_internal_number(
         self, field_name: str, weight: float, _, record: dict
