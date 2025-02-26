@@ -194,7 +194,9 @@ class Client:
         for topic, data in topics.items():
             description = data[0]
             weight = data[1]
-            embeddings = self._sentence_transformer_model.encode([text, description])
+            embeddings = self._sentence_transformer_model.encode(
+                [text, description], show_progress_bar=False
+            )
             similarity = util.cos_sim(embeddings[0], embeddings[1])
             scores[topic] = (
                 float(similarity.item()) * weight
@@ -210,7 +212,7 @@ class Client:
             text (str): The input text to evaluate.
 
         Returns:
-            dict: A scoree for spelling
+            dict: A score for spelling
         """
         # Tokenize the text into words
         words = text.split()
@@ -251,9 +253,9 @@ class Client:
         for w in self.weights:
             if w.field_name == "_":  # skip the _ key
                 continue
-            funct = f"score_{w.field_name}"
-            if hasattr(self, funct):
-                score_results = getattr(self, funct)(
+            score_func = f"score_{w.field_name}"
+            if hasattr(self, score_func):
+                score_results = getattr(self, score_func)(
                     w.field_name, w.weight, data.get(w.field_name), data
                 )
                 score_summary.score_results.append(score_results)
@@ -261,5 +263,5 @@ class Client:
                 logging.warning(
                     f"No score function found for {w.field_name} in {self.type} score"
                 )
-        score_summary.calcuate_sum_score()
+        score_summary.calculate_sum_score()
         return score_summary

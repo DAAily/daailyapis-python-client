@@ -6,6 +6,7 @@ from daaily.score.models import (
     ScoreResultIssues,
     ScoreWeight,
 )
+from daaily.score.utils import compute_score
 
 
 class Product(Client):
@@ -30,14 +31,41 @@ class Product(Client):
             else 0,
         )
 
+    def score_article_number(
+        self, field_name: str, weight: float, article_number: str, _: dict
+    ) -> ScoreResult:
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=1 if article_number else 0
+        )
+
+    def score_launch_date(
+        self, field_name: str, weight: float, launch_date: str, _: dict
+    ) -> ScoreResult:
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=1 if launch_date else 0
+        )
+
+    def score_design_year(
+        self, field_name: str, weight: float, design_year: int, _: dict
+    ) -> ScoreResult:
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=1 if design_year else 0
+        )
+
+    def score_designer_names(
+        self, field_name: str, weight: float, designer_names: list[str], _
+    ) -> ScoreResult:
+        _len = len(designer_names or [])
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
+        )
+
     def score_images(
         self, field_name: str, weight: float, images: list[dict], _
     ) -> ScoreResult:
         _len = len(images or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if _len > 3 else 0 if _len == 0 else 0.8,
+            field_name=field_name, weight=weight, score=compute_score(_len, 3)
         )
 
     def score_family_id(
@@ -47,23 +75,27 @@ class Product(Client):
             field_name=field_name, weight=weight, score=1 if family_id else 0
         )
 
+    def score_family_name(
+        self, field_name: str, weight: float, family_name: int, _
+    ) -> ScoreResult:
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=1 if family_name else 0
+        )
+
     def score_group_ids(
         self, field_name: str, weight: float, group_ids: list[int], _
     ) -> ScoreResult:
         _len = len(group_ids or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if _len > 1 else 0 if _len == 0 else 0.8,
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
         )
 
     def score_materials(
         self, field_name: str, weight: float, materials: list[dict], _
     ) -> ScoreResult:
+        _len = len(materials or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if len(materials or []) > 0 else 0,
+            field_name=field_name, weight=weight, score=compute_score(_len, 0)
         )
 
     def score_attributes(
@@ -71,18 +103,37 @@ class Product(Client):
     ) -> ScoreResult:
         _len = len(attributes or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if _len > 3 else 0 if _len == 0 else 0.8,
+            field_name=field_name, weight=weight, score=compute_score(_len, 3)
         )
 
     def score_collection_ids(
         self, field_name: str, weight: float, collection_ids: list[int], _
     ) -> ScoreResult:
+        _len = len(collection_ids or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if len(collection_ids or []) > 1 else 0,
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
+        )
+
+    def score_collection_names(
+        self, field_name: str, weight: float, collection_names: list[str], _
+    ) -> ScoreResult:
+        _len = len(collection_names or [])
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
+        )
+
+    def score_master_variant_name(
+        self, field_name: str, weight: float, master_variant_name: str, _
+    ) -> ScoreResult:
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=1 if master_variant_name else 0
+        )
+
+    def score_category(
+        self, field_name: str, weight: float, category: str, _
+    ) -> ScoreResult:
+        return ScoreResult(
+            field_name=field_name, weight=weight, score=1 if category else 0
         )
 
     def score_3D(self, field_name: str, weight: float, _, record) -> ScoreResult:
@@ -104,9 +155,7 @@ class Product(Client):
             ]
         )
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if _len > 1 else 0 if _len == 0 else 0.8,
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
         )
 
     def score_prices(
@@ -114,9 +163,7 @@ class Product(Client):
     ) -> ScoreResult:
         _len = len(prices or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if _len > 1 else 0 if _len == 0 else 0.8,
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
         )
 
     def score_pdfs(
@@ -124,17 +171,13 @@ class Product(Client):
     ) -> ScoreResult:
         _len = len(pdf or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if _len > 1 else 0 if _len == 0 else 0.8,
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
         )
 
     def score_cads(self, field_name: str, weight: float, cads, _) -> ScoreResult:
         _len = len(cads or [])
         return ScoreResult(
-            field_name=field_name,
-            weight=weight,
-            score=1 if _len > 1 else 0 if _len == 0 else 0.8,
+            field_name=field_name, weight=weight, score=compute_score(_len, 1)
         )
 
     def score_text_en(
@@ -154,7 +197,7 @@ class Product(Client):
         balanced_score = self._calculate_balanced_richness(
             text_en, target_length=150, alpha=0.5, beta=0.5
         )
-        completeness_score, completness_scores = self._semantic_similarity_check(
+        completeness_score, completeness_scores = self._semantic_similarity_check(
             text_en, TEXT_SIMILARITY_TOPICS
         )
         completeness = completeness_score * balanced_score.richness
@@ -168,7 +211,7 @@ class Product(Client):
             score=completeness * flesch * spelling_score,
             details=ScoreResultDetails(
                 richness=balanced_score.richness,
-                completeness=completness_scores,
+                completeness=completeness_scores,
                 length_factor=balanced_score.length_factor,
                 flesch=flesch,
                 grammar=grammar_score,
