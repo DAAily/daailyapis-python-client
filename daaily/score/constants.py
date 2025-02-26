@@ -23,11 +23,11 @@ TEXT_SIMILARITY_TOPICS = {
     ),
     "dimensions": (
         "The text should provide information about the dimensions of the product like "
-        + "height, width,length but also weigth",
+        + "height, width,length but also weight",
         0.3,
     ),
     "usage": (
-        "The text descibes the usage of the product. Like at home, in the office, "
+        "The text describes the usage of the product. Like at home, in the office, "
         + "outdoor, in living room also in bedroom, etc.",
         0.3,
     ),
