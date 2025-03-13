@@ -18,7 +18,8 @@ from daaily.lucy.utils import (
     get_file_data_and_mimetype,
 )
 
-from . import BaseResource
+from .. import BaseResource
+from ..enums import AttributeType
 
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
 PRODUCT_IMAGE_UPLOAD_ENDPOINT = "/products/{product_id}/image/upload"
@@ -798,3 +799,57 @@ class ProductsResource(BaseResource):
         return self._client.move_asset(
             EntityType.PRODUCT, product_id, AssetType.CAD, blob_id, target_status
         )
+
+    def add_or_update_attributes(
+        self, product_id: int, attributes: list[tuple[str, Any, AttributeType]]
+    ):
+        """
+        Adds attributes to a product.
+
+        attributes is a list of tuples, where each tuple contains the attribute
+        name english, the value and the attribute type. The attribute type must
+        be one of the values in the AttributeType enum.
+        """
+        attributes_to_add = []
+        for name_en, value, attribute_type in attributes:
+            name_match = self._client.attributes.check_exists(name_en, attribute_type)
+            if value is None:
+                value = True
+            (
+                parsed_value,
+                value_type,
+            ) = self._client.attributes.determine_attribute_value_type(value)
+            if name_match:
+                attributes_to_add.append(
+                    {
+                        "name": name_match[name_en],
+                        "value": parsed_value,
+                    }
+                )
+
+            else:
+                new_attribute = {
+                    "name_en": name_en,
+                    "value_type": value_type,
+                    "attribute_type": attribute_type,
+                }
+                resp = self._client.attributes.create([new_attribute])
+                if resp.status != 201:
+                    raise Exception(
+                        f"Failed to create attribute {name_en}. Status: {resp.status}"
+                    )
+                attributes_json = resp.json()
+                if not attributes_json:
+                    raise Exception(
+                        f"Failed to create attribute {name_en}. No attribute returned"
+                    )
+                attribute = attributes_json[0]
+                attributes_to_add.append(
+                    {"name": attribute["name"], "value": parsed_value}
+                )
+        product = self.get_by_id(product_id).json()
+        if not product:
+            raise Exception(f"Product with ID {product_id} not found")
+        product["attributes"] = product.get("attributes") or []
+        product["attributes"].extend(attributes_to_add)
+        return self.update([product])

@@ -7,7 +7,7 @@ from daaily.credentials_sally import Credentials
 from daaily.lucy.constants import ENTITY_STATUS, LUCY_V2_BASE_URL_PRODUCTION
 from daaily.lucy.enums import AssetType, EntityType
 from daaily.lucy.models import Filter
-from daaily.lucy.resources.attribute import AttributesResource
+from daaily.lucy.resources.attribute.resource import AttributesResource
 from daaily.lucy.resources.collection import CollectionsResource
 from daaily.lucy.resources.creator import CreatorsResource
 from daaily.lucy.resources.distributor import DistributorsResource
@@ -19,7 +19,7 @@ from daaily.lucy.resources.group import GroupsResource
 from daaily.lucy.resources.journalist import JournalistsResource
 from daaily.lucy.resources.manufacturer import ManufacturersResource
 from daaily.lucy.resources.material import MaterialsResource
-from daaily.lucy.resources.product import ProductsResource
+from daaily.lucy.resources.product.resource import ProductsResource
 from daaily.lucy.resources.project import ProjectsResource
 from daaily.lucy.resources.space import SpacesResource
 from daaily.lucy.resources.story import StoriesResource
