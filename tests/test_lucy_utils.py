@@ -1,3 +1,4 @@
+import json
 import unittest
 
 import pytest
@@ -96,14 +97,27 @@ class TestLucyUtils(unittest.TestCase):
         assert daaily.lucy.utils.extract_mime_type_from_extension("unknown") is None
 
     def test_valid_message(self):
-        binary_data = (
-            b'{"title": "Duplicate key found", "description": "{\'index\': 0, '
-            b"'code': 11000, 'errmsg': 'E11000 duplicate key error collection: "
-            b"lucy-dev.attributes index: attribute_id_1 dup key: { attribute_id: "
-            b'1024 }", "identifier_field": null, "identifier": null}'
-        )
-        result = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
-        self.assertEqual(result, ("attribute_id_1", "1024"))
+        binary_data = json.dumps(
+            {
+                "title": "Duplicate key found",
+                "description": json.dumps(
+                    {
+                        "index": 0,
+                        "code": 11000,
+                        "errmsg": "E11000 duplicate key error collection: "
+                        + "lucy-dev.attributes index: attribute_id_1 dup key: "
+                        + "{ attribute_id: 1024 }",
+                        "identifier_field": None,
+                        "identifier": None,
+                    }
+                ),
+            }
+        ).encode("utf-8")
+        (
+            index_name,
+            dup_value,
+        ) = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
+        self.assertEqual((index_name, dup_value), ("attribute_id_1", 1024))
 
     def test_missing_dup_key(self):
         binary_data = (
@@ -112,9 +126,11 @@ class TestLucyUtils(unittest.TestCase):
             b'info\', "identifier_field": null, "identifier": null}'
         )
         result = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
-        self.assertIsNone(result)
+        self.assertIsNone(result[0])
+        self.assertIsNone(result[1])
 
     def test_malformed_json(self):
         binary_data = b"not a valid json"
         result = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
-        self.assertIsNone(result)
+        self.assertIsNone(result[0])
+        self.assertIsNone(result[1])

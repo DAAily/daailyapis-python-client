@@ -216,26 +216,21 @@ def deter_duplicate_key_from_error_message(
         ```
     """
     try:
-        # Decode the binary data and load the JSON content.
-        data_str = binary_data.decode("utf-8")
-        data = json.loads(data_str)
-        # Convert the description field into a Python dict.
-        description = data.get("description", "")
-        description_data = ast.literal_eval(description)
-        error_message = description_data.get("errmsg", "")
-        # Define regex patterns with named groups.
+        data = json.loads(binary_data.decode("utf-8"))
+        description_str = data.get("description", "")
+        description_data = json.loads(description_str)
+        errmsg = description_data.get("errmsg", "")
         index_pattern = re.compile(r"index:\s*(?P<index>\S+)")
         dup_key_pattern = re.compile(
             r"dup key:\s*\{\s*(?P<field>\w+):\s*(?P<dup_value>.+?)\s*\}"
         )
-        index_match = index_pattern.search(error_message)
+        index_match = index_pattern.search(errmsg)
         if not index_match:
             return None, None
-        dup_key_match = dup_key_pattern.search(error_message)
+        dup_key_match = dup_key_pattern.search(errmsg)
         if dup_key_match:
             sanitized_value = ast.literal_eval(dup_key_match.group("dup_value"))
             return index_match.group("index"), sanitized_value
     except Exception:
-        # In case of any parsing error, simply return None.
         return None, None
     return None, None
