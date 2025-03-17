@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 from typing import Any, Dict, Generator
@@ -7,11 +8,12 @@ from urllib.parse import urlparse
 import urllib3
 
 from daaily.lucy.constants import ENTITY_STATUS
-from daaily.lucy.enums import AssetType, EntityType
+from daaily.lucy.enums import AssetType, EntityType, Service
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_image_to_product_by_blob_id,
+    deter_duplicate_key_from_error_message,
     extract_extension_from_blob_id,
     extract_mime_type_from_extension,
     gen_new_image_object_with_extras,
@@ -27,6 +29,8 @@ PRODUCT_PDF_UPLOAD_ENDPOINT = "/products/{product_id}/pdf/upload"
 PRODUCT_CAD_UPLOAD_ENDPOINT = "/products/{product_id}/cad/upload"
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
+
+logger = logging.getLogger(__name__)
 
 
 class ProductsResource(BaseResource):
@@ -91,11 +95,25 @@ class ProductsResource(BaseResource):
     def get_by_id(self, product_id: int):
         return self._client.get_entity(EntityType.PRODUCT, product_id)
 
-    def update(self, products: list[dict], filters: list[Filter] | None = None):
-        return self._client.update_entities(EntityType.PRODUCT, products, filters)
+    def update(
+        self,
+        products: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.update_entities(
+            EntityType.PRODUCT, products, filters, service
+        )
 
-    def create(self, products: list[dict], filters: list[Filter] | None = None):
-        return self._client.create_entities(EntityType.PRODUCT, products, filters)
+    def create(
+        self,
+        products: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.create_entities(
+            EntityType.PRODUCT, products, filters, service=service
+        )
 
     def upload_image(
         self,
@@ -800,8 +818,11 @@ class ProductsResource(BaseResource):
             EntityType.PRODUCT, product_id, AssetType.CAD, blob_id, target_status
         )
 
-    def add_or_update_attributes(
-        self, product_id: int, attributes: list[tuple[str, Any, AttributeType]]
+    def add_or_update_attributes(  # noqa: C901
+        self,
+        product_id: int,
+        attributes: list[tuple[str, Any, AttributeType]],
+        service: Service = Service.SPARKY,
     ):
         """
         Adds attributes to a product.
@@ -812,32 +833,35 @@ class ProductsResource(BaseResource):
         """
         attributes_to_add = []
         for name_en, value, attribute_type in attributes:
-            name_match = self._client.attributes.check_exists(name_en, attribute_type)
-            if value is None:
+            filters = [Filter("synonyms", name_en)]
+            generator = self._client.attributes.get(filters=filters)
+            attribute_with_synonym_match = None
+            for attribute in generator:
+                attribute_with_synonym_match = attribute
+                break
+            if value is None:  # If value is None, we assume the attribute is a tag
                 value = True
             (
                 parsed_value,
                 value_type,
             ) = self._client.attributes.determine_attribute_value_type(value)
-            if name_match:
+            if attribute_with_synonym_match:
+                logger.info(f"Found attribute with synonym match: {name_en}")
                 attributes_to_add.append(
                     {
-                        "name": name_match[name_en],
+                        "name": attribute_with_synonym_match["name"],
                         "value": parsed_value,
                     }
                 )
-
-            else:
-                new_attribute = {
-                    "name_en": name_en,
-                    "value_type": value_type,
-                    "attribute_type": attribute_type,
-                }
-                resp = self._client.attributes.create([new_attribute])
-                if resp.status != 201:
-                    raise Exception(
-                        f"Failed to create attribute {name_en}. Status: {resp.status}"
-                    )
+                continue
+            new_attribute = {
+                "name_en": name_en,
+                "value_type": value_type.value,
+                "type": attribute_type.value,
+            }
+            resp = self._client.attributes.create([new_attribute])
+            if resp.status == 201:
+                logger.info(f"Created new attribute: {name_en}")
                 attributes_json = resp.json()
                 if not attributes_json:
                     raise Exception(
@@ -847,9 +871,34 @@ class ProductsResource(BaseResource):
                 attributes_to_add.append(
                     {"name": attribute["name"], "value": parsed_value}
                 )
+            elif resp.status == 409:
+                # Duplicate key issue. Could mean that the attribute already exists
+                index_name, dup_value = deter_duplicate_key_from_error_message(
+                    resp.data
+                )
+                if index_name and index_name.startswith("name_"):
+                    logger.info(
+                        "Attribute already exists. Using existing attribute instead: "
+                        + f"{dup_value}"
+                    )
+                    attributes_to_add.append({"name": dup_value, "value": parsed_value})
+                else:
+                    raise Exception(
+                        f"Failed to create attribute {name_en}. Status: {resp.status}"
+                    )
+            else:
+                raise Exception(
+                    f"Failed to create attribute {name_en}. Status: {resp.status}"
+                )
         product = self.get_by_id(product_id).json()
         if not product:
             raise Exception(f"Product with ID {product_id} not found")
         product["attributes"] = product.get("attributes") or []
-        product["attributes"].extend(attributes_to_add)
-        return self.update([product])
+        for attribute in attributes_to_add:
+            for product_attribute in product["attributes"]:
+                if product_attribute["name"] == attribute["name"]:
+                    product_attribute["value"] = attribute["value"]
+                    break
+            else:
+                product["attributes"].append(attribute)
+        return self.update([product], service=service)

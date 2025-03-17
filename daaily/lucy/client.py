@@ -5,7 +5,7 @@ from urllib3 import filepost
 import daaily.transport
 from daaily.credentials_sally import Credentials
 from daaily.lucy.constants import ENTITY_STATUS, LUCY_V2_BASE_URL_PRODUCTION
-from daaily.lucy.enums import AssetType, EntityType
+from daaily.lucy.enums import AssetType, EntityType, Service
 from daaily.lucy.models import Filter
 from daaily.lucy.resources.attribute.resource import AttributesResource
 from daaily.lucy.resources.collection import CollectionsResource
@@ -143,13 +143,16 @@ class Client:
         entity_type: EntityType,
         entities: list[dict],
         filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
     ) -> Response:
         """
         Creates entities of a certain type.
         """
         url = get_entity_endpoint(self._base_url, entity_type)
-        if filters is not None:
-            url += build_query_string(filters)
+        if filters is None:
+            filters = []
+        filters.append(Filter(name="service", value=service.value))
+        url += build_query_string(filters)
         return Response.from_response(self._do_request("POST", url, json=entities))
 
     def update_entity(self, entity_type: EntityType, entity: dict) -> Response:
@@ -165,13 +168,16 @@ class Client:
         entity_type: EntityType,
         entities: list[dict],
         filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
     ) -> Response:
         """
         Updates entities of a certain type.
         """
         url = get_entity_endpoint(self._base_url, entity_type)
-        if filters is not None:
-            url += build_query_string(filters)
+        if filters is None:
+            filters = []
+        filters.append(Filter(name="service", value=service.value))
+        url += build_query_string(filters)
         return Response.from_response(self._do_request("PUT", url, json=entities))
 
     def get_paginated_entities(

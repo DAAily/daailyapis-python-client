@@ -1,11 +1,11 @@
 from typing import Any, Dict, Generator
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
 from .. import BaseResource
-from .type import AttributeType, AttributeValueType
-from .utils import determine_attribute_value_type, gen_attribute_name
+from .type import AttributeValueType
+from .utils import determine_attribute_value_type
 
 
 class AttributesResource(BaseResource):
@@ -23,6 +23,7 @@ class AttributesResource(BaseResource):
               certification, color, decor, dimension, feature, material, optic, style,
               usage
             - names (str): Filter by comma separated names.
+            - synonyms (str): Filter by comma separated synonyms.
 
         Note that the following filters are automatically added to the query:
             - skip (int): Number of records to skip.
@@ -71,7 +72,7 @@ class AttributesResource(BaseResource):
     def get_by_name(self, name: str):
         return self._client.get_entity_custom(EntityType.ATTRIBUTE, name, "name")
 
-    def update(self, attributes: list[dict]):
+    def update(self, attributes: list[dict], service: Service = Service.SPARKY):
         """
         Updates existing attribute objects.
 
@@ -170,9 +171,11 @@ class AttributesResource(BaseResource):
             result = client.attributes.update(attributes=attributes_update_data)
             ```
         """
-        return self._client.update_entities(EntityType.ATTRIBUTE, attributes)
+        return self._client.update_entities(
+            EntityType.ATTRIBUTE, attributes, service=service
+        )
 
-    def create(self, attributes: list[dict]):
+    def create(self, attributes: list[dict], service: Service = Service.SPARKY):
         """
         Creates new attribute objects.
 
@@ -274,44 +277,9 @@ class AttributesResource(BaseResource):
             result = client.attributes.create(attributes=attributes_data)
             ```
         """
-        return self._client.create_entities(EntityType.ATTRIBUTE, attributes)
-
-    def check_exists(self, name_en: str, attribute_type: AttributeType):
-        """
-        Verifies whether attributes with the specified names and types already exist in
-        the system.
-
-        For each tuple in the provided list (containing an attribute's English name and
-        its type), the function generates a corresponding system attribute name and
-        checks if it exists. It returns a dictionary mapping the input English
-        attribute names to the actual system attribute names for those that are found.
-
-        Args:
-            attribute_names (list[tuple[str, AttributeType]]): A list of tuples where
-                each tuple consists of the attribute's English name and its type.
-
-        Returns:
-            dict[str, str]: A dictionary mapping each provided English attribute name
-                to the generates system attribute name for attributes that already exist
-
-        Raises:
-            ValueError: If any attribute name is not a string or if the attribute type
-                is invalid.
-
-        Example:
-            ```python
-            existing_attributes = client.attributes.check_exists([
-                ("Sample Attribute 1", AttributeType.SOME_TYPE),
-                ("Sample Attribute 2", AttributeType.OTHER_TYPE)
-            ])
-            ```
-        """
-        if not isinstance(name_en, str) or attribute_type not in AttributeType:
-            raise ValueError("Invalid attribute name or type")
-        name = gen_attribute_name(name_en, attribute_type)
-        attribute = self.get_by_name(name)
-        if attribute.status == 200:
-            return {name_en: name}
+        return self._client.create_entities(
+            EntityType.ATTRIBUTE, attributes, service=service
+        )
 
     def determine_attribute_value_type(
         self, value: Any

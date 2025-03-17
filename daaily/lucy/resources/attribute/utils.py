@@ -1,48 +1,7 @@
 import ast
-import re
 from typing import Any
 
-from .type import AttributeType, AttributeValueType
-
-
-def generate_unique_name(name: str):
-    # Remove all non-alphanumeric characters (except spaces)
-    name = name.replace(",", "_")  # special case because of this 3,5 mm -> 3_5_mm
-    name = name.replace(
-        " - ", "_"
-    )  # special case for WBT - 0708 Cu nextgen™ -> wbt_0708_cu_nextgen
-    name = name.replace("-", "_")  # special case for KNX-Systems -> knx_systems
-    normalized_name = re.sub(r"[^\w\s]", "", name)
-    normalized_name = normalized_name.lower().replace("  ", "_").replace(" ", "_")
-    return normalized_name
-
-
-def gen_attribute_name(name_en: str, attribute_type: AttributeType) -> str:
-    name_lower_case = name_en.lower()
-    # case like 5-star base -> base_5_star and not -> base_5_star_base
-    name = name_lower_case.replace(
-        attribute_type.value + "s", ""
-    )  # special case Tabletop natural materials -> material_tabletop_natural_s
-    name = name.replace(attribute_type.value, "")
-    name = name.replace("colour", "")  # special case for British English
-    name = name.replace("+", "plus")  # special case + 4-seater -> plus_4_seater
-    name = name.replace(
-        "<", "less_than"
-    )  # special case < 4-seater -> less_than_4_seater
-    name = name.replace(">", "greater_than")
-    name = name.replace(",", "_")  # special case because of this 3,5 mm -> 3_5_mm
-    name = name.replace(
-        " - ", "_"
-    )  # special case for WBT - 0708 Cu nextgen™ -> wbt_0708_cu_nextgen
-    name = name.replace("-", "_")  # special case for KNX-Systems -> knx_systems
-    name = name.strip()  # remove leading and trailing whitespaces
-    if name.endswith("_"):
-        name = name[:-1]
-    if name.startswith("_"):
-        name = name[1:]
-    name = attribute_type.value + "_" + name
-    unique_name = generate_unique_name(name)
-    return unique_name
+from .type import AttributeValueType
 
 
 def custom_parse_string(value: str) -> Any:

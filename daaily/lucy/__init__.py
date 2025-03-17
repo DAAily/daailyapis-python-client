@@ -1,3 +1,5 @@
+import logging
+
 from daaily.credentials_sally import Credentials
 from daaily.transport.urllib3_http import AuthorizedHttp
 
@@ -14,3 +16,5 @@ __all__ = [
     "Filter",
     "QueryOperators",
 ]
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
