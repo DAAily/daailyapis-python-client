@@ -155,11 +155,33 @@ class Client:
         url += build_query_string(filters)
         return Response.from_response(self._do_request("POST", url, json=entities))
 
-    def update_entity(self, entity_type: EntityType, entity: dict) -> Response:
+    def create_entity(
+        self,
+        entity_type: EntityType,
+        entity: dict,
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ) -> Response:
+        """
+        Creates entities of a certain type.
+        """
+        url = get_entity_endpoint(self._base_url, entity_type)
+        if filters is None:
+            filters = []
+        filters.append(Filter(name="service", value=service.value))
+        url += build_query_string(filters)
+        return Response.from_response(
+            self._do_request("POST", url, json=[entity]), single_entity=True
+        )
+
+    def update_entity(
+        self, entity_type: EntityType, entity: dict, service: Service = Service.SPARKY
+    ) -> Response:
         """
         Updates a entity of a certain type.
         """
         url = get_entity_endpoint(self._base_url, entity_type)
+        url += build_query_string([Filter(name="service", value=service.value)])
         response = self._do_request("PUT", url, json=[entity])
         return Response.from_response(response, single_entity=True)
 

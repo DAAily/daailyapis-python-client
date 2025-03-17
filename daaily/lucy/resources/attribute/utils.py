@@ -41,20 +41,31 @@ def determine_attribute_value_type(value: Any) -> tuple[Any, AttributeValueType]
     then checking against a series of type conditions.
     """
     parsed_value = try_parse_value(value)
+    # None or booleans
     if parsed_value is None:
-        return parsed_value, AttributeValueType.BOOLEAN
+        return True, AttributeValueType.BOOLEAN
     if isinstance(parsed_value, bool):
         return parsed_value, AttributeValueType.BOOLEAN
+    # Single numbers
     if isinstance(parsed_value, (int, float)):
         return parsed_value, AttributeValueType.NUMBER
-    if (
-        isinstance(parsed_value, (list, tuple))
-        and len(parsed_value) == 2
-        and all(isinstance(x, (int, float)) for x in parsed_value)
-    ):
-        return parsed_value, AttributeValueType.NUMBER_RANGE
-    if isinstance(parsed_value, list) and all(isinstance(x, str) for x in parsed_value):
-        return parsed_value, AttributeValueType.LIST_STRINGS
+    # Lists or tuples
+    if isinstance(parsed_value, (list, tuple)):
+        # Check NUMBER_RANGE (exactly two numeric items)
+        if len(parsed_value) == 2 and all(
+            isinstance(x, (int, float)) for x in parsed_value
+        ):
+            return parsed_value, AttributeValueType.NUMBER_RANGE
+        # Check LIST_NUMBER (all numeric, any length other than two)
+        if all(isinstance(x, (int, float)) for x in parsed_value):
+            return parsed_value, AttributeValueType.LIST_NUMBER
+        # Check LIST_STRINGS (all strings)
+        if all(isinstance(x, str) for x in parsed_value):
+            return parsed_value, AttributeValueType.LIST_STRINGS
+        # If it's a list/tuple but doesn't match any known numeric or string pattern
+        raise ValueError(f"Unsupported attribute value type: {value!r}")
+    # Strings
     if isinstance(parsed_value, str):
         return parsed_value, AttributeValueType.STRING
+    # If none of the above conditions match, raise an error
     raise ValueError(f"Unsupported attribute value type: {value!r}")

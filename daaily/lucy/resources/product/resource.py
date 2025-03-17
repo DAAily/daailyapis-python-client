@@ -105,6 +105,9 @@ class ProductsResource(BaseResource):
             EntityType.PRODUCT, products, filters, service
         )
 
+    def update_one(self, product: dict, service: Service = Service.SPARKY):
+        return self._client.update_entity(EntityType.PRODUCT, product, service)
+
     def create(
         self,
         products: list[dict],
@@ -823,13 +826,17 @@ class ProductsResource(BaseResource):
         product_id: int,
         attributes: list[tuple[str, Any, AttributeType]],
         service: Service = Service.SPARKY,
-    ):
+        dry_run: bool = False,
+    ) -> dict | None:
         """
         Adds attributes to a product.
 
         attributes is a list of tuples, where each tuple contains the attribute
         name english, the value and the attribute type. The attribute type must
         be one of the values in the AttributeType enum.
+
+
+        Returns the updated product object.
         """
         attributes_to_add = []
         for name_en, value, attribute_type in attributes:
@@ -859,7 +866,10 @@ class ProductsResource(BaseResource):
                 "value_type": value_type.value,
                 "type": attribute_type.value,
             }
-            resp = self._client.attributes.create([new_attribute])
+            if dry_run:
+                attributes_to_add.append({"name": name_en, "value": parsed_value})
+                continue
+            resp = self._client.attributes.create_one(new_attribute, service=service)
             if resp.status == 201:
                 logger.info(f"Created new attribute: {name_en}")
                 attributes_json = resp.json()
@@ -901,4 +911,11 @@ class ProductsResource(BaseResource):
                     break
             else:
                 product["attributes"].append(attribute)
-        return self.update([product], service=service)
+        if dry_run:
+            return product
+        update_resp = self.update_one(product, service=service)
+        if update_resp.status != 200:
+            raise Exception(
+                f"Failed to update product {product_id}. Status: {update_resp.status}"
+            )
+        return update_resp.json()

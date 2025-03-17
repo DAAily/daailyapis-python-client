@@ -281,6 +281,110 @@ class AttributesResource(BaseResource):
             EntityType.ATTRIBUTE, attributes, service=service
         )
 
+    def create_one(self, attribute: dict, service: Service = Service.SPARKY):
+        """
+        Creates new attribute objects.
+
+        This function allows for the creation of one or more new attributes in the
+        system. Each attribute is defined as a dictionary with keys that describe its
+        properties, such as "name", "type", "value_type", etc.
+
+        Args:
+            attribute (dict): A attribute object to create.
+                Each attribute dictionary can include keys such as:
+                {
+                  "type": "base" | "category" | "certification" | "color" | "decor"
+                    | "dimension" | "feature" | "material" | "optic" | "style"
+                    | "usage",
+                  "value_type": "boolean" | "number" | "string" | "list" | "range",
+                  "value_unit": "cm" | "m" | "mm" | "inch",
+                  "options": [
+                    "string"
+                  ],
+                  "name_en": "string",
+                  "name_de": "string",
+                  "name_fr": "string",
+                  "name_es": "string",
+                  "name_it": "string",
+                  "description_en": "string",
+                  "description_de": "string",
+                  "description_it": "string",
+                  "description_es": "string",
+                  "description_fr": "string",
+                  "synonyms_en": [
+                    "string"
+                  ],
+                  "synonyms_de": [
+                    "string"
+                  ],
+                  "synonyms_fr": [
+                    "string"
+                  ],
+                  "synonyms_es": [
+                    "string"
+                  ],
+                  "synonyms_it": [
+                    "string"
+                  ],
+                  "opposite_name_en": "string",
+                  "opposite_name_de": "string",
+                  "opposite_name_fr": "string",
+                  "opposite_name_es": "string",
+                  "opposite_name_it": "string",
+                  "platforms": [
+                    "new_architonic", "architonic", "archdaily", "daaily-index"
+                  ],
+                  "status": "online"
+                }
+
+        Raises:
+            Exception: If the attribute creation process fails due to invalid input or
+                other errors.
+
+        Returns:
+            Any: The result of the attribute creation process, which may include details
+                of the newly created attributes.
+
+        Example:
+            ```python
+            attributes_data = {
+                    "name": "Sample Attribute",
+                    "type": "base",
+                    "value_type": "boolean",
+                    "value_unit": "cm",
+                    "options": ["option1", "option2"],
+                    "name_en": "Sample Attribute",
+                    "name_de": "Beispielattribut",
+                    "name_fr": "Attribut d'exemple",
+                    "name_es": "Atributo de ejemplo",
+                    "name_it": "Attributo di esempio",
+                    "description_en": "A sample attribute",
+                    "description_de": "Ein Beispielattribut",
+                    "description_fr": "Un attribut d'exemple",
+                    "description_es": "Un atributo de ejemplo",
+                    "description_it": "Un attributo di esempio",
+                    "synonyms_en": ["Example", "Sample"],
+                    "synonyms_de": ["Beispiel"],
+                    "synonyms_fr": ["Exemple"],
+                    "synonyms_es": ["Ejemplo"],
+                    "synonyms_it": ["Esempio"],
+                    "opposite_name_en": "Opposite",
+                    "opposite_name_de": "Gegenteil",
+                    "opposite_name_fr": "Opposé",
+                    "opposite_name_es": "Opuesto",
+                    "opposite_name_it": "Opposto",
+                    "platforms": ["new_architonic"],
+                    "status": "online",
+                    "revision_uuid": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                }
+
+            result = client.attributes.create_one(attribute=attribute_data)
+            ```
+        """
+        return self._client.create_entity(
+            EntityType.ATTRIBUTE, attribute, service=service
+        )
+
     def determine_attribute_value_type(
         self, value: Any
     ) -> tuple[Any, AttributeValueType]:
