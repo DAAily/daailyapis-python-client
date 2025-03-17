@@ -71,9 +71,6 @@ sample-lucy-21:
 	venv/bin/python -m samples.lucy.update_attributes
 
 sample-lucy-22:
-	venv/bin/python -m samples.lucy.check_attributes_exist
-
-sample-lucy-23:
 	venv/bin/python -m samples.lucy.add_or_update_product_attributes
 
 sample-franklin-1:
