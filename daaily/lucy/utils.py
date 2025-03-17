@@ -1,5 +1,8 @@
+import ast
 import json
+import logging
 import mimetypes
+import re
 from typing import Any
 
 import daaily.transport
@@ -10,6 +13,14 @@ from daaily.lucy.config import (
 )
 from daaily.lucy.enums import AssetType, EntityType, MimeType
 from daaily.lucy.models import Filter
+
+
+def setup_logging(level=logging.INFO):
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[logging.StreamHandler()],
+    )
 
 
 def get_entity_endpoint(base_url: str, entity_type: EntityType):
@@ -167,3 +178,59 @@ def extract_mime_type_from_extension(extension: str) -> str | None:
     mime_type = MimeType.extract_from_extension(extension)
     if mime_type:
         return mime_type.value
+
+
+def deter_duplicate_key_from_error_message(
+    binary_data: bytes,
+) -> tuple[str | None, str | None]:
+    """
+    Extracts the index name and duplicate key value from a duplicate key
+    error message in binary form.
+
+    This function decodes a binary error message and retrieves both the index
+    name and the duplicate key value from the error description. For example,
+    given an error message like:
+
+        b'{"title": "Duplicate key found", "description": "{\'index\': 0, '
+        b'\'code\': 11000, \'errmsg\': \'E11000 duplicate key error collection: '
+        b'lucy-dev.attributes index: attribute_id_1 dup key: { attribute_id: '
+        b'1024 }", "identifier_field": null, "identifier": null}'
+
+    it will return ("attribute_id_1", "1024").
+
+    Args:
+        binary_data (bytes): A binary string containing the error message with
+            duplicate key details.
+
+    Returns:
+        tuple[str, str] | None: A tuple containing the index name and the
+            duplicate key value if found; otherwise, None.
+
+    Example:
+        ```python
+        # Extract the duplicate key index name and value from the error message
+        result = deter_duplicate_key_from_error_message(resp.data)
+        if result:
+            index_name, dup_value = result
+            print(f"Index: {index_name}, Duplicate value: {dup_value}")
+        ```
+    """
+    try:
+        data = json.loads(binary_data.decode("utf-8"))
+        description_str = data.get("description", "")
+        description_data = json.loads(description_str)
+        errmsg = description_data.get("errmsg", "")
+        index_pattern = re.compile(r"index:\s*(?P<index>\S+)")
+        dup_key_pattern = re.compile(
+            r"dup key:\s*\{\s*(?P<field>\w+):\s*(?P<dup_value>.+?)\s*\}"
+        )
+        index_match = index_pattern.search(errmsg)
+        if not index_match:
+            return None, None
+        dup_key_match = dup_key_pattern.search(errmsg)
+        if dup_key_match:
+            sanitized_value = ast.literal_eval(dup_key_match.group("dup_value"))
+            return index_match.group("index"), sanitized_value
+    except Exception:
+        return None, None
+    return None, None

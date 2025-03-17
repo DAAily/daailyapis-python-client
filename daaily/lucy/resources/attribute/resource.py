@@ -1,9 +1,11 @@
 from typing import Any, Dict, Generator
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
-from . import BaseResource
+from .. import BaseResource
+from .type import AttributeValueType
+from .utils import determine_attribute_value_type
 
 
 class AttributesResource(BaseResource):
@@ -21,6 +23,7 @@ class AttributesResource(BaseResource):
               certification, color, decor, dimension, feature, material, optic, style,
               usage
             - names (str): Filter by comma separated names.
+            - synonyms (str): Filter by comma separated synonyms.
 
         Note that the following filters are automatically added to the query:
             - skip (int): Number of records to skip.
@@ -66,7 +69,10 @@ class AttributesResource(BaseResource):
     def get_by_id(self, attribute_id: int):
         return self._client.get_entity(EntityType.ATTRIBUTE, attribute_id)
 
-    def update(self, attributes: list[dict]):
+    def get_by_name(self, name: str):
+        return self._client.get_entity_custom(EntityType.ATTRIBUTE, name, "name")
+
+    def update(self, attributes: list[dict], service: Service = Service.SPARKY):
         """
         Updates existing attribute objects.
 
@@ -165,9 +171,11 @@ class AttributesResource(BaseResource):
             result = client.attributes.update(attributes=attributes_update_data)
             ```
         """
-        return self._client.update_entities(EntityType.ATTRIBUTE, attributes)
+        return self._client.update_entities(
+            EntityType.ATTRIBUTE, attributes, service=service
+        )
 
-    def create(self, attributes: list[dict]):
+    def create(self, attributes: list[dict], service: Service = Service.SPARKY):
         """
         Creates new attribute objects.
 
@@ -269,4 +277,15 @@ class AttributesResource(BaseResource):
             result = client.attributes.create(attributes=attributes_data)
             ```
         """
-        return self._client.create_entities(EntityType.ATTRIBUTE, attributes)
+        return self._client.create_entities(
+            EntityType.ATTRIBUTE, attributes, service=service
+        )
+
+    def determine_attribute_value_type(
+        self, value: Any
+    ) -> tuple[Any, AttributeValueType]:
+        return determine_attribute_value_type(value)
+
+    def parse_attribute_value(self, value: Any) -> Any:
+        parsed_value, _ = determine_attribute_value_type(value)
+        return parsed_value

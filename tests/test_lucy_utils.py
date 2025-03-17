@@ -1,9 +1,12 @@
+import json
+import unittest
+
 import pytest
 
 import daaily.lucy.utils
 
 
-class TestLucyUtils:
+class TestLucyUtils(unittest.TestCase):
     def test_constructor(self):
         pass
 
@@ -92,3 +95,42 @@ class TestLucyUtils:
         assert daaily.lucy.utils.extract_mime_type_from_extension("jpg") == "image/jpeg"
         assert daaily.lucy.utils.extract_mime_type_from_extension("png") == "image/png"
         assert daaily.lucy.utils.extract_mime_type_from_extension("unknown") is None
+
+    def test_valid_message(self):
+        binary_data = json.dumps(
+            {
+                "title": "Duplicate key found",
+                "description": json.dumps(
+                    {
+                        "index": 0,
+                        "code": 11000,
+                        "errmsg": "E11000 duplicate key error collection: "
+                        + "lucy-dev.attributes index: attribute_id_1 dup key: "
+                        + "{ attribute_id: 1024 }",
+                        "identifier_field": None,
+                        "identifier": None,
+                    }
+                ),
+            }
+        ).encode("utf-8")
+        (
+            index_name,
+            dup_value,
+        ) = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
+        self.assertEqual((index_name, dup_value), ("attribute_id_1", 1024))
+
+    def test_missing_dup_key(self):
+        binary_data = (
+            b'{"title": "Duplicate key found", "description": "{\'index\': 0, '
+            b"'code': 11000, 'errmsg': 'E11000 error without duplicate key "
+            b'info\', "identifier_field": null, "identifier": null}'
+        )
+        result = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
+        self.assertIsNone(result[0])
+        self.assertIsNone(result[1])
+
+    def test_malformed_json(self):
+        binary_data = b"not a valid json"
+        result = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
+        self.assertIsNone(result[0])
+        self.assertIsNone(result[1])

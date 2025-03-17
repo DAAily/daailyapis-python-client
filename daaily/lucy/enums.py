@@ -1,6 +1,14 @@
 from enum import Enum
 
 
+class Service(str, Enum):
+    WOODSTOCK = "woodstock"
+    SPARKY = "sparky"
+    HAKODA = "hakoda"
+    ROKU = "roku"
+    HOOVER = "hoover"
+
+
 class QueryOperators(str, Enum):
     EQ = "eq"
     NEQ = "neq"
