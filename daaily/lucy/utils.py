@@ -218,7 +218,10 @@ def deter_duplicate_key_from_error_message(
     try:
         data = json.loads(binary_data.decode("utf-8"))
         description_str = data.get("description", "")
-        description_data = json.loads(description_str)
+        try:
+            description_data = json.loads(description_str)
+        except json.JSONDecodeError:
+            description_data = ast.literal_eval(description_str)
         errmsg = description_data.get("errmsg", "")
         index_pattern = re.compile(r"index:\s*(?P<index>\S+)")
         dup_key_pattern = re.compile(
