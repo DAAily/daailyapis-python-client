@@ -58,7 +58,7 @@ def determine_attribute_value_type(value: Any) -> tuple[Any, AttributeValueType]
             return parsed_value, AttributeValueType.NUMBER_RANGE
         # Check LIST_NUMBER (all numeric, any length other than two)
         if all(isinstance(x, (int, float)) for x in parsed_value):
-            return parsed_value, AttributeValueType.LIST_NUMBER
+            return parsed_value, AttributeValueType.LIST_NUMBERS
         # Check LIST_STRINGS (all strings)
         if all(isinstance(x, str) for x in parsed_value):
             return parsed_value, AttributeValueType.LIST_STRINGS

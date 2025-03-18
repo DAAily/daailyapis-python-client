@@ -28,7 +28,7 @@ class AttributeValueType(Enum):
 
     BOOLEAN = "boolean"
     LIST_STRINGS = "list_strings"
-    LIST_NUMBER = "list_number"
+    LIST_NUMBERS = "list_numbers"
     NUMBER = "number"
     NUMBER_RANGE = "number_range"
     STRING = "string"

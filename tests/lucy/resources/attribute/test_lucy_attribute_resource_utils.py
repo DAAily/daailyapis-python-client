@@ -79,9 +79,9 @@ def test_try_parse_value(input_value, expected_output):
         ("[1, 2]", [1, 2], AttributeValueType.NUMBER_RANGE),
         ((1.0, 2.5), (1.0, 2.5), AttributeValueType.NUMBER_RANGE),
         # LIST_NUMBER: all numeric but length != 2
-        ("[]", [], AttributeValueType.LIST_NUMBER),  # empty list
-        ("[42]", [42], AttributeValueType.LIST_NUMBER),  # single element
-        ("[1, 2, 3]", [1, 2, 3], AttributeValueType.LIST_NUMBER),  # three elements
+        ("[]", [], AttributeValueType.LIST_NUMBERS),  # empty list
+        ("[42]", [42], AttributeValueType.LIST_NUMBERS),  # single element
+        ("[1, 2, 3]", [1, 2, 3], AttributeValueType.LIST_NUMBERS),  # three elements
         # LIST_STRINGS
         ("['a', 'b']", ["a", "b"], AttributeValueType.LIST_STRINGS),
         (["hello", "world"], ["hello", "world"], AttributeValueType.LIST_STRINGS),
@@ -106,7 +106,7 @@ def test_determine_attribute_value_type_unsupported():
     For example, if it's a list of mixed types, a dict type, etc.
     """
     with pytest.raises(ValueError):
-        # Mixed-type list doesn't match NUMBER_RANGE, LIST_NUMBER, or LIST_STRINGS
+        # Mixed-type list doesn't match NUMBER_RANGE, LIST_NUMBERS, or LIST_STRINGS
         determine_attribute_value_type(["string", 2])
 
     with pytest.raises(ValueError):
