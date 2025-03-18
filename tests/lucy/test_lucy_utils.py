@@ -119,6 +119,37 @@ class TestLucyUtils(unittest.TestCase):
         ) = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
         self.assertEqual((index_name, dup_value), ("attribute_id_1", 1024))
 
+    def test_python_style_dict_message(self):
+        """
+        In this scenario, 'description' is a Python-style dict string
+        (single quotes, etc.) rather than strict JSON.
+        """
+        # 1) Build the Python dict whose "errmsg" has the 'index: name_1 dup key..' text
+        description_py_dict = {
+            "index": 0,
+            "code": 11000,
+            "errmsg": (
+                "E11000 duplicate key error collection: lucy-staging.attributes "
+                'index: name_1 dup key: { name: "material_" }'
+            ),
+            "keyPattern": {"name": 1},
+            "keyValue": {"name": "material_"},
+        }
+        # 2) Use repr(...) to create a Python‐style string from that dict,
+        #    then JSON‐dump the entire top‐level object so that it is valid JSON.
+        payload = {
+            "title": "Duplicate key found",
+            "description": repr(description_py_dict),
+            "identifier_field": None,
+            "identifier": None,
+        }
+        binary_data = json.dumps(payload).encode("utf-8")
+        (
+            index_name,
+            dup_value,
+        ) = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
+        self.assertEqual((index_name, dup_value), ("name_1", "material_"))
+
     def test_missing_dup_key(self):
         binary_data = (
             b'{"title": "Duplicate key found", "description": "{\'index\': 0, '
