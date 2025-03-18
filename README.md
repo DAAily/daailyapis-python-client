@@ -61,3 +61,39 @@ pip install twine
 python -m build
 python -m twine upload --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ dist/* --skip-existing
 ```
+
+## Logging Configuration
+
+The Lucy client uses Python's built-in `logging` module for internal logging. By default, logging is disabled to avoid cluttering your application logs. To enable logging, you have multiple options:
+
+- **Simple logging activation**: You can easily activate logging by setting the optional `log_level` parameter when creating a `Client` instance:
+
+```python
+from lucy import Client
+import logging
+
+client = Client(log_level=logging.INFO)
+```
+
+This provides convenient and immediate logging setup using sensible defaults.
+
+- **Explicit logging configuration**: For more control, you can configure logging explicitly within your application. This overrides the client's basic logging setup:
+
+```python
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+
+# Now instantiate the client without the log_level parameter
+from lucy import Client
+client = Client()
+```
+
+- **Library default**: If neither of these methods is used, the client remains silent due to the default `NullHandler` configuration, ensuring no unwanted logging output.
+
+We recommend explicit configuration for production environments, as it offers the greatest flexibility. The convenient `log_level` parameter is ideal for development and debugging.
+

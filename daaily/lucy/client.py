@@ -1,4 +1,5 @@
 import json
+import logging
 
 from urllib3 import filepost
 
@@ -48,9 +49,15 @@ class Client:
         credentials: Credentials | None = None,
         http=None,
         base_url: str | None = None,
+        log_level: int | None = None,
     ):
         """
         Creates a new Lucy client.
+
+        :param credentials: Optional credentials.
+        :param http: Optional HTTP client instance.
+        :param base_url: Optional base URL for Lucy API.
+        :param log_level: Optional logging level. If set, logging will be configured.
         """
         if credentials is None:
             credentials = Credentials()
@@ -65,6 +72,12 @@ class Client:
             abc classes.
             """
             raise NotImplementedError("Custom request handlers are not supported yet.")
+
+        if log_level is not None:
+            self._setup_logging(log_level)
+        self._logger = logging.getLogger(__name__)
+        self._logger.debug("Client initialized.")
+
         self._auth_http = AuthorizedHttp(self._credentials)
         self.manufacturers = ManufacturersResource(self)
         self.distributors = DistributorsResource(self)
@@ -82,6 +95,19 @@ class Client:
         self.groups = GroupsResource(self)
         self.fairs = FairsResource(self)
         self.files = FilesResource(self)
+
+    def _setup_logging(self, level: int):
+        """
+        Set up basic logging configuration for convenience.
+        """
+        logging.basicConfig(
+            level=level,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            handlers=[logging.StreamHandler()],
+        )
+        logging.getLogger(__name__).debug(
+            f"Logging configured with level {logging.getLevelName(level)}."
+        )
 
     def _do_request(
         self, method, url, body=None, fields=None, headers=None, json=None, **kwargs
