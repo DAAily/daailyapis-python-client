@@ -894,11 +894,13 @@ class ProductsResource(BaseResource):
                     attributes_to_add.append({"name": dup_value, "value": parsed_value})
                 else:
                     raise Exception(
-                        f"Failed to create attribute {name_en}. Status: {resp.status}"
+                        f"Failed to create attribute {name_en}. Status: {resp.status} "
+                        + f"{resp.data}"
                     )
             else:
                 raise Exception(
-                    f"Failed to create attribute {name_en}. Status: {resp.status}"
+                    f"Failed to create attribute {name_en}. Status: {resp.status} "
+                    + f"{resp.data}"
                 )
         product = self.get_by_id(product_id).json()
         if not product:

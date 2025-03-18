@@ -27,7 +27,7 @@ attributes = [
 product_id = 20321273
 
 updated_product = client.products.add_or_update_attributes(
-    product_id, attributes=attributes, service=Service.HOOVER
+    product_id, attributes=attributes, service=Service.HOOVER, dry_run=True
 )
 
-print(updated_product.json())
+print(updated_product)
