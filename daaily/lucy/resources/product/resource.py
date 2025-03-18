@@ -872,12 +872,12 @@ class ProductsResource(BaseResource):
             resp = self._client.attributes.create_one(new_attribute, service=service)
             if resp.status == 201:
                 logger.info(f"Created new attribute: {name_en}")
-                attributes_json = resp.json()
-                if not attributes_json:
+                attribute = resp.json()
+                if not attribute:
                     raise Exception(
                         f"Failed to create attribute {name_en}. No attribute returned"
                     )
-                attribute = attributes_json[0]
+                # attribute = attributes_json[0]
                 attributes_to_add.append(
                     {"name": attribute["name"], "value": parsed_value}
                 )
