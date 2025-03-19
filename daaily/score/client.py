@@ -61,6 +61,10 @@ class Client:
     def reencode(self, text: str) -> str:
         """
         Re-encode the text with the proper encoding.
+
+        Texts need re-encoding because it comes from different sources and might have
+        different encodings, such as raw MongoDB data.
+
         Issue: https://github.com/googleapis/google-cloud-python/issues/11381
 
         Parameters:
