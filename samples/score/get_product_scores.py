@@ -20,7 +20,6 @@ products = client.products.get(filters=filters)
 # Iterate over the results
 for i, p in enumerate(products):
     print(f"{i} Product: {p['product_id']}")
-    p["name_en"] = p.get("name_en", "").replace("\n", "")
     score_results = score.score(p)
     for sr in score_results.score_results:
         print(f"Field Name: {sr.field_name}")
