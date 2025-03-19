@@ -73,8 +73,8 @@ class Client:
         Returns:
             str: The re-encoded text.
         """
-        bio = io.BytesIO(text.encode("utf-8"))
-        text_io = io.TextIOWrapper(bio, encoding="utf-8-sig")
+        bytes_object = io.BytesIO(text.encode("utf-8"))
+        text_io = io.TextIOWrapper(bytes_object, encoding="utf-8-sig")
         return text_io.read().strip()
 
     def _grammar_check(self, text: str) -> tuple[float, list[str]]:
