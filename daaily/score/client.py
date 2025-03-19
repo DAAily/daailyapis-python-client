@@ -1,3 +1,4 @@
+import io
 import logging
 import re
 
@@ -14,7 +15,6 @@ try:
 except ImportError:
     spellchecker = None
 
-import unicodedata
 
 from daaily.score.models import BalancedScore, ScoreSummary, ScoreWeight
 
@@ -58,52 +58,22 @@ class Client:
         )
         self._spell = spellchecker.SpellChecker()
 
-    def clean_text(self, text: str) -> str:
+    def reencode(self, text: str) -> str:
         """
-        Normalize and clean input text so that it only contains simple,
-        everyday-used UTF-8 characters.
-
-        The function performs the following steps:
-        1. Normalizes the text using NFKC to standardize Unicode representations.
-        2. Replaces common "fancy" punctuation (like en/em dashes and curly quotes)
-            with their simple counterparts.
-        3. Removes any characters that are not:
-            - Uppercase or lowercase English letters (A-Z, a-z)
-            - Digits (0-9)
-            - Whitespace
-            - Basic punctuation: . , ? ! ' " : ; ( ) and hyphen (-)
-        4. Collapses multiple whitespace characters into a single space.
-        5. Strips leading and trailing whitespace.
+        Re-encode the text with the proper encoding.
+        Issue: https://github.com/googleapis/google-cloud-python/issues/11381
 
         Parameters:
-            text (str): The input text to be cleaned.
+            text (str): The text to re-encode.
 
         Returns:
-            str: The cleaned text.
+            str: The re-encoded text.
         """
-        # Normalize the text to standardize Unicode representations.
-        text = unicodedata.normalize("NFKC", text)
-        # Replace common fancy punctuation with simple versions.
-        replacements = {
-            "–": "-",  # en dash # type: ignore
-            "—": "-",  # em dash
-            "‘": "'",  # left single quote
-            "’": "'",  # right single quote
-            "“": '"',  # left double quote
-            "”": '"',  # right double quote
-        }
-        for old, new in replacements.items():
-            text = text.replace(old, new)
-        # Remove any character that is not a letter, digit, whitespace,
-        # or one of the allowed punctuations.
-        allowed_pattern = r"[^A-Za-z0-9\s\.,\?!'\":;\(\)\-]"
-        text = re.sub(allowed_pattern, "", text)
-        # Collapse multiple whitespace characters into a single space.
-        text = re.sub(r"\s+", " ", text)
-        # Strip any leading or trailing whitespace.
-        return text.strip()
+        bio = io.BytesIO(text.encode("utf-8"))
+        text_io = io.TextIOWrapper(bio, encoding="utf-8-sig")
+        return text_io.read().strip()
 
-    def _grammar_check(self, text) -> tuple[float, list[str]]:
+    def _grammar_check(self, text: str) -> tuple[float, list[str]]:
         """
         Perform a grammar check on the provided text using Google's NL API.
 
@@ -122,8 +92,7 @@ class Client:
                 - float: The grammar score (ranging from 0 to 1).
                 - list[str]: A list of identified grammar issue lemmas.
         """
-        if text:
-            text = self.clean_text(text)  # as long as document type is plain text
+        text = self.reencode(text)
         document = language_v1.Document(  # type: ignore
             content=text,
             type_=language_v1.Document.Type.PLAIN_TEXT,  # type: ignore
