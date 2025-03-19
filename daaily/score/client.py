@@ -58,7 +58,7 @@ class Client:
         )
         self._spell = spellchecker.SpellChecker()
 
-    def reencode(self, text: str) -> str:
+    def re_encode(self, text: str) -> str:
         """
         Re-encode the text with the proper encoding.
 
@@ -96,7 +96,7 @@ class Client:
                 - float: The grammar score (ranging from 0 to 1).
                 - list[str]: A list of identified grammar issue lemmas.
         """
-        text = self.reencode(text)
+        text = self.re_encode(text)
         document = language_v1.Document(  # type: ignore
             content=text,
             type_=language_v1.Document.Type.PLAIN_TEXT,  # type: ignore
