@@ -1,3 +1,4 @@
+import io
 import logging
 import re
 
@@ -57,7 +58,26 @@ class Client:
         )
         self._spell = spellchecker.SpellChecker()
 
-    def _grammar_check(self, text) -> tuple[float, list[str]]:
+    def re_encode(self, text: str) -> str:
+        """
+        Re-encode the text with the proper encoding.
+
+        Texts need re-encoding because it comes from different sources and might have
+        different encodings, such as raw MongoDB data.
+
+        Issue: https://github.com/googleapis/google-cloud-python/issues/11381
+
+        Parameters:
+            text (str): The text to re-encode.
+
+        Returns:
+            str: The re-encoded text.
+        """
+        bytes_object = io.BytesIO(text.encode("utf-8"))
+        text_io = io.TextIOWrapper(bytes_object, encoding="utf-8-sig")
+        return text_io.read().strip()
+
+    def _grammar_check(self, text: str) -> tuple[float, list[str]]:
         """
         Perform a grammar check on the provided text using Google's NL API.
 
@@ -76,11 +96,15 @@ class Client:
                 - float: The grammar score (ranging from 0 to 1).
                 - list[str]: A list of identified grammar issue lemmas.
         """
+        text = self.re_encode(text)
         document = language_v1.Document(  # type: ignore
             content=text,
             type_=language_v1.Document.Type.PLAIN_TEXT,  # type: ignore
         )
-        response = self._lang_client.analyze_syntax(document=document)
+        response = self._lang_client.analyze_syntax(
+            document=document,
+            encoding_type=language_v1.EncodingType.UTF8,  # type: ignore
+        )
         grammar_issues = []
         for token in response.tokens:
             if token.part_of_speech.tag in (
