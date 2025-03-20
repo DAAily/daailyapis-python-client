@@ -96,3 +96,11 @@ class MimeType(Enum):
             return MimeType.CSV
         if extension == "json":
             return MimeType.JSON
+
+
+class Language(str, Enum):
+    EN = "en"
+    DE = "de"
+    ES = "es"
+    FR = "fr"
+    IT = "it"

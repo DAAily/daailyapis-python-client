@@ -77,7 +77,7 @@ class Client:
         text_io = io.TextIOWrapper(bytes_object, encoding="utf-8-sig")
         return text_io.read().strip()
 
-    def _grammar_check(self, text: str) -> tuple[float, list[str]]:
+    def _grammar_check(self, text: str, language_iso: str) -> tuple[float, list[str]]:
         """
         Perform a grammar check on the provided text using Google's NL API.
 
@@ -90,6 +90,7 @@ class Client:
 
         Parameters:
             text (str): The text to check for grammar issues.
+            language_iso (str): The ISO code for the language of the text.
 
         Returns:
             tuple[float, list[str]]:
@@ -100,6 +101,7 @@ class Client:
         document = language_v1.Document(  # type: ignore
             content=text,
             type_=language_v1.Document.Type.PLAIN_TEXT,  # type: ignore
+            language=language_iso,
         )
         response = self._lang_client.analyze_syntax(
             document=document,
