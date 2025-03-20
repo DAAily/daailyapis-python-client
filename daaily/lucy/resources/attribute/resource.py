@@ -4,8 +4,8 @@ from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
 from .. import BaseResource
-from .type import AttributeValueType
-from .utils import determine_attribute_value_type
+from .type import AttributeType, AttributeValueType, AttributeValueUnit
+from .utils import determine_attribute_value_type, gen_new_attribute_object_with_extras
 
 
 class AttributesResource(BaseResource):
@@ -393,3 +393,15 @@ class AttributesResource(BaseResource):
     def parse_attribute_value(self, value: Any) -> Any:
         parsed_value, _ = determine_attribute_value_type(value)
         return parsed_value
+
+    def gen_new_attribute_object_with_extras(
+        self,
+        name_en: str,
+        attribute_type: AttributeType,
+        value_type: AttributeValueType,
+        value_unit: AttributeValueUnit | None = None,
+        **kwargs,
+    ):
+        return gen_new_attribute_object_with_extras(
+            name_en, attribute_type, value_type, value_unit, **kwargs
+        )

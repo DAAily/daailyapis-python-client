@@ -1,7 +1,23 @@
 import ast
 from typing import Any
 
-from .type import AttributeValueType
+from .type import AttributeType, AttributeValueType, AttributeValueUnit
+
+
+def gen_new_attribute_object_with_extras(
+    name_en: str,
+    attribute_type: AttributeType,
+    value_type: AttributeValueType,
+    value_unit: AttributeValueUnit | None = None,
+    **kwargs,
+):
+    return {
+        "name_en": name_en,
+        "type": attribute_type.value,
+        "value_type": value_type.value,
+        "value_unit": value_unit.value if value_unit else None,
+        **kwargs,
+    }
 
 
 def custom_parse_string(value: str) -> Any:

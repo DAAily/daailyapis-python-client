@@ -21,7 +21,7 @@ from daaily.lucy.utils import (
 )
 
 from .. import BaseResource
-from ..enums import AttributeType
+from ..enums import AttributeType, AttributeValueUnit
 
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
 PRODUCT_IMAGE_UPLOAD_ENDPOINT = "/products/{product_id}/image/upload"
@@ -824,7 +824,7 @@ class ProductsResource(BaseResource):
     def add_or_update_attributes(  # noqa: C901
         self,
         product_id: int,
-        attributes: list[tuple[str, Any, AttributeType]],
+        attributes: list[tuple[str, Any, AttributeType, AttributeValueUnit | None]],
         service: Service = Service.SPARKY,
         dry_run: bool = False,
     ) -> dict | None:
@@ -839,7 +839,7 @@ class ProductsResource(BaseResource):
         Returns the updated product object.
         """
         attributes_to_add = []
-        for name_en, value, attribute_type in attributes:
+        for name_en, value, attribute_type, attribute_unit in attributes:
             filters = [Filter("synonyms", name_en)]
             generator = self._client.attributes.get(filters=filters)
             attribute_with_synonym_match = None
@@ -861,11 +861,11 @@ class ProductsResource(BaseResource):
                     }
                 )
                 continue
-            new_attribute = {
-                "name_en": name_en,
-                "value_type": value_type.value,
-                "type": attribute_type.value,
-            }
+            new_attribute = (
+                self._client.attributes.gen_new_attribute_object_with_extras(
+                    name_en, attribute_type, value_type, attribute_unit
+                )
+            )
             if dry_run:
                 attributes_to_add.append({"name": name_en, "value": parsed_value})
                 continue
