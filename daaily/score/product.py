@@ -1,3 +1,4 @@
+from daaily.lucy.enums import Language
 from daaily.score.client import Client
 from daaily.score.constants import PRODUCT_WEIGHTS, TEXT_SIMILARITY_TOPICS
 from daaily.score.models import (
@@ -202,7 +203,9 @@ class Product(Client):
         flesch = round(min(self._calculate_flesch_reading_ease(text_en) / 100, 1), 2)
         spelling_score, spelling_errors = self._calculate_spelling_score(text_en)
         spelling_score = round(min(spelling_score / 100, 1), 2)
-        grammar_score, grammar_issues = self._grammar_check(text_en)
+        grammar_score, grammar_issues = self._grammar_check(
+            text=text_en, language_iso=Language.EN.value
+        )
         score_result = ScoreResult(
             field_name=field_name,
             weight=weight,
