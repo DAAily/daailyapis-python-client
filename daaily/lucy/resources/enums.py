@@ -11,13 +11,9 @@ class AttributeType(Enum):
     CATEGORY = "category"
     CERTIFICATION = "certification"
     COLOR = "color"
-    DECOR = "decor"
     DIMENSION = "dimension"
     FEATURE = "feature"
     MATERIAL = "material"
-    OPTIC = "optic"
-    STYLE = "style"
-    USAGE = "usage"
 
 
 class AttributeValueType(Enum):
@@ -40,24 +36,28 @@ class AttributeValueUnit(Enum):
     https://github.com/DAAily/lucy-data-processing-api/blob/main/app/settings/enums/attribute_enums.py#L31
     """
 
-    # Length units
-    CM = "cm"  # centimeter
-    M = "m"  # meter
-    MM = "mm"  # millimeter
-    KM = "km"  # kilometer
-    INCH = "inch"  # inch
+    # Length
+    CM = "cm"  # centimeters
 
-    # Weight units
-    G = "g"  # gram
-    KG = "kg"  # kilogram
-    T = "t"  # ton
-    MG = "mg"  # milligram
+    # Weight
+    KG = "kg"  # kilograms
 
-    # Electrical units
-    V = "V"  # volt
-    W = "W"  # watt
-    A = "A"  # ampere
-    MA = "mA"  # milliampere
+    # Area
+    SQ_M = "m^2"  # square meters
 
-    K = "K"  # Kelvin
-    LM = "lm"  # lumen
+    # Volume
+    CU_M = "m^3"  # cubic meters
+
+    # Temperature
+    C = "°C"  # degrees Celsius
+
+    # Luminous Flux
+    LM = "lm"  # lumens
+
+    # Electrical
+    V = "V"  # volts
+    W = "W"  # watts
+    A = "A"  # amperes
+
+    # Angle
+    DEG = "°"  # degrees
