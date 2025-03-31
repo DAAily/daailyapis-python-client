@@ -826,6 +826,7 @@ class ProductsResource(BaseResource):
         product_id: int,
         attributes: list[tuple[str, Any, AttributeType, AttributeValueUnit | None]],
         service: Service = Service.SPARKY,
+        overwrite_existing: bool = False,
         dry_run: bool = False,
     ) -> dict | None:
         """
@@ -906,6 +907,8 @@ class ProductsResource(BaseResource):
         if not product:
             raise Exception(f"Product with ID {product_id} not found")
         product["attributes"] = product.get("attributes") or []
+        if overwrite_existing:
+            product["attributes"] = []
         for attribute in attributes_to_add:
             for product_attribute in product["attributes"]:
                 if product_attribute["name"] == attribute["name"]:
