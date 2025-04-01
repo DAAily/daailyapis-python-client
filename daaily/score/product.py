@@ -1,4 +1,4 @@
-from daaily.lucy.enums import Language
+from daaily.enums import Language
 from daaily.score.client import Client
 from daaily.score.constants import PRODUCT_WEIGHTS, TEXT_SIMILARITY_TOPICS
 from daaily.score.models import (
@@ -179,32 +179,32 @@ class Product(Client):
             field_name=field_name, weight=weight, score=compute_score(_len, 1)
         )
 
-    def score_text_en(
-        self, field_name: str, weight: float, text_en: str, _
+    def score_text(
+        self, field_name: str, weight: float, text: str, language: Language, _
     ) -> ScoreResult:
-        if not text_en or len(text_en) < 10:
+        if not text or len(text) < 10:
             text_issue = None
-            if not text_en:
-                text_issue = "text_en==None"
+            if not text:
+                text_issue = f"{field_name}==None"
             else:
-                text_issue = f"text_en to short {len(text_en)} < 10"
+                text_issue = f"{field_name} to short {len(text)} < 10"
             return ScoreResult(
                 field_name=field_name,
                 weight=weight,
                 issues=ScoreResultIssues(text=text_issue),
             )
         balanced_score = self._calculate_balanced_richness(
-            text_en, target_length=150, alpha=0.5, beta=0.5
+            text, target_length=150, alpha=0.5, beta=0.5
         )
         completeness_score, completeness_scores = self._semantic_similarity_check(
-            text_en, TEXT_SIMILARITY_TOPICS
+            text, TEXT_SIMILARITY_TOPICS
         )
         completeness = completeness_score * balanced_score.richness
-        flesch = round(min(self._calculate_flesch_reading_ease(text_en) / 100, 1), 2)
-        spelling_score, spelling_errors = self._calculate_spelling_score(text_en)
+        flesch = round(min(self._calculate_flesch_reading_ease(text) / 100, 1), 2)
+        spelling_score, spelling_errors = self._calculate_spelling_score(text)
         spelling_score = round(min(spelling_score / 100, 1), 2)
         grammar_score, grammar_issues = self._grammar_check(
-            text=text_en, language_iso=Language.EN.value
+            text=text, language_iso=Language(language).value
         )
         score_result = ScoreResult(
             field_name=field_name,

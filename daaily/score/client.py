@@ -16,6 +16,7 @@ except ImportError:
     spellchecker = None
 
 
+from daaily.enums import Language
 from daaily.score.models import BalancedScore, ScoreSummary, ScoreWeight
 
 
@@ -261,6 +262,10 @@ class Client:
         with the corresponding data. The results are collected into a ScoreSummary
         object, which is then finalized by calculating the total score.
 
+        There is a special case for text fields, where the scoring function
+        `score_text` is called. This function handles the text scoring logic,
+        including language detection and semantic similarity checks.
+
         Parameters:
             data (dict): The data dictionary that contains values associated with each
                 field_name in the weights. These values are passed to the respective
@@ -279,15 +284,30 @@ class Client:
         for w in self.weights:
             if w.field_name == "_":  # skip the _ key
                 continue
-            score_func = f"score_{w.field_name}"
-            if hasattr(self, score_func):
-                score_results = getattr(self, score_func)(
-                    w.field_name, w.weight, data.get(w.field_name), data
+            if w.field_name.startswith("text_"):
+                language_raw = w.field_name.split("_")[1]
+                try:
+                    language = Language(language_raw)
+                except ValueError:
+                    logging.warning(
+                        f"Language {language_raw} not supported, skipping text score"
+                    )
+                    continue
+                score_results = self.score_text(  # type: ignore
+                    w.field_name, w.weight, data.get(w.field_name), language, data
                 )
                 score_summary.score_results.append(score_results)
             else:
-                logging.warning(
-                    f"No score function found for {w.field_name} in {self.type} score"
-                )
+                score_func = f"score_{w.field_name}"
+                if hasattr(self, score_func):
+                    score_results = getattr(self, score_func)(
+                        w.field_name, w.weight, data.get(w.field_name), data
+                    )
+                    score_summary.score_results.append(score_results)
+                else:
+                    logging.warning(
+                        "No score function found for "
+                        + f"{w.field_name} in {self.type} score"
+                    )
         score_summary.calculate_sum_score()
         return score_summary
