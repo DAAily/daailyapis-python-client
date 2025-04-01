@@ -884,10 +884,10 @@ class ProductsResource(BaseResource):
                 )
             elif resp.status == 409:
                 # Duplicate key issue. Could mean that the attribute already exists
-                index_name, dup_value = deter_duplicate_key_from_error_message(
+                key_pattern, dup_value = deter_duplicate_key_from_error_message(
                     resp.data
                 )
-                if index_name and index_name.startswith("name_"):
+                if key_pattern and key_pattern == "name":
                     logger.info(
                         "Attribute already exists. Using existing attribute instead: "
                         + f"{dup_value}"
