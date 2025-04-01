@@ -2,7 +2,6 @@ import ast
 import json
 import logging
 import mimetypes
-import re
 from typing import Any
 
 import daaily.transport
@@ -191,10 +190,11 @@ def deter_duplicate_key_from_error_message(
     name and the duplicate key value from the error description. For example,
     given an error message like:
 
-        b'{"title": "Duplicate key found", "description": "{\'index\': 0, '
-        b'\'code\': 11000, \'errmsg\': \'E11000 duplicate key error collection: '
-        b'lucy-dev.attributes index: attribute_id_1 dup key: { attribute_id: '
-        b'1024 }", "identifier_field": null, "identifier": null}'
+        {"title": "Duplicate key found", "description": "{'index': 0, 'code': 11000,
+        'errmsg': 'E11000 duplicate key error collection: lucy-dev.attributes
+        index: name_1 dup key: { name: \"feature_backrest_fixed\" }', 'keyPattern':
+        {'name': 1}, 'keyValue': {'name': 'feature_backrest_fixed'}}",
+        "identifier_field": null, "identifier": null}'
 
     it will return ("attribute_id_1", "1024").
 
@@ -222,18 +222,10 @@ def deter_duplicate_key_from_error_message(
             description_data = json.loads(description_str)
         except json.JSONDecodeError:
             description_data = ast.literal_eval(description_str)
-        errmsg = description_data.get("errmsg", "")
-        index_pattern = re.compile(r"index:\s*(?P<index>\S+)")
-        dup_key_pattern = re.compile(
-            r"dup key:\s*\{\s*(?P<field>\w+):\s*(?P<dup_value>.+?)\s*\}"
-        )
-        index_match = index_pattern.search(errmsg)
-        if not index_match:
-            return None, None
-        dup_key_match = dup_key_pattern.search(errmsg)
-        if dup_key_match:
-            sanitized_value = ast.literal_eval(dup_key_match.group("dup_value"))
-            return index_match.group("index"), sanitized_value
+        key_value = description_data.get("keyValue", {})
+        value = key_value.get("name")
+        if value is not None:
+            return "name", value
     except Exception:
-        return None, None
+        pass
     return None, None
