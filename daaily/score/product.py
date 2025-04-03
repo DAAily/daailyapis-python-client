@@ -187,7 +187,7 @@ class Product(Client):
             if not text:
                 text_issue = f"{field_name}==None"
             else:
-                text_issue = f"{field_name} to short {len(text)} < 10"
+                text_issue = f"{field_name} too short {len(text)} < 10"
             return ScoreResult(
                 field_name=field_name,
                 weight=weight,
