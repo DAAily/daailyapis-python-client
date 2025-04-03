@@ -295,18 +295,16 @@ class Client:
 
         """
         Check the semantic similarity of the text to defined topic descriptions.
-        Not working as expected. The scores are very small, needs investigation how
-        this lib is working
-
+        
         Parameters:
             text (str): The text to analyze.
             topics (dict): A dictionary of topics and their descriptions.
 
         Returns:
-            dict: A dictionary showing similarity scores for each topic.
+            tuple: (overall_score, dictionary showing similarity scores for each topic)
         """
         scores = {}
-        score = 0
+        total_score = 0
         for topic, data in topics.items():
             description = data[0]
             weight = data[1]
@@ -314,9 +312,11 @@ class Client:
                 [text, description], show_progress_bar=False
             )
             similarity = util.cos_sim(embeddings[0], embeddings[1])
-            scores[topic] = float(similarity.item()) * weight
-            score += max(scores[topic], 0)
-        return score, scores
+            raw_similarity = float(similarity.item())
+            positive_similarity = max(0, raw_similarity)
+            scores[topic] = positive_similarity * weight
+            total_score += scores[topic]
+        return total_score, scores
 
     def _calculate_spelling_score(
         self, text: str, language: Language

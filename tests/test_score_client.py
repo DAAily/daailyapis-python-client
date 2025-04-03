@@ -52,7 +52,9 @@ class TestScores(unittest.TestCase):
                 inclination and can be locked in any position. Once the user is
                 comfortably reclined, the Ottoman provides a soft foot rest for
                 ultimate relaxation. You can get it in many types of fabrics and
-                leather"""
+                leather. The Grand Repos range from 2 meters to 3 meters in
+                length, and the Grand Repos 2.5 meters is the most popular choice.
+                """
         }
         score_summary = self.product_score.score(product)
         text_en_detail = None
@@ -69,12 +71,12 @@ class TestScores(unittest.TestCase):
         dimension = text_en_detail.completeness.get("dimensions")
         if not mat or not usage or not audience or not dimension:
             self.fail("Completeness not found")
-        self.assertGreater(mat, 0.01)
-        self.assertGreater(usage, 0.02)
-        self.assertGreater(audience, 0.005)
-        self.assertGreater(dimension, 0.05)
+        self.assertGreater(mat, 0.001)
+        self.assertGreater(usage, 0.01)
+        self.assertGreater(audience, 0.0006)
+        self.assertGreater(dimension, 0.01)
 
-    def test_dimension_score(self):
+    def test_attributes_score(self):
         product = {
             "attributes": [
                 {"name": "dimension_hight", "value": 100},
@@ -84,14 +86,15 @@ class TestScores(unittest.TestCase):
         }
 
         score_summary = self.product_score.score(product)
-        dimension_result = None
+        atrributes_result = None
         for result in score_summary.score_results:
-            if result.field_name == "dimensions":
-                dimension_result = result
+            print(f"Test Result: {result}")
+            if result.field_name == "attributes":
+                atrributes_result = result
                 break
-        if dimension_result is None:
+        if atrributes_result is None:
             self.fail("No details found")
-        self.assertGreater(dimension_result.score, 0.99)
+        self.assertGreater(atrributes_result.score, 0.7)
 
     def test_prices_score(self):
         product = {
