@@ -86,15 +86,15 @@ class TestScores(unittest.TestCase):
         }
 
         score_summary = self.product_score.score(product)
-        atrributes_result = None
+        attributes_result = None
         for result in score_summary.score_results:
             print(f"Test Result: {result}")
             if result.field_name == "attributes":
-                atrributes_result = result
+                attributes_result = result
                 break
-        if atrributes_result is None:
+        if attributes_result is None:
             self.fail("No details found")
-        self.assertGreater(atrributes_result.score, 0.7)
+        self.assertGreater(attributes_result.score, 0.7)
 
     def test_prices_score(self):
         product = {
