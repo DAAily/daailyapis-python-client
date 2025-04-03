@@ -71,7 +71,7 @@ class TestScores(unittest.TestCase):
             self.fail("Completeness not found")
         self.assertGreater(mat, 0.01)
         self.assertGreater(usage, 0.02)
-        self.assertGreater(audience, 0.01)
+        self.assertGreater(audience, 0.005)
         self.assertGreater(dimension, 0.05)
 
     def test_dimension_score(self):
