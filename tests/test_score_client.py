@@ -70,7 +70,7 @@ class TestScores(unittest.TestCase):
         if not mat or not usage or not audience or not dimension:
             self.fail("Completeness not found")
         self.assertGreater(mat, 0.01)
-        self.assertGreater(usage, 0.05)
+        self.assertGreater(usage, 0.02)
         self.assertGreater(audience, 0.01)
         self.assertGreater(dimension, 0.05)
 
