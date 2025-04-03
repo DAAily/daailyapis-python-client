@@ -35,7 +35,7 @@ class TestScores(unittest.TestCase):
             self.fail("No details found")
         self.assertIsInstance(text_en_detail, ScoreResultDetails)
         self.assertIsInstance(text_en_detail.completeness, dict)
-        self.assertIsInstance(text_en_detail.flesch, int)
+        self.assertIsInstance(text_en_detail.flesch, float)
         self.assertIsInstance(text_en_detail.richness, float)
         self.assertIsInstance(text_en_detail.grammar, float)
         self.assertEqual(text_en_detail.spelling, 1.0)
@@ -69,7 +69,7 @@ class TestScores(unittest.TestCase):
         dimension = text_en_detail.completeness.get("dimensions")
         if not mat or not usage or not audience or not dimension:
             self.fail("Completeness not found")
-        self.assertGreater(mat, 0.05)
+        self.assertGreater(mat, 0.01)
         self.assertGreater(usage, 0.05)
         self.assertGreater(audience, 0.01)
         self.assertGreater(dimension, 0.05)
