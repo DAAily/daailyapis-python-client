@@ -196,15 +196,24 @@ class Product(Client):
         balanced_score = self._calculate_balanced_richness(
             text, target_length=150, alpha=0.5, beta=0.5
         )
+        language_similarity_topics = TEXT_SIMILARITY_TOPICS.get(language)
+        if not language_similarity_topics:
+            raise ValueError(
+                f"Language {language} not supported for semantic similarity check. "
+                f"Please add it. "
+                f"Supported languages are: {list(TEXT_SIMILARITY_TOPICS.keys())}"
+            )
         completeness_score, completeness_scores = self._semantic_similarity_check(
-            text, TEXT_SIMILARITY_TOPICS
+            text, language_similarity_topics
         )
         completeness = completeness_score * balanced_score.richness
-        flesch = round(min(self._calculate_flesch_reading_ease(text) / 100, 1), 2)
-        spelling_score, spelling_errors = self._calculate_spelling_score(text)
+        flesch = round(
+            min(self._calculate_flesch_reading_ease(text, language) / 100, 1), 2
+        )
+        spelling_score, spelling_errors = self._calculate_spelling_score(text, language)
         spelling_score = round(min(spelling_score / 100, 1), 2)
         grammar_score, grammar_issues = self._grammar_check(
-            text=text, language_iso=Language(language).value
+            text=text, language=language
         )
         score_result = ScoreResult(
             field_name=field_name,

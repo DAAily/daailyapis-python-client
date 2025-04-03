@@ -10,8 +10,8 @@ score = Product()
 
 # Define filters
 filters = [
-    Filter("manufacturer_id", "3100144"),
-    # Filter("product_ids", "1000528"),
+    # Filter("manufacturer_id", "3100144"),
+    Filter("product_ids", "1000528,1295461"),
     Filter("status", "online,preview,offline"),
 ]
 
