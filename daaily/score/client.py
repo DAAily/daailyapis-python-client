@@ -17,11 +17,13 @@ except ImportError:
     spellchecker = None
 
 
+from abc import ABC, abstractmethod
+
 from daaily.enums import Language
-from daaily.score.models import BalancedScore, ScoreSummary, ScoreWeight
+from daaily.score.models import BalancedScore, ScoreResult, ScoreSummary, ScoreWeight
 
 
-class Client:
+class Client(ABC):
     def __init__(
         self, type: str | None = None, weights: list[ScoreWeight] | None = None
     ):
@@ -295,6 +297,16 @@ class Client:
 
         """
         Check the semantic similarity of the text to defined topic descriptions.
+
+        This method uses sentence embeddings to compute the similarity between the
+        input text and predefined topic descriptions. The similarity scores are
+        weighted according to the provided weights for each topic.
+
+        The topic's score is calculated as the cosine similarity between the text and
+        the topic description. The similarity score is then multiplied by the weight
+        assigned to that topic. The resulting score is a measure of how well the
+        text aligns with the topic. A higher score indicates a better match.
+        The overall score is the sum of the weighted similarity scores.
         
         Parameters:
             text (str): The text to analyze.
@@ -332,17 +344,8 @@ class Client:
         Returns:
             tuple: A score for spelling (0-100) and the number of misspelled words
         """
-        if language == Language.DE:
-            word_pattern = r"\b[a-zA-ZäöüÄÖÜß]+\b"
-        elif language == Language.IT:
-            word_pattern = r"\b[a-zA-ZàèéìíòóùúÀÈÉÌÍÒÓÙÚ]+\b"
-        elif language == Language.FR:
-            word_pattern = r"\b[a-zA-ZàâæçéèêëîïôœùûüÿÀÂÆÇÉÈÊËÎÏÔŒÙÛÜŸ]+\b"
-        elif language == Language.ES:
-            word_pattern = r"\b[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+\b"
-        else:
-            word_pattern = r"\b[a-zA-Z]+\b"
-        words = re.findall(word_pattern, text)
+        # Universal pattern to split by on non-alphanumeric and non-accented characters
+        words = re.findall(r"\b[^\s\d\W]+\b", text, re.UNICODE)
         words = [word for word in words if len(word) > 1 and not word.isdigit()]
         words = [word for word in words if word]
         total_words = len(words)
@@ -360,6 +363,13 @@ class Client:
         spelling_errors = len(misspelled)
         spelling_score = max(0, 100 - (spelling_errors / total_words * 100))
         return spelling_score, spelling_errors
+
+    @abstractmethod
+    def score_text(
+        self, field_name: str, weight: float, text: str, language: Language, data: dict
+    ) -> ScoreResult:
+        """Method that must be implemented by subclasses"""
+        pass
 
     def score(self, data) -> ScoreSummary:
         """
@@ -402,7 +412,7 @@ class Client:
                         f"Language {language_raw} not supported, skipping text score"
                     )
                     continue
-                score_results = self.score_text(  # type: ignore
+                score_results = self.score_text(
                     w.field_name, w.weight, data.get(w.field_name), language, data
                 )
                 score_summary.score_results.append(score_results)
