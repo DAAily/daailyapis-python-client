@@ -1,5 +1,6 @@
 import io
 import logging
+import os
 import re
 
 try:
@@ -16,10 +17,13 @@ except ImportError:
     spellchecker = None
 
 
-from daaily.score.models import BalancedScore, ScoreSummary, ScoreWeight
+from abc import ABC, abstractmethod
+
+from daaily.enums import Language
+from daaily.score.models import BalancedScore, ScoreResult, ScoreSummary, ScoreWeight
 
 
-class Client:
+class Client(ABC):
     def __init__(
         self, type: str | None = None, weights: list[ScoreWeight] | None = None
     ):
@@ -53,10 +57,11 @@ class Client:
             )
 
         self._lang_client = language_v1.LanguageServiceClient()
+        # https://www.sbert.net/docs/sentence_transformer/pretrained_models.html#semantic-similarity-models
         self._sentence_transformer_model = sentence_transformers.SentenceTransformer(
-            "bert-base-nli-mean-tokens"
+            "distiluse-base-multilingual-cased-v1"
         )
-        self._spell = spellchecker.SpellChecker()
+        self._spellchecker = spellchecker
 
     def re_encode(self, text: str) -> str:
         """
@@ -77,7 +82,7 @@ class Client:
         text_io = io.TextIOWrapper(bytes_object, encoding="utf-8-sig")
         return text_io.read().strip()
 
-    def _grammar_check(self, text: str, language_iso: str) -> tuple[float, list[str]]:
+    def _grammar_check(self, text: str, language: Language) -> tuple[float, list[str]]:
         """
         Perform a grammar check on the provided text using Google's NL API.
 
@@ -90,7 +95,7 @@ class Client:
 
         Parameters:
             text (str): The text to check for grammar issues.
-            language_iso (str): The ISO code for the language of the text.
+            language (Language): The language of the text.
 
         Returns:
             tuple[float, list[str]]:
@@ -101,7 +106,7 @@ class Client:
         document = language_v1.Document(  # type: ignore
             content=text,
             type_=language_v1.Document.Type.PLAIN_TEXT,  # type: ignore
-            language=language_iso,
+            language=Language(language).value,
         )
         response = self._lang_client.analyze_syntax(
             document=document,
@@ -143,59 +148,146 @@ class Client:
         length_factor = min(1.0, total_words / target_length)
         return BalancedScore(richness, length_factor, alpha, beta)
 
-    def _calculate_flesch_reading_ease(self, text: str) -> float:
-        """
-        How It Works:
-        Sentence Count: Splits the text into sentences using common punctuation (.,!,?).
-        Word Count: Identifies words using regex (\\w+).
-        Syllable Count: Counts syllables per word by checking vowels and handling edge
-        cases like trailing "e".
-
-        Flesch Formula:
-        Flesch Score = 206.835-(1.015 x Words per Sentence)-(84.6 x Syllables per Word)
-
-        Calculate the Flesch Reading Ease score for the given text.
-        Higher scores indicate easier readability.
-
-        Parameters:
-            text (str): The text to analyze.
-
-        Returns:
-            float: Flesch Reading Ease score.
-        """
-        # Count sentences
-        sentences = re.split(r"[.!?]", text)
-        num_sentences = len([s for s in sentences if s.strip()])
-        # Count words
-        words = re.findall(r"\w+", text)
-        num_words = len(words)
-
-        # Count syllables
-        def count_syllables(word: str) -> int:
-            word = word.lower()
+    def count_text_syllables(self, word: str, lang: Language) -> int:  # noqa: C901
+        word = word.lower()
+        if lang == Language.DE:
+            vowels = "aeiouyäöü"
+            diphthongs = ["ei", "ie", "eu", "äu", "au"]
+        elif lang == Language.ES:
+            vowels = "aeiouyáéíóúü"
+            diphthongs = [
+                "ai",
+                "ei",
+                "oi",
+                "ui",
+                "ia",
+                "ie",
+                "io",
+                "iu",
+                "ua",
+                "ue",
+                "uo",
+            ]
+        elif lang == Language.FR:
+            vowels = "aeiouyéèêëàâîïôùûüÿç"
+            diphthongs = ["ai", "ei", "oi", "ou", "au", "eu"]
+        elif lang == Language.IT:
+            vowels = "aeiouyàèéìíòóùú"
+            diphthongs = ["ai", "ei", "oi", "ui", "ia", "ie", "io", "iu"]
+        else:  # Default to English
             vowels = "aeiouy"
-            num_syllables = 0
-            prev_char_was_vowel = False
-            for char in word:
-                if char in vowels:
+            diphthongs = [
+                "ai",
+                "ay",
+                "ea",
+                "ee",
+                "ei",
+                "ey",
+                "ie",
+                "oa",
+                "oe",
+                "oi",
+                "oo",
+                "ou",
+                "oy",
+                "ui",
+                "uy",
+            ]
+        num_syllables = 0
+        prev_char_was_vowel = False
+        i = 0
+        while i < len(word):
+            # Check for diphthongs (count as one syllable)
+            is_diphthong = False
+            if i < len(word) - 1:
+                potential_diphthong = word[i : i + 2]
+                if potential_diphthong in diphthongs:
+                    if (
+                        not prev_char_was_vowel
+                    ):  # Avoid counting overlapping vowels twice
+                        num_syllables += 1
+                    prev_char_was_vowel = True
+                    is_diphthong = True
+                    i += 2
+                    continue
+            # If not a diphthong, check single letters
+            if not is_diphthong:
+                if word[i] in vowels:
                     if not prev_char_was_vowel:
                         num_syllables += 1
                     prev_char_was_vowel = True
                 else:
                     prev_char_was_vowel = False
-            if word.endswith("e"):
-                num_syllables = max(1, num_syllables - 1)
-            return max(1, num_syllables)
+                i += 1
+        # Language-specific end-of-word rules
+        if lang == Language.EN and word.endswith("e"):
+            num_syllables = max(1, num_syllables - 1)
+        elif lang == Language.FR and (
+            word.endswith("e") or word.endswith("es") or word.endswith("ent")
+        ):
+            # In French, final 'e', 'es', 'ent' are often silent
+            num_syllables = max(1, num_syllables - 1)
+        return max(1, num_syllables)
 
-        num_syllables = sum(count_syllables(word) for word in words)
-        # Flesch Reading Ease formula
+    def _calculate_flesch_reading_ease(self, text: str, language: Language) -> float:
+        """
+        Calculate the Flesch Reading Ease score for the given text with
+        language-specific adaptations. Higher scores indicate easier readability.
+
+        The original Flesch formula is optimized for English. This implementation
+        includes language-specific adjustments for German, Spanish, French, and Italian.
+
+        Parameters:
+            text (str): The text to analyze.
+            language (Language): The language of the text.
+
+        Returns:
+            float: Adjusted Flesch Reading Ease score.
+        """
+        sentence_terminators = r"[.!?]"
+        if language == Language.ES:
+            sentence_terminators = r"[.!?¡¿]"
+        sentences = re.split(sentence_terminators, text)
+        num_sentences = len([s for s in sentences if s.strip()])
+        if language == Language.DE:
+            # German has compound words that should be counted differently
+            # This simple approach splits compound words with hyphens
+            text_for_word_count = text.replace("-", " ")
+            words = re.findall(r"\w+", text_for_word_count)
+        else:
+            words = re.findall(r"\w+", text)
+        num_words = len(words)
+        num_syllables = sum(self.count_text_syllables(word, language) for word in words)
         if num_sentences == 0 or num_words == 0:
-            return 0.0  # Avoid division by zero
+            return 0.0
+        words_per_sentence = num_words / num_sentences
+        syllables_per_word = num_syllables / num_words
+        # Base Flesch calculation
         flesch_score = (
-            206.835
-            - (1.015 * (num_words / num_sentences))
-            - (84.6 * (num_syllables / num_words))
+            206.835 - (1.015 * words_per_sentence) - (84.6 * syllables_per_word)
         )
+        if language == Language.DE:
+            # German typically scores lower due to longer words and sentences
+            # The Flesch formula for German actually requires different coefficients
+            # Amstad's adaptation for German:
+            # 180 - (1 * words_per_sentence) - (58.5 * syllables_per_word)
+            flesch_score = (
+                180 - (1.0 * words_per_sentence) - (58.5 * syllables_per_word)
+            )
+        elif language == Language.IT:
+            # Tends to have more syllables per word than English
+            flesch_score = (
+                217 - (1.3 * words_per_sentence) - (60.0 * syllables_per_word)
+            )
+        elif language == Language.FR:
+            flesch_score = (
+                207 - (1.015 * words_per_sentence) - (73.6 * syllables_per_word)
+            )
+        elif language == Language.ES:
+            flesch_score = (
+                206.835 - (1.02 * words_per_sentence) - (60.0 * syllables_per_word)
+            )
+        flesch_score = max(0, min(100, flesch_score))
         return round(flesch_score, 2)
 
     def _semantic_similarity_check(
@@ -205,18 +297,26 @@ class Client:
 
         """
         Check the semantic similarity of the text to defined topic descriptions.
-        Not working as expected. The scores are very small, needs investigation how
-        this lib is working
 
+        This method uses sentence embeddings to compute the similarity between the
+        input text and predefined topic descriptions. The similarity scores are
+        weighted according to the provided weights for each topic.
+
+        The topic's score is calculated as the cosine similarity between the text and
+        the topic description. The similarity score is then multiplied by the weight
+        assigned to that topic. The resulting score is a measure of how well the
+        text aligns with the topic. A higher score indicates a better match.
+        The overall score is the sum of the weighted similarity scores.
+        
         Parameters:
             text (str): The text to analyze.
             topics (dict): A dictionary of topics and their descriptions.
 
         Returns:
-            dict: A dictionary showing similarity scores for each topic.
+            tuple: (overall_score, dictionary showing similarity scores for each topic)
         """
         scores = {}
-        score = 0
+        total_score = 0
         for topic, data in topics.items():
             description = data[0]
             weight = data[1]
@@ -224,32 +324,52 @@ class Client:
                 [text, description], show_progress_bar=False
             )
             similarity = util.cos_sim(embeddings[0], embeddings[1])
-            scores[topic] = (
-                float(similarity.item()) * weight
-            )  # Convert tensor to Python float
-            score += max(scores[topic], 0)
-        return score, scores
+            raw_similarity = float(similarity.item())
+            positive_similarity = max(0, raw_similarity)
+            scores[topic] = positive_similarity * weight
+            total_score += scores[topic]
+        return total_score, scores
 
-    def _calculate_spelling_score(self, text: str) -> tuple[float, int]:
+    def _calculate_spelling_score(
+        self, text: str, language: Language
+    ) -> tuple[float, int]:
         """
-        Calculate a spelling score for the input text.
+        Calculate a spelling score for the input text with improved tokenization
+        for different languages.
 
         Parameters:
             text (str): The input text to evaluate.
+            language (Language): The language of the text.
 
         Returns:
-            dict: A score for spelling
+            tuple: A score for spelling (0-100) and the number of misspelled words
         """
-        # Tokenize the text into words
-        words = text.split()
+        # Universal pattern to split by on non-alphanumeric and non-accented characters
+        words = re.findall(r"\b[^\s\d\W]+\b", text, re.UNICODE)
+        words = [word for word in words if len(word) > 1 and not word.isdigit()]
+        words = [word for word in words if word]
         total_words = len(words)
         if total_words == 0:
             return 0, 0
-        misspelled = self._spell.unknown(words)
+        spell_client = self._spellchecker.SpellChecker(
+            language=language.value,
+            local_dictionary=os.path.join(
+                os.path.dirname(__file__),
+                f"resources/spellchecker/{language.value}.json.gz",
+            ),
+            case_sensitive=False,
+        )
+        misspelled = spell_client.unknown(words)
         spelling_errors = len(misspelled)
-        # Scores
         spelling_score = max(0, 100 - (spelling_errors / total_words * 100))
         return spelling_score, spelling_errors
+
+    @abstractmethod
+    def score_text(
+        self, field_name: str, weight: float, text: str, language: Language, data: dict
+    ) -> ScoreResult:
+        """Method that must be implemented by subclasses"""
+        pass
 
     def score(self, data) -> ScoreSummary:
         """
@@ -260,6 +380,10 @@ class Client:
         in this class named `score_<field_name>`. If found, that function is called
         with the corresponding data. The results are collected into a ScoreSummary
         object, which is then finalized by calculating the total score.
+
+        There is a special case for text fields, where the scoring function
+        `score_text` is called. This function handles the text scoring logic,
+        including language detection and semantic similarity checks.
 
         Parameters:
             data (dict): The data dictionary that contains values associated with each
@@ -279,15 +403,30 @@ class Client:
         for w in self.weights:
             if w.field_name == "_":  # skip the _ key
                 continue
-            score_func = f"score_{w.field_name}"
-            if hasattr(self, score_func):
-                score_results = getattr(self, score_func)(
-                    w.field_name, w.weight, data.get(w.field_name), data
+            if w.field_name.startswith("text_"):
+                language_raw = w.field_name.split("_")[1]
+                try:
+                    language = Language(language_raw)
+                except ValueError:
+                    logging.warning(
+                        f"Language {language_raw} not supported, skipping text score"
+                    )
+                    continue
+                score_results = self.score_text(
+                    w.field_name, w.weight, data.get(w.field_name), language, data
                 )
                 score_summary.score_results.append(score_results)
             else:
-                logging.warning(
-                    f"No score function found for {w.field_name} in {self.type} score"
-                )
+                score_func = f"score_{w.field_name}"
+                if hasattr(self, score_func):
+                    score_results = getattr(self, score_func)(
+                        w.field_name, w.weight, data.get(w.field_name), data
+                    )
+                    score_summary.score_results.append(score_results)
+                else:
+                    logging.warning(
+                        "No score function found for "
+                        + f"{w.field_name} in {self.type} score"
+                    )
         score_summary.calculate_sum_score()
         return score_summary

@@ -9,7 +9,9 @@ class Serializable:
 
 
 class BalancedScore:
-    def __init__(self, richness, length_factor, alpha: float, beta: float):
+    def __init__(
+        self, richness: float, length_factor: float, alpha: float, beta: float
+    ):
         self.richness = richness
         self.length_factor = length_factor
         self.alpha = alpha
