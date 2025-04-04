@@ -65,19 +65,44 @@ class Product(Client):
         """
         Score product images based on quality, variety, and completeness.
 
-        Evaluates products based on having the three key image types:
-        - pro-b: Main/beauty image (highest importance)
-        - pro-g: Gallery images (multiple images improve score)
-        - pro-d: Dimension image (technical information)
+        This function evaluates a product's images based on three key image types,
+        with each contributing differently to the final score:
+
+        - pro-b: Main/beauty image (50% of score) - Critical product representation
+        - pro-g: Gallery images (30% of score) - Additional views/angles
+        - pro-d: Dimension image (20% of score) - Technical specifications visualization
+
+        Scoring methodology:
+        1. Main images: 0.5 points maximum (0.5 per image, capped at 1 image)
+        2. Gallery images: 0.3 points maximum (0.06 per image, capped at 5 images)
+        3. Dimension images: 0.2 points maximum (0.2 per image, capped at 1 image)
+        4. Quality penalty: -0.05 points per low-resolution image
+
+        A perfect score of 1.0 requires:
+        - At least 1 main image (pro-b)
+        - At least 5 gallery images (pro-g)
+        - At least 1 dimension image (pro-d)
+        - No low-resolution images
+
+        The function also generates diagnostic information in the result details:
+        - Completeness: Shows scores for each image type (normalized to 0-1 range)
+        - Richness: Represents overall image quality after penalty adjustments
+        - Length factor: Raw count of online images
 
         Parameters:
             field_name: Name of the field being scored
             weight: Weight of this field in the overall product score
-            images: List of image dictionaries
-            _: Unused parameter
+            images: List of image dictionaries containing 'status' and
+            'image_usages' keys
+            _: Unused parameter (product record)
 
         Returns:
-            ScoreResult: Score result with details about the image evaluation
+            ScoreResult: Score result (0-1 scale) with details and any issues found
+
+        Issues reported:
+            - Missing any of the three key image types
+            - Presence of low-resolution images
+            - No online images available
         """
         if not images:
             return ScoreResult(
@@ -124,7 +149,7 @@ class Product(Client):
         low_quality_images = [
             image
             for image in online_images
-            if image.get("image_error") in ["low_resolution", "poor_quality"]
+            if image.get("image_error") in ["low_resolution"]
         ]
         # Penalize for low-quality images
         quality_penalty = len(low_quality_images) * 0.05
@@ -142,7 +167,7 @@ class Product(Client):
         # - richness: represents overall image quality (0-1)
         # - completeness: represents coverage of different image types
         # - length_factor: represents the quantity of images relative to optimal
-        # - flesch, grammar, spelling: not applicable to images, set to 1.0
+        # - flesch, grammar, spelling: not applicable to images, set to 0.0
         image_completeness = {
             "main_image": main_image_score / 0.5 if num_pro_b > 0 else 0.0,
             "gallery_images": gallery_score / 0.3 if num_pro_g > 0 else 0.0,
@@ -151,14 +176,10 @@ class Product(Client):
         }
         # Calculate richness as overall quality factor
         image_richness = max(0.0, 1.0 - (quality_penalty * 2))
-        # Calculate length_factor based on total image count relative
-        # to optimal (approx. 7 images)
-        optimal_image_count = 7  # 1 main + 5 gallery + 1 dimension
-        length_factor = min(1.0, len(online_images) / optimal_image_count)
         details = ScoreResultDetails(
             richness=image_richness,
             completeness=image_completeness,
-            length_factor=length_factor,
+            length_factor=len(online_images),
             flesch=0.0,
             grammar=0.0,
             spelling=0.0,
@@ -208,14 +229,36 @@ class Product(Client):
         Score product attributes based on diversity across attribute types,
         with emphasis on material, dimension, and feature attributes.
 
+        This function evaluates a product's attributes based on two key factors:
+        1. Attribute type diversity (variety of different attribute categories)
+        2. Presence of critical attribute types (material, dimension, feature)
+
+        Scoring methodology (total 1.0 maximum):
+        - Attribute diversity: 60% of score (0.6 points)
+        * Score increases based on how many different attribute types are present
+        * Maximum score for having 7 or more different attribute types
+
+        - Critical attribute types: 30% of score (0.3 points)
+        * Material attributes: 0.1 points if any present
+        * Dimension attributes: 0.1 points if any present
+        * Feature attributes: 0.1 points if any present
+
+        - Primary dimensions bonus: 10% of score (0.1 points)
+        * Height dimension: 0.033 points
+        * Width dimension: 0.033 points
+        * Length/depth/breadth dimension: 0.033 points
+
+        The function categorizes attributes by examining the attribute name
+        (e.g., "material_frame" would be categorized as "material").
+
         Parameters:
             field_name: Name of the field being scored
             weight: Weight of this field in the overall product score
-            attributes: List of attribute dictionaries
-            _: Unused parameter
+            attributes: List of attribute dictionaries with 'name' and 'value' keys
+            _: Unused parameter (product record)
 
         Returns:
-            ScoreResult: Score result with details about the attribute evaluation
+            ScoreResult: Score result (0-1 scale) with details and any issues found
         """
         if not attributes:
             return ScoreResult(
@@ -229,14 +272,9 @@ class Product(Client):
             "category",
             "certification",
             "color",
-            "colour",
             "dimension",
             "feature",
             "material",
-            "decor",
-            "optic",
-            "style",
-            "usage",
         ]
         attribute_groups = {attr_type: [] for attr_type in attribute_types}
         uncategorized = []
@@ -247,8 +285,6 @@ class Product(Client):
                 if attr_name.startswith(f"{type_name}_") or attr_name == type_name:
                     attr_type = type_name
                     break
-            if attr_type == "colour":
-                attr_type = "color"
             if attr_type:
                 attribute_groups[attr_type].append(attr)
             else:
@@ -279,8 +315,8 @@ class Product(Client):
         # Count how many different attribute types are present
         attr_types_present = sum(1 for count in attribute_counts.values() if count > 0)
         # Prioritize diversity of attribute types (60% of the score)
-        # Maximum possible types is 11 (after combining color/colour)
-        max_types = 11
+        # Maximum possible types is 7 (after combining color/colour)
+        max_types = 7
         diversity_score = min(0.6, (attr_types_present / max_types) * 0.6)
         # Prioritize the three most important types: material, dimension,
         # feature (30% of the score)
@@ -439,6 +475,47 @@ class Product(Client):
     def score_text(
         self, field_name: str, weight: float, text: str, language: Language, _
     ) -> ScoreResult:
+        """
+        Score product text descriptions based on content quality, readability,
+        and linguistic correctness.
+
+        This function evaluates text descriptions across multiple dimensions to
+        determine how well they represent the product. The scoring combines content
+        relevance, readability, spelling, and grammar to provide a comprehensive
+        assessment of text quality.
+
+        Scoring methodology (total 1.0 maximum):
+        - Content quality: 60% of score
+        * Measures how well the text covers relevant topics defined in
+        TEXT_SIMILARITY_TOPICS
+        * Weighted by text richness (vocabulary diversity and structure)
+
+        - Readability: 20% of score
+        * Uses language-specific Flesch reading ease score
+        * Adjusted and normalized to 0-1 scale
+
+        - Formal correctness: 20% of score
+        * Spelling: 10% (0.5 * 20%) - percentage of correctly spelled words
+        * Grammar: 10% (0.5 * 20%) - quality of grammatical structure
+
+        Topic evaluation criteria are defined in TEXT_SIMILARITY_TOPICS for each
+        language and typically include:
+        - Benefits and advantages of the product
+        - Design philosophy and concept
+        - User experience and feel
+        - Product context and relation to environments
+
+        Parameters:
+            field_name: Name of the field being scored (e.g., "text_en", "text_de")
+            weight: Weight of this field in the overall product score
+            text: The product description text to evaluate
+            language: Language enum indicating which language the text is in
+            _: Unused parameter (product record)
+
+        Returns:
+            ScoreResult: Score result (0-1 scale) with detailed component scores
+            and any issues found
+        """
         if not text or len(text) < 10:
             text_issue = None
             if not text:
