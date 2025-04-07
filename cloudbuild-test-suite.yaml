@@ -2,7 +2,7 @@ steps:
 
   - name: python:3.10
     entrypoint: python
-    args: ['-m', 'pip', 'install', '-r', 'tests/requirements.txt', '--user']
+    args: ['-m', 'pip', 'install', '-r', 'tests/requirements.txt', '--user', '--no-cache-dir']
 
   - name: python:3.10
     entrypoint: 'python'
