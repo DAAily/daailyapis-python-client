@@ -107,17 +107,19 @@ class TestLucyUtils(unittest.TestCase):
                         "errmsg": "E11000 duplicate key error collection: "
                         + "lucy-dev.attributes index: attribute_id_1 dup key: "
                         + "{ attribute_id: 1024 }",
-                        "identifier_field": None,
-                        "identifier": None,
+                        "keyPattern": {"name": 1},
+                        "keyValue": {"name": "feature_backrest_fixed"},
                     }
                 ),
+                "identifier_field": None,
+                "identifier": None,
             }
         ).encode("utf-8")
         (
-            index_name,
+            key_pattern,
             dup_value,
         ) = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
-        self.assertEqual((index_name, dup_value), ("attribute_id_1", 1024))
+        self.assertEqual((key_pattern, dup_value), ("name", "feature_backrest_fixed"))
 
     def test_python_style_dict_message(self):
         """
@@ -148,7 +150,7 @@ class TestLucyUtils(unittest.TestCase):
             index_name,
             dup_value,
         ) = daaily.lucy.utils.deter_duplicate_key_from_error_message(binary_data)
-        self.assertEqual((index_name, dup_value), ("name_1", "material_"))
+        self.assertEqual((index_name, dup_value), ("name", "material_"))
 
     def test_missing_dup_key(self):
         binary_data = (
