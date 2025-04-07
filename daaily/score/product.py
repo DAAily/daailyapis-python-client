@@ -68,7 +68,7 @@ class Product(Client):
         This function evaluates a product's images based on three key image types,
         with each contributing differently to the final score:
 
-        - pro-b: Main/beauty image (50% of score) - Critical product representation
+        - pro-b: Main image (50% of score) - Critical product representation
         - pro-g: Gallery images (30% of score) - Additional views/angles
         - pro-d: Dimension image (20% of score) - Technical specifications visualization
 
@@ -137,7 +137,7 @@ class Product(Client):
         num_pro_b = len(pro_b_images)
         num_pro_g = len(pro_g_images)
         num_pro_d = len(pro_d_images)
-        # Main/beauty image (pro-b) - Most important (max 0.5)
+        # Main image (pro-b) - Most important (max 0.5)
         main_image_score = min(0.5, num_pro_b * 0.5)
         # Gallery images (pro-g) - Score increases with more images, up to 5 (max 0.3)
         gallery_score = min(0.3, num_pro_g * 0.06)
