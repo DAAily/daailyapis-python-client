@@ -10,7 +10,8 @@ score = Product()
 
 # Define filters
 filters = [
-    Filter("manufacturer_id", "3100144"),
+    # Filter("manufacturer_id", "3100144"),
+    Filter("product_ids", "1000528,1295461"),
     Filter("status", "online,preview,offline"),
 ]
 
@@ -21,9 +22,10 @@ products = client.products.get(filters=filters)
 for i, p in enumerate(products):
     print(f"{i} Product: {p['product_id']}")
     score_results = score.score(p)
+    print(f"Sum Score: {score_results.sum_score}")
     for sr in score_results.score_results:
         print(f"Field Name: {sr.field_name}")
-        print(f"Score: {sr.score}")
+        print(f"Field Score: {sr.score}")
         print(f"Weight: {sr.weight}")
         if sr.details:
             print(f"Richness: {sr.details.richness}")
