@@ -36,7 +36,7 @@ score = [
   "pre-commit>=4.0.1",
   "pyspellchecker>=0.8.2",
   "python-dotenv>=1.0.1",
-  "sentence-transformers>=3.3.1",
+  "sentence-transformers>=4.0.2",
   "spacy>=3.8.3",
   "textstat>=0.7.4",
 ]
