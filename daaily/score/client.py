@@ -149,6 +149,41 @@ class Client(ABC):
         return BalancedScore(richness, length_factor, alpha, beta)
 
     def count_text_syllables(self, word: str, lang: Language) -> int:  # noqa: C901
+        """
+        Count the number of syllables in a word with language-specific rules.
+
+        This function implements a sophisticated syllable counting algorithm that
+        accounts for language-specific phonetic patterns:
+
+        1. Language-specific character sets:
+        - Different vowel sets for each language (including accented characters)
+        - Language-specific diphthongs (vowel combinations that count as one syllable)
+
+        2. Syllable counting process:
+        - Iterates through the word character by character
+        - Checks for diphthongs first (two-character vowel combinations)
+        - If not a diphthong, checks if the current character is a vowel
+        - Avoids double-counting consecutive vowels
+        - Handles special cases like silent 'e' in English
+
+        3. End-of-word rules:
+        - English: Silent 'e' at the end reduces syllable count by 1
+        - French: Silent 'e', 'es', or 'ent' at the end reduces syllable count by 1
+
+        4. Minimum syllables:
+        - Ensures every word has at least 1 syllable, even if no vowels are detected
+
+        The algorithm works by tracking vowel transitions (consonant->vowel) rather than
+        simply counting vowels, which provides more accurate syllable counts
+        across languages.
+
+        Parameters:
+            word (str): The word to analyze
+            lang (Language): The language of the word
+
+        Returns:
+            int: The number of syllables in the word (minimum 1)
+        """
         word = word.lower()
         if lang == Language.DE:
             vowels = "aeiouyäöü"
@@ -231,18 +266,43 @@ class Client(ABC):
 
     def _calculate_flesch_reading_ease(self, text: str, language: Language) -> float:
         """
-        Calculate the Flesch Reading Ease score for the given text with
-        language-specific adaptations. Higher scores indicate easier readability.
+        Calculate the Flesch Reading Ease score with language-specific adaptations.
 
-        The original Flesch formula is optimized for English. This implementation
-        includes language-specific adjustments for German, Spanish, French, and Italian.
+        This function implements a multilingual Flesch Reading Ease calculator that:
+
+        1. Segments text into sentences:
+        - Uses language-specific sentence terminators (adds ¡¿ for Spanish)
+        - Counts non-empty sentences only
+
+        2. Tokenizes text into words:
+        - Handles compound words in German by splitting on hyphens
+        - Uses appropriate word boundary patterns for each language
+
+        3. Counts syllables:
+        - Uses language-specific syllable counting rules via count_text_syllables()
+        - Accounts for diphthongs, accented vowels, and special cases
+
+        4. Applies language-specific Flesch formulas
+        (https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests):
+        - English (original): 206.835 - (1.015 x words/sentence) -
+          (84.6 x syllables/word)
+        - German (Amstad): 180 - (1.0 x words/sentence) - (58.5 x syllables/word)
+        - Italian: 217 - (1.3 x words/sentence) - (60.0 x syllables/word)
+        - French: 207 - (1.015 x words/sentence) - (73.6 x syllables/word)
+        - Spanish: 206.835 - (1.02 x words/sentence) - (60.0 x syllables/word)
+
+        5. Normalizes the result:
+        - Ensures score is within 0-100 range
+        - Rounds to 2 decimal places
+
+        The resulting score indicates text readability (higher = easier to read).
 
         Parameters:
-            text (str): The text to analyze.
-            language (Language): The language of the text.
+            text (str): The text to analyze
+            language (Language): The language of the text
 
         Returns:
-            float: Adjusted Flesch Reading Ease score.
+            float: The adjusted Flesch Reading Ease score (0-100)
         """
         sentence_terminators = r"[.!?]"
         if language == Language.ES:
@@ -296,24 +356,39 @@ class Client(ABC):
         from sentence_transformers import util
 
         """
-        Check the semantic similarity of the text to defined topic descriptions.
-
-        This method uses sentence embeddings to compute the similarity between the
-        input text and predefined topic descriptions. The similarity scores are
-        weighted according to the provided weights for each topic.
-
-        The topic's score is calculated as the cosine similarity between the text and
-        the topic description. The similarity score is then multiplied by the weight
-        assigned to that topic. The resulting score is a measure of how well the
-        text aligns with the topic. A higher score indicates a better match.
-        The overall score is the sum of the weighted similarity scores.
+        Evaluate how well a text matches predefined topics using semantic similarity.
+        
+        This function uses transformer-based sentence embeddings to measure the 
+        semantic relationship between product text and topic descriptions. 
+        
+        The process works as follows:
+        
+        1. Embedding generation:
+        - Converts both the input text and each topic description into numerical vectors
+        - Uses a pre-trained sentence transformer model
+        - Creates embeddings that capture semantic meaning beyond keywords
+        
+        2. Similarity calculation:
+        - Computes cosine similarity between text and topic embeddings
+        - Ranges from -1 (completely dissimilar) to 1 (identical meaning)
+        - Ensures non-negative by applying max(0, similarity)
+        
+        3. Weighted scoring:
+        - Each topic has an importance weight (e.g., material: 0.3, usage: 0.3)
+        - Multiplies raw similarity by topic weight
+        - Aggregates weighted scores into a total completeness score
+        
+        This approach enables detecting semantic matches even when exact keywords 
+        aren't present. For example, "crafted from oak" would match a "materials" 
+        topic even without the word "material" being present.
         
         Parameters:
-            text (str): The text to analyze.
-            topics (dict): A dictionary of topics and their descriptions.
-
+            text (str): The product text to analyze
+            topics (dict): Dictionary mapping topic names to 
+            (description, weight) tuples
+            
         Returns:
-            tuple: (overall_score, dictionary showing similarity scores for each topic)
+            tuple: (total_score, {topic_name: weighted_score, ...})
         """
         scores = {}
         total_score = 0
@@ -334,15 +409,36 @@ class Client(ABC):
         self, text: str, language: Language
     ) -> tuple[float, int]:
         """
-        Calculate a spelling score for the input text with improved tokenization
-        for different languages.
+        Calculate spelling accuracy for a text in a specific language.
+
+        This function analyzes text for spelling errors using
+        language-specific dictionaries.
+
+        The implementation:
+
+        1. Text tokenization:
+        - Uses a universal Unicode-aware pattern to identify words
+        - Excludes numbers, punctuation, and special characters
+        - Filters out very short words (length 1) to reduce false positives
+
+        2. Dictionary-based spell checking:
+        - Uses language-specific dictionaries stored as compressed JSON files
+        - Loads the appropriate dictionary based on the language parameter
+        - Identifies words not found in the dictionary as potential misspellings
+
+        3. Score calculation:
+        - Calculates the percentage of correctly spelled words
+        - Score = 100 - (error_count / total_words * 100)
+        - Returns both the score and the count of misspellings
+
+        The spell checker uses local dictionaries to ensure consistent results.
 
         Parameters:
-            text (str): The input text to evaluate.
-            language (Language): The language of the text.
+            text (str): The text to analyze for spelling errors
+            language (Language): The language of the text
 
         Returns:
-            tuple: A score for spelling (0-100) and the number of misspelled words
+            tuple: (spelling_score (0-100), misspelled_word_count)
         """
         # Universal pattern to split by on non-alphanumeric and non-accented characters
         words = re.findall(r"\b[^\s\d\W]+\b", text, re.UNICODE)
@@ -373,29 +469,40 @@ class Client(ABC):
 
     def score(self, data) -> ScoreSummary:
         """
-        Compute an overall score for the provided data based on defined weights and
-        corresponding scoring methods.
+        Calculate a comprehensive product score based on multiple weighted factors.
 
-        Iterates through each defined ScoreWeight and looks for a scoring function
-        in this class named `score_<field_name>`. If found, that function is called
-        with the corresponding data. The results are collected into a ScoreSummary
-        object, which is then finalized by calculating the total score.
+        This orchestration function coordinates the scoring process by:
 
-        There is a special case for text fields, where the scoring function
-        `score_text` is called. This function handles the text scoring logic,
-        including language detection and semantic similarity checks.
+        1. Weight-based scoring:
+        - Uses the weights defined for each specific entity
+        - Each field is scored independently by specialized scoring functions
+        - Weighted scores are combined for a final product score
+
+        2. Scoring function discovery and dispatch:
+        - Dynamically finds scoring methods using naming convention: score_<field_name>
+        - Handles text fields specially via the score_text abstract method
+        - Skips any fields with missing scoring functions
+
+        3. Language handling for text fields:
+        - Parses language code from field name (e.g., text_en → 'en')
+        - Validates language support
+
+        4. Result aggregation:
+        - Collects individual field scores into a ScoreSummary
+        - Calculates final weighted sum of all scores
+
+        This approach allows for modular scoring where fields can be added or
+        removed without changing the core scoring logic.
 
         Parameters:
-            data (dict): The data dictionary that contains values associated with each
-                field_name in the weights. These values are passed to the respective
-                scoring methods.
+            data (dict): Product data dictionary with fields matching weight keys
 
         Returns:
-            ScoreSummary: A summary object that contains individual scoring results and
-            the cumulative score.
+            ScoreSummary: Complete scoring results with overall and
+            field-specific scores
 
         Raises:
-            ValueError: If no weights are defined for the score.
+            ValueError: If no weights are defined for scoring
         """
         score_summary = ScoreSummary([])
         if not self.weights:
