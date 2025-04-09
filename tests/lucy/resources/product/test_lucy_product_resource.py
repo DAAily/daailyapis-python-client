@@ -675,3 +675,133 @@ class TestProductResource:
             **image_data,
         )
         client.update_entity.assert_called_once()
+
+    def test_deter_score_up_to_date_no_product_data(self):
+        """
+        Test that an exception is raised if the product data is empty.
+        """
+        product_id = 1
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+        # Simulate empty product data.
+        client.get_entity = mock.MagicMock(return_value=DummyResponse({}, status=200))
+        client.get_entity_audits = mock.MagicMock()
+        try:
+            client.products.deter_score_up_to_date(product_id)
+            raise AssertionError("Expected an exception due to empty product data")
+        except Exception as exc:
+            assert str(exc) == "Could not deserialize product"
+
+    def test_deter_score_up_to_date_no_scored_fields(self):
+        """
+        Test that an exception is raised if scored_fields or updated_at is missing in
+        product data.
+        """
+        product_id = 2
+        # Missing both scored_fields and updated_at in the nested dict.
+        product_data = {"product_score": {}}
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+        client.get_entity = mock.MagicMock(
+            return_value=DummyResponse(product_data, status=200)
+        )
+        client.get_entity_audits = mock.MagicMock()
+        try:
+            client.products.deter_score_up_to_date(product_id)
+            raise AssertionError(
+                "Expected an exception due to missing scored fields or updated_at"
+            )
+        except Exception as exc:
+            assert str(exc) == "Could not find scored fields in product score data"
+
+    def test_deter_score_up_to_date_no_product_score_audits(self):
+        """
+        Test that if there are no product score audits the function returns True.
+        """
+        product_id = 3
+        scored_fields = ["field1", "field2"]
+        # Include updated_at along with scored_fields.
+        product_data = {
+            "product_score": {
+                "scored_fields": scored_fields,
+                "updated_at": "2025-01-01T00:00:00.000000",
+            }
+        }
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+        client.get_entity = mock.MagicMock(
+            return_value=DummyResponse(product_data, status=200)
+        )
+        # No audits exist for a product score update.
+        client.get_entity_audits = mock.MagicMock(
+            return_value=DummyResponse([], status=404)
+        )
+        result = client.products.deter_score_up_to_date(product_id)
+        assert result is True
+
+    def test_deter_score_up_to_date_audit_response_status_404(self):
+        """
+        Test that if the filtered audit call returns a 404 status,
+        the function returns True.
+        """
+        product_id = 4
+        scored_fields = ["field1", "field2"]
+        # Include updated_at along with scored_fields.
+        product_data = {
+            "product_score": {
+                "scored_fields": scored_fields,
+                "updated_at": "2025-02-01T00:00:00.000000",
+            }
+        }
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+        client.get_entity = mock.MagicMock(
+            return_value=DummyResponse(product_data, status=200)
+        )
+        # Simulate a 404 response from the audit call.
+        client.get_entity_audits = mock.MagicMock(
+            return_value=DummyResponse([], status=404)
+        )
+        result = client.products.deter_score_up_to_date(product_id)
+        assert result is True
+
+    def test_deter_score_up_to_date_audit_exists(self):
+        """
+        Test that if a filtered audit exists (status not 404),
+        the function returns False.
+        """
+        product_id = 5
+        scored_fields = ["field1", "field2"]
+        # Include updated_at along with scored_fields.
+        product_data = {
+            "product_score": {
+                "scored_fields": scored_fields,
+                "updated_at": "2025-03-01T00:00:00.000000",
+            }
+        }
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+        client.get_entity = mock.MagicMock(
+            return_value=DummyResponse(product_data, status=200)
+        )
+        # A normal audit response (status 200) indicates a matching change.
+        client.get_entity_audits = mock.MagicMock(
+            return_value=DummyResponse([{"dummy": "data"}], status=200)
+        )
+        result = client.products.deter_score_up_to_date(product_id)
+        assert result is False

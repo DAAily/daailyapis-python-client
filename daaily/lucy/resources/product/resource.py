@@ -511,6 +511,39 @@ class ProductsResource(BaseResource):
                         ownership_results[field] = product_data.get(field)
         return ownership_results or None
 
+    def deter_score_up_to_date(self, product_id: int) -> bool:
+        """
+        Determine if the product score is still up to date. That means that
+        the fields used to calculate the score have not been changed since the last
+        product score update.
+
+        Args:
+            product_id (int): The unique identifier of the product to inspect.
+            scored_fields (list[str]): A list of field names the score is based on.
+
+        Returns:
+            boolean: True if the score is up to date, False otherwise.
+        """
+        product = self._client.get_entity(EntityType.PRODUCT, product_id)
+        product_data = product.json()
+        if not product_data:
+            raise Exception("Could not deserialize product")
+        scored_fields = product_data.get("product_score", {}).get("scored_fields")
+        score_last_updated_at = product_data.get("product_score", {}).get("updated_at")
+        if not scored_fields or not score_last_updated_at:
+            raise Exception("Could not find scored fields in product score data")
+        filters_score_fields = [
+            Filter("limit", "1"),
+            Filter("changed_fields", ",".join(scored_fields)),
+            Filter("changed_from", score_last_updated_at),
+        ]
+        audits_response = self._client.get_entity_audits(
+            EntityType.PRODUCT, product_id, filters_score_fields
+        )
+        if audits_response.status == 404:
+            return True
+        return False
+
     def add_or_update_image(  # noqa: C901
         self,
         product_id: int,
