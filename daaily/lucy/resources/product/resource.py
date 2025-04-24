@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+from dataclasses import asdict
 from typing import Any, Dict, Generator
 from urllib.parse import urlparse
 
@@ -21,7 +22,7 @@ from daaily.lucy.utils import (
 )
 
 from .. import BaseResource
-from ..enums import AttributeType, AttributeValueUnit
+from .types import ProductAttribute
 
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
 PRODUCT_IMAGE_UPLOAD_ENDPOINT = "/products/{product_id}/image/upload"
@@ -857,7 +858,7 @@ class ProductsResource(BaseResource):
     def add_or_update_attributes(  # noqa: C901
         self,
         product_id: int,
-        attributes: list[tuple[str, Any, AttributeType, AttributeValueUnit | None]],
+        attributes: list[ProductAttribute],
         service: Service = Service.SPARKY,
         overwrite_existing: bool = False,
         dry_run: bool = False,
@@ -873,21 +874,20 @@ class ProductsResource(BaseResource):
         Returns the updated product object.
         """
         attributes_to_add = []
-        for name_en, value, attribute_type, attribute_unit in attributes:
-            filters = [Filter("synonyms", name_en)]
+        for a in attributes:
+            filters = [Filter("synonyms", a.name_en)]
             generator = self._client.attributes.get(filters=filters)
             attribute_with_synonym_match = None
             for attribute in generator:
                 attribute_with_synonym_match = attribute
                 break
-            if value is None:  # If value is None, we assume the attribute is a tag
+            if a.value is None:  # If value is None, we assume the attribute is a tag
                 value = True
-            (
-                parsed_value,
-                value_type,
-            ) = self._client.attributes.determine_attribute_value_type(value)
+            parsed_value, _ = self._client.attributes.determine_attribute_value_type(
+                value
+            )
             if attribute_with_synonym_match:
-                logger.info(f"Found attribute with synonym match: {name_en}")
+                logger.info(f"Found attribute with synonym match: {a.name_en}")
                 attributes_to_add.append(
                     {
                         "name": attribute_with_synonym_match["name"],
@@ -895,23 +895,17 @@ class ProductsResource(BaseResource):
                     }
                 )
                 continue
-            new_attribute = (
-                self._client.attributes.gen_new_attribute_object_with_extras(
-                    name_en, attribute_type, value_type, attribute_unit
-                )
-            )
             if dry_run:
-                attributes_to_add.append({"name": name_en, "value": parsed_value})
+                attributes_to_add.append({"name": a.name_en, "value": parsed_value})
                 continue
-            resp = self._client.attributes.create_one(new_attribute, service=service)
+            resp = self._client.attributes.create_one(asdict(a), service=service)
             if resp.status == 201:
-                logger.info(f"Created new attribute: {name_en}")
+                logger.info(f"Created new attribute: {a.name_en}")
                 attribute = resp.json()
                 if not attribute:
                     raise Exception(
-                        f"Failed to create attribute {name_en}. No attribute returned"
+                        f"Failed to create attribute {a.name_en}. No attribute returned"
                     )
-                # attribute = attributes_json[0]
                 attributes_to_add.append(
                     {"name": attribute["name"], "value": parsed_value}
                 )
@@ -928,12 +922,12 @@ class ProductsResource(BaseResource):
                     attributes_to_add.append({"name": dup_value, "value": parsed_value})
                 else:
                     raise Exception(
-                        f"Failed to create attribute {name_en}. Status: {resp.status} "
-                        + f"{resp.data}"
+                        f"Failed to create attribute {a.name_en}. Status: {resp.status}"
+                        + f" {resp.data}"
                     )
             else:
                 raise Exception(
-                    f"Failed to create attribute {name_en}. Status: {resp.status} "
+                    f"Failed to create attribute {a.name_en}. Status: {resp.status} "
                     + f"{resp.data}"
                 )
         product = self.get_by_id(product_id).json()

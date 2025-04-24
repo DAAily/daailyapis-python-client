@@ -4,7 +4,7 @@ from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
 from .. import BaseResource
-from .type import AttributeType, AttributeValueType, AttributeValueUnit
+from .types import AttributeType, AttributeValueType, AttributeValueUnit
 from .utils import determine_attribute_value_type, gen_new_attribute_object_with_extras
 
 
