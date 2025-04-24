@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class AttributeType(Enum):
+class AttributeType(str, Enum):
     """
     Based on corresponding attribute types from Lucy Repository here:
     https://github.com/DAAily/lucy-data-processing-api/blob/main/app/settings/enums/attribute_enums.py#L7
@@ -16,7 +16,7 @@ class AttributeType(Enum):
     MATERIAL = "material"
 
 
-class AttributeValueType(Enum):
+class AttributeValueType(str, Enum):
     """
     Based on corresponding attribute types from Lucy Repository here:
     https://github.com/DAAily/lucy-data-processing-api/blob/main/app/settings/enums/attribute_enums.py#L22
@@ -29,7 +29,7 @@ class AttributeValueType(Enum):
     STRING = "string"
 
 
-class AttributeValueUnit(Enum):
+class AttributeValueUnit(str, Enum):
     """
     Enumeration of standard units for attribute values.
     Based on corresponding attribute types from Lucy Repository here:
