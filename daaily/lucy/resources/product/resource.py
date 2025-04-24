@@ -882,11 +882,11 @@ class ProductsResource(BaseResource):
                 attribute_with_synonym_match = attribute
                 break
             if a.value is None:  # If value is None, we assume the attribute is a tag
-                value = True
+                a.value = True
             (
                 parsed_value,
                 value_type,
-            ) = self._client.attributes.determine_attribute_value_type(value)
+            ) = self._client.attributes.determine_attribute_value_type(a.value)
             if attribute_with_synonym_match:
                 logger.info(f"Found attribute with synonym match: {a.name_en}")
                 attributes_to_add.append(
