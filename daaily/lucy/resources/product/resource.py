@@ -883,9 +883,10 @@ class ProductsResource(BaseResource):
                 break
             if a.value is None:  # If value is None, we assume the attribute is a tag
                 value = True
-            parsed_value, _ = self._client.attributes.determine_attribute_value_type(
-                value
-            )
+            (
+                parsed_value,
+                value_type,
+            ) = self._client.attributes.determine_attribute_value_type(value)
             if attribute_with_synonym_match:
                 logger.info(f"Found attribute with synonym match: {a.name_en}")
                 attributes_to_add.append(
@@ -898,7 +899,9 @@ class ProductsResource(BaseResource):
             if dry_run:
                 attributes_to_add.append({"name": a.name_en, "value": parsed_value})
                 continue
-            resp = self._client.attributes.create_one(asdict(a), service=service)
+            a_dict = asdict(a)
+            a_dict["value_type"] = value_type
+            resp = self._client.attributes.create_one(a_dict, service=service)
             if resp.status == 201:
                 logger.info(f"Created new attribute: {a.name_en}")
                 attribute = resp.json()
