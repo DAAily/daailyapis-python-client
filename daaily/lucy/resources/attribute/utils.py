@@ -1,7 +1,7 @@
 import ast
 from typing import Any
 
-from .type import AttributeType, AttributeValueType, AttributeValueUnit
+from .types import AttributeType, AttributeValueType, AttributeValueUnit
 
 
 def gen_new_attribute_object_with_extras(
