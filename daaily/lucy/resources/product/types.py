@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 from typing import Any
 
-from ..enums import AttributeType, AttributeValueType, AttributeValueUnit
+from ..enums import AttributeType, AttributeValueUnit
 
 
 @dataclass
 class ProductAttribute:
     type: AttributeType
     value: Any
-    value_type: AttributeValueType
     value_unit: AttributeValueUnit | None
     options: list[str] | None
     name_en: str
