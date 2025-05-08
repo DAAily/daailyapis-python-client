@@ -12,9 +12,9 @@ from daaily.lucy.utils import (
 
 from . import BaseResource
 
-MANUFACTURER_PDF_UPLOAD_ENDPOINT = "/distributors/{distributor_id}/pdf/upload"
-MANUFACTURER_PDF_SIGNED_URL_ENDPOINT = "/distributors/{distributor_id}/pdf/signed-url"
-MANUFACTURER_PDF_PREVIEW_SIGNED_URL_ENDPOINT = (
+DISTRIBUTOR_PDF_UPLOAD_ENDPOINT = "/distributors/{distributor_id}/pdf/upload"
+DISTRIBUTOR_PDF_SIGNED_URL_ENDPOINT = "/distributors/{distributor_id}/pdf/signed-url"
+DISTRIBUTOR_PDF_PREVIEW_SIGNED_URL_ENDPOINT = (
     "/distributors/{distributor_id}/pdf/signed-url-preview"
 )
 
@@ -167,7 +167,7 @@ class DistributorsResource(BaseResource):
             headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
         else:
             headers = {}
-        dist_pdf_upload_url = MANUFACTURER_PDF_UPLOAD_ENDPOINT.format(
+        dist_pdf_upload_url = DISTRIBUTOR_PDF_UPLOAD_ENDPOINT.format(
             distributor_id=distributor_id
         )
         url = f"{self._client._base_url}{dist_pdf_upload_url}"
@@ -232,7 +232,7 @@ class DistributorsResource(BaseResource):
             )
             ```
         """
-        dist_pdf_signed_url_pathname = MANUFACTURER_PDF_SIGNED_URL_ENDPOINT.format(
+        dist_pdf_signed_url_pathname = DISTRIBUTOR_PDF_SIGNED_URL_ENDPOINT.format(
             distributor_id=distributor_id
         )
         url = f"{self._client._base_url}{dist_pdf_signed_url_pathname}"
@@ -293,7 +293,7 @@ class DistributorsResource(BaseResource):
             ```
         """
         dist_pdf_preview_signed_url_pathname = (
-            MANUFACTURER_PDF_PREVIEW_SIGNED_URL_ENDPOINT.format(
+            DISTRIBUTOR_PDF_PREVIEW_SIGNED_URL_ENDPOINT.format(
                 distributor_id=distributor_id
             )
         )
