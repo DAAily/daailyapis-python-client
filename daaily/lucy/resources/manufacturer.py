@@ -3,7 +3,7 @@ import mimetypes
 import os
 import re
 from typing import Any, Dict, Generator, Literal
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 import urllib3
 
@@ -800,15 +800,18 @@ class ManufacturersResource(BaseResource):
             )
             ```
         """
-        url = MANUFACTURER_PDF_SIGNED_URL_ENDPOINT.format(
+        man_pdf_signed_url_pathname = MANUFACTURER_PDF_SIGNED_URL_ENDPOINT.format(
             manufacturer_id=manufacturer_id
         )
+        url = f"{self._client._base_url}{man_pdf_signed_url_pathname}"
         params = {}
         if pdf_title:
             params["pdf_title"] = pdf_title
         if old_blob_id:
             params["old_blob_id"] = old_blob_id
-        resp = self._client._do_request("POST", url, query_string=params)
+        if params:
+            url += "?" + urlencode(params)
+        resp = self._client._do_request("POST", url)
         if resp.status != 200:
             raise Exception(
                 f"Failed to get signed URL. Status code: {resp.status}. {resp.data}"
