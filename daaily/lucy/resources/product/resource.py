@@ -32,6 +32,7 @@ PRODUCT_PDF_PREVIEW_SIGNED_URL_ENDPOINT = (
     "/products/{product_id}/pdf/signed-url-preview"
 )
 PRODUCT_CAD_UPLOAD_ENDPOINT = "/products/{product_id}/cad/upload"
+PRODUCT_CAD_SIGNED_URL_ENDPOINT = "/products/{product_id}/cad/signed-url"
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
@@ -440,7 +441,7 @@ class ProductsResource(BaseResource):
             )
         return json.loads(resp.data.decode("utf-8"))
 
-    def upload_cad(
+    def upload_cad(  # noqa: C901
         self,
         product_id: int,
         cad_path: str | None = None,
@@ -520,11 +521,14 @@ class ProductsResource(BaseResource):
             headers = {}
         prod_cad_upload_url = PRODUCT_CAD_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_cad_upload_url}"
+        params = {}
         if old_blob_id:
             old_extension = extract_extension_from_blob_id(old_blob_id)
             old_mime_type = extract_mime_type_from_extension(old_extension)
             if old_mime_type == content_type:
-                url += f"&old_blob_id={old_blob_id}"
+                params["old_blob_id"] = old_blob_id
+        if params:
+            url += "?" + urlencode(params)
         resp = self._client._do_request(
             "POST",
             url,
@@ -534,6 +538,68 @@ class ProductsResource(BaseResource):
         if resp.status != 200:
             raise Exception(
                 f"Failed to upload cad. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def get_cad_signed_url(
+        self,
+        product_id: int,
+        file_extension: str,
+        cad_title: str | None = None,
+        old_blob_id: str | None = None,
+    ) -> Any:
+        """
+        Requests a signed URL for uploading a CAD file to GCS.
+
+        This method sends a request to Lydia for a signed URL that can be used to
+        upload a CAD file to Google Cloud Storage (GCS). The signed URL is returned
+        in the response, along with the blob ID and blob name.
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            file_extension (str): The file extension of the CAD file.
+            cad_title (str | None): The title of the CAD file.
+            old_blob_id (str | None): The blob ID of the existing CAD file.
+                If provided, it will be used to check if the existing CAD can be
+                replaced.
+        Returns:
+            Any: The response from the server containing the signed URL and other
+                details.
+                For example:
+                    {
+                        "signed_url": "string",
+                        "blob_id": "string",
+                        "blob_name": "string"
+                    }
+        Raises:
+            Exception: If the request fails or if the response is not as expected.
+        Example:
+            ```python
+            # Request a signed URL for uploading a CAD file
+            response = client.products.get_cad_signed_url(
+                product_id=12345,
+                file_extension="dwg",
+                cad_title="Sample CAD",
+                old_blob_id="m-on/310089/cad/file.dwg"
+            )
+            ```
+        """
+        prod_pdf_signed_url_pathname = PRODUCT_CAD_SIGNED_URL_ENDPOINT.format(
+            product_id=product_id
+        )
+        url = f"{self._client._base_url}{prod_pdf_signed_url_pathname}"
+        params = {}
+        params["file_extension"] = file_extension
+        if cad_title:
+            params["cad_title"] = cad_title
+        if old_blob_id:
+            params["old_blob_id"] = old_blob_id
+        if params:
+            url += "?" + urlencode(params)
+        resp = self._client._do_request("POST", url)
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to get signed URL. Status code: {resp.status}. {resp.data}"
             )
         return json.loads(resp.data.decode("utf-8"))
 
