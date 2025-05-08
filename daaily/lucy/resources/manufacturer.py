@@ -660,7 +660,7 @@ class ManufacturersResource(BaseResource):
         m = add_about_to_manufacturer(m, about)
         return self._client.update_entity(EntityType.MANUFACTURER, m)
 
-    def upload_pdf(
+    def upload_pdf(  # noqa: C901
         self,
         manufacturer_id: int,
         pdf_path: str | None = None,
@@ -744,11 +744,14 @@ class ManufacturersResource(BaseResource):
             manufacturer_id=manufacturer_id
         )
         url = f"{self._client._base_url}{man_pdf_upload_url}"
+        params = {}
         if old_blob_id:
             old_extension = extract_extension_from_blob_id(old_blob_id)
             old_mime_type = extract_mime_type_from_extension(old_extension)
             if old_mime_type == content_type:
-                url += f"&old_blob_id={old_blob_id}"
+                params["old_blob_id"] = old_blob_id
+        if params:
+            url += "?" + urlencode(params)
         resp = self._client._do_request(
             "POST",
             url,
