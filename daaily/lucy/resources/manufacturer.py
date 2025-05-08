@@ -766,7 +766,7 @@ class ManufacturersResource(BaseResource):
         manufacturer_id: int,
         pdf_title: str | None = None,
         old_blob_id: str | None = None,
-    ) -> Response:
+    ) -> Any:
         """
         Requests a signed URL for uploading a PDF file to GCS.
         This method sends a request to Lydia for a signed URL that can be used to
@@ -780,7 +780,7 @@ class ManufacturersResource(BaseResource):
                 If provided, it will be used to check if the existing PDF can be
                 replaced.
         Returns:
-            Response: The response from the server containing the signed URL and other
+            Any: The response from the server containing the signed URL and other
                 details.
                 For example:
                     {
