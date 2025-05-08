@@ -28,6 +28,8 @@ MANUFACTURER_IMAGE_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/image/upl
 MANUFACTURER_ABOUT_IMAGE_UPLOAD_ENDPOINT = (
     "/manufacturers/{manufacturer_id}/about/upload"
 )
+MANUFACTURER_PDF_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/pdf/upload"
+MANUFACTURER_PDF_SIGNED_URL_ENDPOINT = "/manufacturers/{manufacturer_id}/pdf/signed-url"
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
@@ -131,7 +133,7 @@ class ManufacturersResource(BaseResource):
             Any: The response data from the server.
             For example:
                 {
-                    "image_blob_id": "m-on/310089/manufacturers/12345/image/file.jpg",
+                    "image_blob_id": "m-on/310089/image/file.jpg",
                     "image_mime_type": "image/jpeg",
                     "image_size": 123456,
                     "image_height": 600,
@@ -657,6 +659,161 @@ class ManufacturersResource(BaseResource):
             raise Exception(f"Manufacturer with ID {manufacturer_id} not found.")
         m = add_about_to_manufacturer(m, about)
         return self._client.update_entity(EntityType.MANUFACTURER, m)
+
+    def upload_pdf(
+        self,
+        manufacturer_id: int,
+        pdf_path: str | None = None,
+        pdf_bytes: bytes | None = None,
+        mime_type: str | None = None,
+        filename: str | None = None,
+        old_blob_id: str | None = None,
+        **kwargs,
+    ) -> Any:
+        """
+        Uploads a PDF file to a manufacturer and returns the blob ID.
+        Does not add the PDF file to the manufacturer.
+
+        Args:
+            manufacturer_id (int): The unique identifier of the manufacturer.
+            pdf_path (str | None): The local file path to the PDF file.
+            pdf_bytes (bytes | None): The binary data of the PDF file.
+            mime_type (str | None): The MIME type of the PDF file.
+            filename (str | None): The name of the PDF file.
+            old_blob_id (str | None): The blob ID of the existing PDF file.
+            **kwargs: Additional keyword arguments containing PDF metadata.
+
+        Returns:
+            Any: The response data from the server.
+            For example:
+                {
+                    "pdf_blob_id": "m-on/310089/pdf/file.pdf",
+                    "pdf_mime_type": "application/pdf",
+                    "pdf_size": 123456,
+                    "pdf_page_count": 3,
+                    "preview_image_blob_id":
+                        "m-on/310089/pdf/image.jpg",
+                    "preview_image_size": 1234,
+                    "preview_image_mime_type": "image/jpeg",
+                    "preview_image_height": 600,
+                    "preview_image_width": 200
+                }
+
+        Raises:
+            Exception: If neither pdf_path nor pdf_bytes is provided.
+            Exception: If the content type of the PDF file is not application/pdf.
+            Exception: If the upload fails.
+
+        Example:
+            ```python
+            # Upload a PDF file using a local file
+            response = client.manufacturers.upload_pdf(
+                manufacturer_id=12345,
+                pdf_path="/path/to/pdf_file.pdf"
+            )
+
+            # Upload a PDF file using binary data
+            response = client.manufacturers.upload_pdf(
+                manufacturer_id=12345,
+                pdf_bytes=b"binary_data",
+                mime_type="application/pdf",
+                filename="pdf_file.pdf"
+            )
+            ```
+        """
+        if not pdf_path and not pdf_bytes:
+            raise Exception("Either pdf_path or pdf_bytes must be provided")
+        if pdf_path:
+            pdf_data, content_type, filename = get_file_data_and_mimetype(pdf_path)
+        else:
+            if not mime_type:
+                raise ValueError(
+                    "If 'pdf_bytes' is provided, 'mime_type' must be specified."
+                )
+            pdf_data = pdf_bytes
+            content_type = mime_type
+        if content_type is None:
+            raise Exception("Could not determine content type for pdf")
+        if content_type != "application/pdf":
+            raise Exception(f"File is not pdf type. Detected: {content_type}")
+        if kwargs:
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
+        else:
+            headers = {}
+        man_pdf_upload_url = MANUFACTURER_PDF_UPLOAD_ENDPOINT.format(
+            manufacturer_id=manufacturer_id
+        )
+        url = f"{self._client._base_url}{man_pdf_upload_url}"
+        if old_blob_id:
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
+        resp = self._client._do_request(
+            "POST",
+            url,
+            fields={"file": (filename, pdf_data, content_type)},
+            headers=headers,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload pdf. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def get_pdf_signed_url(
+        self,
+        manufacturer_id: int,
+        pdf_title: str | None = None,
+        old_blob_id: str | None = None,
+    ) -> Response:
+        """
+        Requests a signed URL for uploading a PDF file to GCS.
+        This method sends a request to Lydia for a signed URL that can be used to
+        upload a PDF file to Google Cloud Storage (GCS). The signed URL is returned
+        in the response, along with the blob ID and blob name.
+
+        Args:
+            manufacturer_id (int): The unique identifier of the manufacturer.
+            pdf_title (str | None): The title of the PDF file. Optional.
+            old_blob_id (str | None): The blob ID of the existing PDF file. Optional.
+                If provided, it will be used to check if the existing PDF can be
+                replaced.
+        Returns:
+            Response: The response from the server containing the signed URL and other
+                details.
+                For example:
+                    {
+                        "signed_url": "string",
+                        "blob_id": "string",
+                        "blob_name": "string"
+                    }
+        Raises:
+            Exception: If the request fails or if the response is not as expected.
+        Example:
+            ```python
+            # Request a signed URL for uploading a PDF
+            response = client.manufacturers.get_pdf_signed_url(
+                manufacturer_id=12345,
+                pdf_title="Sample PDF",
+                old_blob_id="m-on/310089/pdf/file.pdf"
+            )
+            ```
+        """
+        url = MANUFACTURER_PDF_SIGNED_URL_ENDPOINT.format(
+            manufacturer_id=manufacturer_id
+        )
+        params = {}
+        if pdf_title:
+            params["pdf_title"] = pdf_title
+        if old_blob_id:
+            params["old_blob_id"] = old_blob_id
+        resp = self._client._do_request("POST", url, query_string=params)
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to get signed URL. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
 
     def change_pdf_status(
         self, manufacturer_id: int, blob_id: str, target_status: ENTITY_STATUS
