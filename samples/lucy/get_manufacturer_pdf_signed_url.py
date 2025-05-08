@@ -19,3 +19,13 @@ try:
     print("Pdf Signed Url:", signed_url)
 except Exception as e:
     print(f"An error occurred while getting pdf signed url: {e}")
+
+
+try:
+    signed_url = client.manufacturers.get_pdf_preview_signed_url(
+        manufacturer_id=manufacturer_id,
+        mime_type="image/png",
+    )
+    print("Pdf Preview Signed Url:", signed_url)
+except Exception as e:
+    print(f"An error occurred while getting pdf preview signed url: {e}")

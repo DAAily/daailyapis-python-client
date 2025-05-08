@@ -30,6 +30,9 @@ MANUFACTURER_ABOUT_IMAGE_UPLOAD_ENDPOINT = (
 )
 MANUFACTURER_PDF_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/pdf/upload"
 MANUFACTURER_PDF_SIGNED_URL_ENDPOINT = "/manufacturers/{manufacturer_id}/pdf/signed-url"
+MANUFACTURER_PDF_PREVIEW_SIGNED_URL_ENDPOINT = (
+    "/manufacturers/{manufacturer_id}/pdf/signed-url-preview"
+)
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
 
@@ -812,6 +815,64 @@ class ManufacturersResource(BaseResource):
             params["pdf_title"] = pdf_title
         if old_blob_id:
             params["old_blob_id"] = old_blob_id
+        if params:
+            url += "?" + urlencode(params)
+        resp = self._client._do_request("POST", url)
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to get signed URL. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def get_pdf_preview_signed_url(
+        self,
+        manufacturer_id: int,
+        mime_type: str,
+        old_blob_id: str | None = None,
+    ) -> Any:
+        """
+        Requests a signed URL for uploading a PDF preview image to GCS.
+        This method sends a request to Lydia for a signed URL that can be used to
+        upload a PDF preview image to Google Cloud Storage (GCS). The signed URL is
+        returned in the response, along with the blob ID and blob name.
+        Args:
+            manufacturer_id (int): The unique identifier of the manufacturer.
+            mime_type (str): The MIME type of the preview image.
+            old_blob_id (str | None): The blob ID of the existing preview image.
+                If provided, it will be used to check if the existing image can be
+                replaced.
+        Returns:
+            Any: The response from the server containing the signed URL and other
+                details.
+                For example:
+                    {
+                        "signed_url": "string",
+                        "blob_id": "string",
+                        "blob_name": "string"
+                    }
+        Raises:
+            Exception: If the request fails or if the response is not as expected.
+        Example:
+            ```python
+            # Request a signed URL for uploading a PDF preview image
+            response = client.manufacturers.get_pdf_preview_signed_url(
+                manufacturer_id=12345,
+                mime_type="image/jpeg",
+                old_blob_id="m-on/310089/pdf/image.jpg"
+            )
+            ```
+        """
+        man_pdf_preview_signed_url_pathname = (
+            MANUFACTURER_PDF_PREVIEW_SIGNED_URL_ENDPOINT.format(
+                manufacturer_id=manufacturer_id
+            )
+        )
+        url = f"{self._client._base_url}{man_pdf_preview_signed_url_pathname}"
+        params = {}
+        if old_blob_id:
+            params["old_blob_id"] = old_blob_id
+        if mime_type:
+            params["mime_type"] = mime_type
         if params:
             url += "?" + urlencode(params)
         resp = self._client._do_request("POST", url)
