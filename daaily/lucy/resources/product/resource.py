@@ -4,7 +4,7 @@ import os
 import re
 from dataclasses import asdict
 from typing import Any, Dict, Generator
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 import urllib3
 
@@ -27,6 +27,10 @@ from .types import ProductAttribute
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
 PRODUCT_IMAGE_UPLOAD_ENDPOINT = "/products/{product_id}/image/upload"
 PRODUCT_PDF_UPLOAD_ENDPOINT = "/products/{product_id}/pdf/upload"
+PRODUCT_PDF_SIGNED_URL_ENDPOINT = "/products/{product_id}/pdf/signed-url"
+PRODUCT_PDF_PREVIEW_SIGNED_URL_ENDPOINT = (
+    "/products/{product_id}/pdf/signed-url-preview"
+)
 PRODUCT_CAD_UPLOAD_ENDPOINT = "/products/{product_id}/cad/upload"
 
 http = urllib3.PoolManager()  # for handling HTTP requests without auth
@@ -215,12 +219,13 @@ class ProductsResource(BaseResource):
             )
         return json.loads(resp.data.decode("utf-8"))
 
-    def upload_pdf(
+    def upload_pdf(  # noqa: C901
         self,
         product_id: int,
         pdf_path: str | None = None,
         pdf_bytes: bytes | None = None,
         mime_type: str | None = None,
+        pdf_type: str | None = None,
         filename: str | None = None,
         old_blob_id: str | None = None,
         **kwargs,
@@ -234,6 +239,7 @@ class ProductsResource(BaseResource):
             pdf_path (str | None): The local file path to the PDF file.
             pdf_bytes (bytes | None): The binary data of the PDF file.
             mime_type (str | None): The MIME type of the PDF file.
+            pdf_type (str | None): The type of the PDF file.
             filename (str | None): The name of the PDF file.
             old_blob_id (str | None): The blob ID of the existing PDF file.
             **kwargs: Additional keyword arguments containing PDF metadata.
@@ -296,11 +302,16 @@ class ProductsResource(BaseResource):
             headers = {}
         prod_pdf_upload_url = PRODUCT_PDF_UPLOAD_ENDPOINT.format(product_id=product_id)
         url = f"{self._client._base_url}{prod_pdf_upload_url}"
+        params = {}
         if old_blob_id:
             old_extension = extract_extension_from_blob_id(old_blob_id)
             old_mime_type = extract_mime_type_from_extension(old_extension)
             if old_mime_type == content_type:
-                url += f"&old_blob_id={old_blob_id}"
+                params["old_blob_id"] = old_blob_id
+        if pdf_type:
+            params["pdf_type"] = pdf_type
+        if params:
+            url += "?" + urlencode(params)
         resp = self._client._do_request(
             "POST",
             url,
@@ -310,6 +321,122 @@ class ProductsResource(BaseResource):
         if resp.status != 200:
             raise Exception(
                 f"Failed to upload pdf. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def get_pdf_signed_url(
+        self,
+        product_id: int,
+        pdf_title: str | None = None,
+        pdf_type: str | None = None,
+        old_blob_id: str | None = None,
+    ) -> Any:
+        """
+        Requests a signed URL for uploading a PDF file to GCS.
+        This method sends a request to Lydia for a signed URL that can be used to
+        upload a PDF file to Google Cloud Storage (GCS). The signed URL is returned
+        in the response, along with the blob ID and blob name.
+        Args:
+            product_id (int): The unique identifier of the product.
+            pdf_title (str | None): The title of the PDF file.
+            pdf_type (str | None): The type of the PDF file.
+            old_blob_id (str | None): The blob ID of the existing PDF file.
+                If provided, it will be used to check if the existing PDF can be
+                replaced.
+        Returns:
+            Any: The response from the server containing the signed URL and other
+                details.
+                For example:
+                    {
+                        "signed_url": "string",
+                        "blob_id": "string",
+                        "blob_name": "string"
+                    }
+        Raises:
+            Exception: If the request fails or if the response is not as expected.
+        Example:
+            ```python
+            # Request a signed URL for uploading a PDF
+            response = client.products.get_pdf_signed_url(
+                product_id=12345,
+                pdf_title="Sample PDF",
+                old_blob_id="m-on/310089/pdf/file.pdf"
+            )
+            ```
+        """
+        prod_pdf_signed_url_pathname = PRODUCT_PDF_SIGNED_URL_ENDPOINT.format(
+            product_id=product_id
+        )
+        url = f"{self._client._base_url}{prod_pdf_signed_url_pathname}"
+        params = {}
+        if pdf_title:
+            params["pdf_title"] = pdf_title
+        if pdf_type:
+            params["pdf_type"] = pdf_type
+        if old_blob_id:
+            params["old_blob_id"] = old_blob_id
+        if params:
+            url += "?" + urlencode(params)
+        resp = self._client._do_request("POST", url)
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to get signed URL. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
+
+    def get_pdf_preview_signed_url(
+        self,
+        product_id: int,
+        mime_type: str,
+        old_blob_id: str | None = None,
+    ) -> Any:
+        """
+        Requests a signed URL for uploading a PDF preview image to GCS.
+        This method sends a request to Lydia for a signed URL that can be used to
+        upload a PDF preview image to Google Cloud Storage (GCS). The signed URL is
+        returned in the response, along with the blob ID and blob name.
+        Args:
+            product_id (int): The unique identifier of the product.
+            mime_type (str): The MIME type of the preview image.
+            old_blob_id (str | None): The blob ID of the existing preview image.
+                If provided, it will be used to check if the existing image can be
+                replaced.
+        Returns:
+            Any: The response from the server containing the signed URL and other
+                details.
+                For example:
+                    {
+                        "signed_url": "string",
+                        "blob_id": "string",
+                        "blob_name": "string"
+                    }
+        Raises:
+            Exception: If the request fails or if the response is not as expected.
+        Example:
+            ```python
+            # Request a signed URL for uploading a PDF preview image
+            response = client.products.get_pdf_preview_signed_url(
+                product_id=12345,
+                mime_type="image/jpeg",
+                old_blob_id="m-on/310089/pdf/image.jpg"
+            )
+            ```
+        """
+        prod_pdf_preview_signed_url_pathname = (
+            PRODUCT_PDF_PREVIEW_SIGNED_URL_ENDPOINT.format(product_id=product_id)
+        )
+        url = f"{self._client._base_url}{prod_pdf_preview_signed_url_pathname}"
+        params = {}
+        if old_blob_id:
+            params["old_blob_id"] = old_blob_id
+        if mime_type:
+            params["mime_type"] = mime_type
+        if params:
+            url += "?" + urlencode(params)
+        resp = self._client._do_request("POST", url)
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to get signed URL. Status code: {resp.status}. {resp.data}"
             )
         return json.loads(resp.data.decode("utf-8"))
 
