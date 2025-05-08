@@ -441,7 +441,7 @@ class ProductsResource(BaseResource):
             )
         return json.loads(resp.data.decode("utf-8"))
 
-    def upload_cad(
+    def upload_cad(  # noqa: C901
         self,
         product_id: int,
         cad_path: str | None = None,
