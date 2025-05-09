@@ -17,12 +17,12 @@ pip install git+ssh://git@github.com/DAAily/daailyapis-python-client.git
 
 Latest stable release:
 ```bash
-pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.13#egg=daaily
+pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.37#egg=daaily
 ```
   
 In case you want to work with the score client you need to install additional dependencies:
 ```bash
-pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.13#egg=daaily[score]
+pip install git+ssh://github.com/DAAily/daailyapis-python-client.git@v1.12.37#egg=daaily[score]
 ```
 
 
