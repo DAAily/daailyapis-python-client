@@ -389,6 +389,7 @@ class ProductsResource(BaseResource):
         self,
         product_id: int,
         mime_type: str,
+        pdf_type: str | None = None,
         old_blob_id: str | None = None,
     ) -> Any:
         """
@@ -399,6 +400,7 @@ class ProductsResource(BaseResource):
         Args:
             product_id (int): The unique identifier of the product.
             mime_type (str): The MIME type of the preview image.
+            pdf_type (str | None): The type of the PDF file.
             old_blob_id (str | None): The blob ID of the existing preview image.
                 If provided, it will be used to check if the existing image can be
                 replaced.
@@ -432,6 +434,8 @@ class ProductsResource(BaseResource):
             params["old_blob_id"] = old_blob_id
         if mime_type:
             params["mime_type"] = mime_type
+        if pdf_type:
+            params["pdf_type"] = pdf_type
         if params:
             url += "?" + urlencode(params)
         resp = self._client._do_request("POST", url)

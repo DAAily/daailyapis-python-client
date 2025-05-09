@@ -26,6 +26,7 @@ try:
     signed_url = client.products.get_pdf_preview_signed_url(
         product_id=product_id,
         mime_type="image/png",
+        pdf_type="booklet",
     )
     print("Pdf Preview Signed Url:", signed_url)
 except Exception as e:
