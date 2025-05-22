@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Literal
 
 from urllib3 import filepost
 
@@ -162,6 +163,22 @@ class Client:
         url = get_entity_endpoint(self._base_url, entity_type)
         if filters is not None:
             url += build_query_string(filters)
+        return Response.from_response(self._do_request("GET", url))
+
+    def search_entities(
+        self,
+        entity_type: EntityType,
+        query: str,
+        mode: Literal["keyword", "hybrid", "vector"] = "keyword",
+        filters: list[Filter] | None = None,
+    ) -> Response:
+        """
+        Searches for entities of a certain type.
+        """
+        url = get_entity_endpoint(self._base_url, entity_type)
+        url += f"/search?query_value={query}&mode={mode}"
+        if filters is not None:
+            url += build_query_string(filters, append=True)
         return Response.from_response(self._do_request("GET", url))
 
     def create_entities(

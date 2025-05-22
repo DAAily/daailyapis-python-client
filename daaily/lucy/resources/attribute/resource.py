@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, Literal
 
 from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
@@ -65,6 +65,39 @@ class AttributesResource(BaseResource):
             skip_filter.value = str(skip)
             filters = [f for f in filters if f.name != "skip"]
             filters.append(skip_filter)
+
+    def search(
+        self,
+        query: str,
+        mode: Literal["keyword", "hybrid", "vector"] = "keyword",
+        return_type: Literal["json", "response"] = "response",
+    ) -> list[dict] | Any:
+        """
+        Searches for attributes based on a query string.
+
+        Args:
+            query (str): The search query string.
+            mode (str): The search mode. Available values: "keyword", "hybrid",
+                "vector".
+
+        Returns:
+            list[dict]: A list of attributes matching the search criteria.
+
+        Example:
+            ```python
+            results = client.attributes.search("example attribute")
+            for attribute in results:
+                print(attribute)
+            ```
+        """
+        response = self._client.search_entities(EntityType.ATTRIBUTE, query, mode)
+        if return_type == "json":
+            if response.status != 200:
+                raise Exception(
+                    f"Error: {response.status} - {response.data.decode('utf-8')}"
+                )
+            return response.json()
+        return response
 
     def get_by_id(self, attribute_id: int):
         return self._client.get_entity(EntityType.ATTRIBUTE, attribute_id)
