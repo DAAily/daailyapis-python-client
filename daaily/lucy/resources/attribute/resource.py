@@ -70,6 +70,7 @@ class AttributesResource(BaseResource):
         self,
         query: str,
         mode: Literal["keyword", "hybrid", "vector"] = "keyword",
+        filters: list[Filter] | None = None,
         return_type: Literal["json", "response"] = "response",
     ) -> list[dict] | Any:
         """
@@ -90,7 +91,9 @@ class AttributesResource(BaseResource):
                 print(attribute)
             ```
         """
-        response = self._client.search_entities(EntityType.ATTRIBUTE, query, mode)
+        response = self._client.search_entities(
+            EntityType.ATTRIBUTE, query, mode, filters=filters
+        )
         if return_type == "json":
             if response.status != 200:
                 raise Exception(
