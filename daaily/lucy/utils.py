@@ -26,8 +26,11 @@ def get_entity_endpoint(base_url: str, entity_type: EntityType):
     return f"{base_url}/{entity_type_endpoint_mapping[entity_type]}"
 
 
-def build_query_string(filters: list[Filter]):
-    query_string = "?"
+def build_query_string(filters: list[Filter], append: bool = False) -> str:
+    if append:
+        query_string = "&"
+    else:
+        query_string = "?"
     for filter in filters:
         query_string += f"{filter.name}={filter.value}&"
     return query_string

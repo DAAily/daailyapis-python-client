@@ -76,6 +76,9 @@ sample-lucy-22:
 sample-lucy-23:
 	venv/bin/python -m samples.lucy.determine_product_score_up_to_date
 
+sample-lucy-24:
+	venv/bin/python -m samples.lucy.search_attributes
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
