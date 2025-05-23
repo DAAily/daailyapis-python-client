@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import re
-from dataclasses import asdict
 from typing import Any, Dict, Generator
 from urllib.parse import urlencode, urlparse
 
@@ -14,7 +13,6 @@ from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_image_to_product_by_blob_id,
-    deter_duplicate_key_from_error_message,
     extract_extension_from_blob_id,
     extract_mime_type_from_extension,
     gen_new_image_object_with_extras,
@@ -22,7 +20,6 @@ from daaily.lucy.utils import (
 )
 
 from .. import BaseResource
-from .types import ProductAttribute
 
 PRODUCT_SIGNED_URL_ENDPOINT = "/products/{product_id}/images/online"
 PRODUCT_IMAGE_UPLOAD_ENDPOINT = "/products/{product_id}/image/upload"
@@ -1055,7 +1052,7 @@ class ProductsResource(BaseResource):
     def add_or_update_attributes(  # noqa: C901
         self,
         product_id: int,
-        attributes: list[ProductAttribute],
+        attributes: list[dict[str, Any]],
         service: Service = Service.SPARKY,
         overwrite_existing: bool = False,
         dry_run: bool = False,
@@ -1069,74 +1066,26 @@ class ProductsResource(BaseResource):
 
 
         Returns the updated product object.
+
+        Args:
+            product_id (int): The unique identifier of the product.
+            attributes (list[dict[str, Any]]): A list of dictionaries containing
+                attribute details. Each dictionary should contain the following keys:
+                - name (str): The name of the attribute.
+                - value (Any): The value of the attribute.
+            service (Service): The service to use for the operation. Default is sparky.
+            overwrite_existing (bool): If True, existing attributes will be overwritten.
+                Default is False.
+            dry_run (bool): If True, the operation will not be executed, and the
+                updated product object will be returned without making any changes.
         """
-        attributes_to_add = []
-        for a in attributes:
-            filters = [Filter("synonyms", a.name_en)]
-            generator = self._client.attributes.get(filters=filters)
-            attribute_with_synonym_match = None
-            for attribute in generator:
-                attribute_with_synonym_match = attribute
-                break
-            if a.value is None:  # If value is None, we assume the attribute is a tag
-                a.value = True
-            (
-                parsed_value,
-                value_type,
-            ) = self._client.attributes.determine_attribute_value_type(a.value)
-            if attribute_with_synonym_match:
-                logger.info(f"Found attribute with synonym match: {a.name_en}")
-                attributes_to_add.append(
-                    {
-                        "name": attribute_with_synonym_match["name"],
-                        "value": parsed_value,
-                    }
-                )
-                continue
-            if dry_run:
-                attributes_to_add.append({"name": a.name_en, "value": parsed_value})
-                continue
-            a_dict = asdict(a)
-            a_dict["value_type"] = value_type
-            resp = self._client.attributes.create_one(a_dict, service=service)
-            if resp.status == 201:
-                logger.info(f"Created new attribute: {a.name_en}")
-                attribute = resp.json()
-                if not attribute:
-                    raise Exception(
-                        f"Failed to create attribute {a.name_en}. No attribute returned"
-                    )
-                attributes_to_add.append(
-                    {"name": attribute["name"], "value": parsed_value}
-                )
-            elif resp.status == 409:
-                # Duplicate key issue. Could mean that the attribute already exists
-                key_pattern, dup_value = deter_duplicate_key_from_error_message(
-                    resp.data
-                )
-                if key_pattern and key_pattern == "name":
-                    logger.info(
-                        "Attribute already exists. Using existing attribute instead: "
-                        + f"{dup_value}"
-                    )
-                    attributes_to_add.append({"name": dup_value, "value": parsed_value})
-                else:
-                    raise Exception(
-                        f"Failed to create attribute {a.name_en}. Status: {resp.status}"
-                        + f" {resp.data}"
-                    )
-            else:
-                raise Exception(
-                    f"Failed to create attribute {a.name_en}. Status: {resp.status} "
-                    + f"{resp.data}"
-                )
         product = self.get_by_id(product_id).json()
         if not product:
             raise Exception(f"Product with ID {product_id} not found")
         product["attributes"] = product.get("attributes") or []
         if overwrite_existing:
             product["attributes"] = []
-        for attribute in attributes_to_add:
+        for attribute in attributes:
             for product_attribute in product["attributes"]:
                 if product_attribute["name"] == attribute["name"]:
                     product_attribute["value"] = attribute["value"]
