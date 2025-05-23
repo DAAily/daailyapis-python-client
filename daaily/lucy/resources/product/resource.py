@@ -1049,7 +1049,7 @@ class ProductsResource(BaseResource):
             EntityType.PRODUCT, product_id, AssetType.CAD, blob_id, target_status
         )
 
-    def add_or_update_attributes(  # noqa: C901
+    def add_or_update_attributes(
         self,
         product_id: int,
         attributes: list[dict[str, Any]],
