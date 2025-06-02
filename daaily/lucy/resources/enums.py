@@ -14,6 +14,7 @@ class AttributeType(str, Enum):
     DIMENSION = "dimension"
     FEATURE = "feature"
     MATERIAL = "material"
+    USAGE = "usage"
 
 
 class AttributeValueType(str, Enum):
