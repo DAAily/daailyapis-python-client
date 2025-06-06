@@ -113,7 +113,7 @@ class Credentials(daaily.credentials.Credentials):
             subject_token (str): The OAuth 2.0 refresh token.
         """
         self._token_exchange_endpoint = f"{SALLY_BASE_URL}/{TOKEN_ENDPOINT}"
-        headers = {"authorization": self._api_key}
+        headers = {"Authorization": self._api_key}
         return self._make_request(
             request,
             headers,
@@ -130,7 +130,7 @@ class Credentials(daaily.credentials.Credentials):
             subject_token (str): The OAuth 2.0 refresh token.
         """
         self._token_exchange_endpoint = f"{SALLY_BASE_URL}/{REFRESH_ENDPOINT}"
-        headers = {"authorization": self._api_key}
+        headers = {"Authorization": self._api_key}
         return self._make_request(
             request,
             headers,
