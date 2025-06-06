@@ -75,7 +75,7 @@ class Credentials(daaily.credentials.Credentials):
                 )
                 response_data = json.loads(response_body)
                 return response_data
-            elif response.status == 429: # Too Many Requests
+            elif response.status == 429:  # Too Many Requests
                 attempt += 1
                 retry_after = response.headers.get("Retry-After")
                 if retry_after:
@@ -87,9 +87,7 @@ class Credentials(daaily.credentials.Credentials):
                 raise daaily.transport.exceptions.TransportException(
                     response, response.data
                 )
-        raise daaily.transport.exceptions.TransportException(
-            response, response.data
-        )
+        raise daaily.transport.exceptions.TransportException(response, response.data)
 
     def refresh(self, request):
         if self.id_token and self.refresh_token:
@@ -114,12 +112,11 @@ class Credentials(daaily.credentials.Credentials):
                 HTTP requests.
             subject_token (str): The OAuth 2.0 refresh token.
         """
-        self._token_exchange_endpoint = (
-            f"{SALLY_BASE_URL}/{TOKEN_ENDPOINT}?key={self._api_key}"
-        )
+        self._token_exchange_endpoint = f"{SALLY_BASE_URL}/{TOKEN_ENDPOINT}"
+        headers = {"authorization": self._api_key}
         return self._make_request(
             request,
-            None,
+            headers,
             {"email": f"{self._user_email}", "uid": f"{self._user_uid}"},
         )
 
@@ -132,11 +129,10 @@ class Credentials(daaily.credentials.Credentials):
                 HTTP requests.
             subject_token (str): The OAuth 2.0 refresh token.
         """
-        self._token_exchange_endpoint = (
-            f"{SALLY_BASE_URL}/{REFRESH_ENDPOINT}?key={self._api_key}"
-        )
+        self._token_exchange_endpoint = f"{SALLY_BASE_URL}/{REFRESH_ENDPOINT}"
+        headers = {"authorization": self._api_key}
         return self._make_request(
             request,
-            None,
+            headers,
             {"email": f"{self._user_email}", "refresh_token": refresh_token},
         )
