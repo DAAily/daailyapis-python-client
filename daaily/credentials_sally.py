@@ -50,9 +50,18 @@ class Credentials(daaily.credentials.Credentials):
         self._user_email = user_email
         self._user_uid = user_uid
         self._api_key = api_key
+        self._get_token_endpoint = f"{SALLY_BASE_URL}/{TOKEN_ENDPOINT}"
+        self._get_token_with_refresh_token_endpoint = (
+            f"{SALLY_BASE_URL}/{REFRESH_ENDPOINT}"
+        )
+        self._api_key_header = {"Authorization": f"ApiKey {self._api_key}"}
 
     def _make_request(
-        self, request, headers: dict | None = None, request_body: dict | None = None
+        self,
+        request,
+        url: str,
+        headers: dict | None = None,
+        request_body: dict | None = None,
     ):
         max_retries = 10
         retry_delay = 1
@@ -62,7 +71,7 @@ class Credentials(daaily.credentials.Credentials):
             if request_body is not None:
                 body = json.dumps(request_body)
             response = request(
-                url=self._token_exchange_endpoint,
+                url=url,
                 method="POST",
                 headers=headers,
                 body=body,
@@ -75,7 +84,7 @@ class Credentials(daaily.credentials.Credentials):
                 )
                 response_data = json.loads(response_body)
                 return response_data
-            elif response.status == 429: # Too Many Requests
+            elif response.status == 429:  # Too Many Requests
                 attempt += 1
                 retry_after = response.headers.get("Retry-After")
                 if retry_after:
@@ -87,9 +96,7 @@ class Credentials(daaily.credentials.Credentials):
                 raise daaily.transport.exceptions.TransportException(
                     response, response.data
                 )
-        raise daaily.transport.exceptions.TransportException(
-            response, response.data
-        )
+        raise daaily.transport.exceptions.TransportException(response, response.data)
 
     def refresh(self, request):
         if self.id_token and self.refresh_token:
@@ -114,13 +121,11 @@ class Credentials(daaily.credentials.Credentials):
                 HTTP requests.
             subject_token (str): The OAuth 2.0 refresh token.
         """
-        self._token_exchange_endpoint = (
-            f"{SALLY_BASE_URL}/{TOKEN_ENDPOINT}?key={self._api_key}"
-        )
         return self._make_request(
-            request,
-            None,
-            {"email": f"{self._user_email}", "uid": f"{self._user_uid}"},
+            request=request,
+            url=self._get_token_endpoint,
+            headers=self._api_key_header,
+            request_body={"email": f"{self._user_email}", "uid": f"{self._user_uid}"},
         )
 
     def get_token_with_refresh_token(self, request, refresh_token: str):
@@ -132,11 +137,12 @@ class Credentials(daaily.credentials.Credentials):
                 HTTP requests.
             subject_token (str): The OAuth 2.0 refresh token.
         """
-        self._token_exchange_endpoint = (
-            f"{SALLY_BASE_URL}/{REFRESH_ENDPOINT}?key={self._api_key}"
-        )
         return self._make_request(
-            request,
-            None,
-            {"email": f"{self._user_email}", "refresh_token": refresh_token},
+            request=request,
+            url=self._get_token_with_refresh_token_endpoint,
+            headers=self._api_key_header,
+            request_body={
+                "email": f"{self._user_email}",
+                "refresh_token": refresh_token,
+            },
         )
