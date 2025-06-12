@@ -6,12 +6,12 @@ client = Client(base_url=LUCY_V2_BASE_URL_STAGING)
 
 # Define filters
 filters = [
-    Filter("manufacturer_id", str(3103858)),
-    Filter("status", "deleted"),
+    Filter("status", "online"),
+    Filter("skip", "580"),
 ]
 
-families = client.families.get(filters=filters)
+products = client.products.get(filters=filters)
 
 # Iterate over the results
-for f in families:
-    print(f"ID: {f['family_id']}, Name: {f['name_en']}, Status: {f['status']}")
+for p in products:
+    print(f"ID: {p['product_id']}, Name: {p['name_en']}, Status: {p['status']}")

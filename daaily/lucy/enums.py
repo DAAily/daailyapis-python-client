@@ -22,6 +22,7 @@ class QueryOperators(str, Enum):
 class EntityType(str, Enum):
     MANUFACTURER = "manufacturer"
     DISTRIBUTOR = "distributor"
+    INSTITUTION = "institution"
     COLLECTION = "collection"
     JOURNALIST = "journalist"
     ATTRIBUTE = "attribute"
@@ -34,7 +35,6 @@ class EntityType(str, Enum):
     SPACE = "space"
     GROUP = "group"
     STORY = "story"
-    FAIR = "fair"
 
 
 class AssetType(str, Enum):
