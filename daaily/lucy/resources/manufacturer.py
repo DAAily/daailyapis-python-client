@@ -77,21 +77,30 @@ class ManufacturersResource(BaseResource):
         """
         if filters is None:
             filters = []
-        filters = [f for f in filters if f.name not in ["limit", "skip"]]
-        limit_filter = Filter(name="limit", value="100")
-        skip_filter = Filter(name="skip", value="0")
-        filters.append(limit_filter)
-        filters.append(skip_filter)
+        limit_value = "100"
+        skip_value = "0"
+        new_filters = []
+        for f in filters:
+            if f.name == "limit":
+                limit_value = f.value
+            elif f.name == "skip":
+                skip_value = f.value
+            else:
+                new_filters.append(f)
+        limit_filter = Filter(name="limit", value=limit_value)
+        skip_filter = Filter(name="skip", value=skip_value)
+        new_filters.append(limit_filter)
+        new_filters.append(skip_filter)
         while True:
-            response = self._client.get_entities(EntityType.MANUFACTURER, filters)
+            response = self._client.get_entities(EntityType.MANUFACTURER, new_filters)
             if response.status != 200:
                 break
             for item in response.json():  # type: ignore
                 yield item
-            skip = int(skip_filter.value) + int(limit_filter.value)
-            skip_filter.value = str(skip)
-            filters = [f for f in filters if f.name != "skip"]
-            filters.append(skip_filter)
+            skip_value = str(int(skip_value) + int(limit_value))
+            skip_filter.value = skip_value
+            new_filters = [f for f in new_filters if f.name != "skip"]
+            new_filters.append(skip_filter)
 
     def get_by_id(self, manufacturer_id: int):
         return self._client.get_entity(EntityType.MANUFACTURER, manufacturer_id)

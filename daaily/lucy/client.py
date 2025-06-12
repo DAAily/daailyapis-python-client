@@ -13,11 +13,11 @@ from daaily.lucy.resources.attribute.resource import AttributesResource
 from daaily.lucy.resources.collection import CollectionsResource
 from daaily.lucy.resources.creator import CreatorsResource
 from daaily.lucy.resources.distributor import DistributorsResource
-from daaily.lucy.resources.fair import FairsResource
 from daaily.lucy.resources.family import FamiliesResource
 from daaily.lucy.resources.file import FilesResource
 from daaily.lucy.resources.filter import FiltersResource
 from daaily.lucy.resources.group import GroupsResource
+from daaily.lucy.resources.institution.resource import InstitutionsResource
 from daaily.lucy.resources.journalist import JournalistsResource
 from daaily.lucy.resources.manufacturer import ManufacturersResource
 from daaily.lucy.resources.material import MaterialsResource
@@ -82,6 +82,7 @@ class Client:
         self._auth_http = AuthorizedHttp(self._credentials)
         self.manufacturers = ManufacturersResource(self)
         self.distributors = DistributorsResource(self)
+        self.institutions = InstitutionsResource(self)
         self.collections = CollectionsResource(self)
         self.journalists = JournalistsResource(self)
         self.attributes = AttributesResource(self)
@@ -94,7 +95,6 @@ class Client:
         self.stories = StoriesResource(self)
         self.spaces = SpacesResource(self)
         self.groups = GroupsResource(self)
-        self.fairs = FairsResource(self)
         self.files = FilesResource(self)
 
     def _setup_logging(self, level: int):

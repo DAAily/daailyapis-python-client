@@ -3,6 +3,7 @@ from daaily.lucy.enums import AssetType, EntityType
 entity_type_endpoint_mapping = {
     EntityType.MANUFACTURER: "manufacturers",
     EntityType.DISTRIBUTOR: "distributors",
+    EntityType.INSTITUTION: "institutions",
     EntityType.COLLECTION: "collections",
     EntityType.JOURNALIST: "journalists",
     EntityType.ATTRIBUTE: "attributes",
@@ -15,7 +16,6 @@ entity_type_endpoint_mapping = {
     EntityType.STORY: "stories",
     EntityType.SPACE: "spaces",
     EntityType.GROUP: "groups",
-    EntityType.FAIR: "fairs",
 }
 
 MIME_TYPE_TO_ASSET_TYPE = {
@@ -86,7 +86,4 @@ ENTITY_ASSET_TYPE_UPLOADS_ENDPOINT_MAPPING = {
     (EntityType.GROUP, AssetType.IMAGE): "groups/images",
     (EntityType.GROUP, AssetType.PDF): "groups/pdfs",
     (EntityType.GROUP, AssetType.CAD): "groups/cads",
-    (EntityType.FAIR, AssetType.IMAGE): "fairs/images",
-    (EntityType.FAIR, AssetType.PDF): "fairs/pdfs",
-    (EntityType.FAIR, AssetType.CAD): "fairs/cads",
 }

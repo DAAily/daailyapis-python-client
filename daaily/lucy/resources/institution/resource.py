@@ -3,19 +3,19 @@ from typing import Any, Dict, Generator
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
 
-from . import BaseResource
+from .. import BaseResource
 
 
-class SpacesResource(BaseResource):
+class InstitutionsResource(BaseResource):
     def get(
         self, filters: list[Filter] | None = None
     ) -> Generator[Dict[str, Any], None, None]:
         """
-        Retrieves spaces with optional filtering, returning them as a generator
-        that yields each space one at a time.
+        Retrieves institutions with optional filtering, returning them as a generator
+        that yields each institution one at a time.
 
         Available filters:
-            - space_ids (str): Filter by comma separated space IDs.
+            - institution_ids (str): Filter by comma separated institution IDs.
 
         Note that the following filters are automatically added to the query:
             - skip (int): Number of records to skip.
@@ -25,19 +25,19 @@ class SpacesResource(BaseResource):
             filters (list[Filter] | None): A list of filters to apply to the query.
 
         Yields:
-            dict: A dictionary representing a single space.
+            dict: A dictionary representing a single institution.
 
         Example:
             ```python
             # Define filters
-            filters = [Filter("space_ids", "12345, 78910")]
+            filters = [Filter("institution_ids", "12345, 78910")]
 
-            # Get spaces (pagination handled internally)
-            spaces = client.spaces.get(filters=filters)
+            # Get institutions (pagination handled internally)
+            institutions = client.institutions.get(filters=filters)
 
             # Iterate over the results without worrying about pagination
-            for s in spaces:
-                print(f"ID: {s['space_id']}, Space Type: {s['space_type']}")
+            for i in institutions:
+                print(f"ID: {i['institution_id']}, Name: {i['name']}")
             ```
         """
         if filters is None:
@@ -57,7 +57,7 @@ class SpacesResource(BaseResource):
         new_filters.append(limit_filter)
         new_filters.append(skip_filter)
         while True:
-            response = self._client.get_entities(EntityType.SPACE, new_filters)
+            response = self._client.get_entities(EntityType.INSTITUTION, new_filters)
             if response.status != 200:
                 break
             for item in response.json():  # type: ignore
@@ -67,11 +67,15 @@ class SpacesResource(BaseResource):
             new_filters = [f for f in new_filters if f.name != "skip"]
             new_filters.append(skip_filter)
 
-    def get_by_id(self, space_id: int):
-        return self._client.get_entity(EntityType.SPACE, space_id)
+    def get_by_id(self, institution_id: int):
+        return self._client.get_entity(EntityType.INSTITUTION, institution_id)
 
-    def update(self, spaces: list[dict], filters: list[Filter] | None = None):
-        return self._client.update_entities(EntityType.SPACE, spaces, filters)
+    def update(self, institutions: list[dict], filters: list[Filter] | None = None):
+        return self._client.update_entities(
+            EntityType.INSTITUTION, institutions, filters
+        )
 
-    def create(self, spaces: list[dict], filters: list[Filter] | None = None):
-        return self._client.create_entities(EntityType.SPACE, spaces, filters)
+    def create(self, institutions: list[dict], filters: list[Filter] | None = None):
+        return self._client.create_entities(
+            EntityType.INSTITUTION, institutions, filters
+        )

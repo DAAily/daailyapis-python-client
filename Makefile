@@ -79,6 +79,9 @@ sample-lucy-23:
 sample-lucy-24:
 	venv/bin/python -m samples.lucy.search_attributes
 
+sample-lucy-25:
+	venv/bin/python -m samples.lucy.get_filtered_products
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
