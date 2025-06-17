@@ -1095,29 +1095,34 @@ class ProductsResource(BaseResource):
             raise Exception(f"Product with ID {product_id} not found")
         product["attributes"] = product.get("attributes") or []
         if overwrite_existing:
-            # ensure that all incoming attributes come from the same source actor
-            # otherwise the logic will not work as expected
             source_actor = None
             for attribute in attributes:
                 if not source_actor:
-                    source_actor = attribute.get("source_actor")
-                elif source_actor != attribute.get("source_actor"):
+                    source_actor = attribute.get("source_actor", "internal_user")
+                elif source_actor != attribute.get("source_actor", "internal_user"):
                     raise ValueError(
                         "All attributes must have the same source actor when "
                         + "overwrite_existing is True"
                     )
-            for product_attribute in product["attributes"]:
-                if product_attribute["source_actor"] == source_actor:
-                    # remove all attributes that were set by the same source actor
-                    product["attributes"].remove(product_attribute)
+                attribute["source_actor"] = source_actor
+                source_type = attribute.get("source_type", "unknown")
+                attribute["source_type"] = source_type
+            # remove all attributes that were set by the same source actor
+            product["attributes"] = [
+                attr
+                for attr in product["attributes"]
+                if attr.get("source_actor") != source_actor
+            ]
         for attribute in attributes:
+            source_actor = attribute.get("source_actor")
             for product_attribute in product["attributes"]:
-                if product_attribute["name"] == attribute["name"]:
+                if (
+                    product_attribute["name"] == attribute["name"]
+                    and product_attribute["source_actor"] == source_actor
+                ):
                     product_attribute["value"] = attribute["value"]
-                    if source_actor := attribute.get("source_actor"):
-                        product_attribute["source_actor"] = source_actor
-                    if source_type := attribute.get("source_type"):
-                        product_attribute["source_type"] = source_type
+                    source_type = product_attribute.get("source_type", "unknown")
+                    product_attribute["source_type"] = source_type
                     break
             else:
                 product["attributes"].append(attribute)

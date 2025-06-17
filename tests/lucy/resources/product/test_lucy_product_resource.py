@@ -841,7 +841,7 @@ class TestProductResource:
             ],
         }
 
-        updated_product_data = {
+        expected_updated_product = {
             "product_id": product_id,
             "attributes": [
                 {
@@ -869,9 +869,13 @@ class TestProductResource:
         client.products.get_by_id = mock.MagicMock(
             return_value=DummyResponse(existing_product_data)
         )
-        client.products.update_one = mock.MagicMock(
-            return_value=DummyResponse(updated_product_data, status=200)
-        )
+
+        # Capture the input to update_one
+        def update_one_side_effect(product, service):
+            assert product == expected_updated_product
+            return DummyResponse(product, status=200)
+
+        client.products.update_one = mock.MagicMock(side_effect=update_one_side_effect)
 
         # Attributes to add/update
         new_attributes = [
@@ -893,7 +897,7 @@ class TestProductResource:
             product_id=product_id, attributes=new_attributes, overwrite_existing=True
         )
 
-        assert result == updated_product_data
+        assert result == expected_updated_product
         client.products.get_by_id.assert_called_once_with(product_id)
         client.products.update_one.assert_called_once()
 
@@ -923,8 +927,29 @@ class TestProductResource:
                     "source_actor": "ai",
                     "source_type": "html",
                 },
+                {
+                    "name": "dimension_depth",
+                    "value": 150,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
             ],
         }
+
+        new_attributes = [
+            {
+                "name": "dimension_height",
+                "value": 330,
+                "source_actor": "ai",
+                "source_type": "html",
+            },
+            {
+                "name": "material_frame",
+                "value": "metal",
+                "source_actor": "ai",
+                "source_type": "html",
+            },
+        ]
 
         updated_product_data = {
             "product_id": product_id,
@@ -942,6 +967,12 @@ class TestProductResource:
                     "source_type": "html",
                 },
                 {
+                    "name": "dimension_depth",
+                    "value": 150,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+                {
                     "name": "material_frame",
                     "value": "metal",
                     "source_actor": "ai",
@@ -954,28 +985,190 @@ class TestProductResource:
         client.products.get_by_id = mock.MagicMock(
             return_value=DummyResponse(existing_product_data)
         )
-        client.products.update_one = mock.MagicMock(
-            return_value=DummyResponse(updated_product_data, status=200)
+
+        def update_one_side_effect(product, service):
+            assert product == updated_product_data
+            return DummyResponse(product, status=200)
+
+        client.products.update_one = mock.MagicMock(side_effect=update_one_side_effect)
+
+        # Attributes to add/update
+
+        result = client.products.add_or_update_attributes(
+            product_id=product_id, attributes=new_attributes, overwrite_existing=False
         )
+
+        assert result == updated_product_data
+        client.products.get_by_id.assert_called_once_with(product_id)
+        client.products.update_one.assert_called_once()
+
+    def test_add_or_update_attributes_without_source_fields_set(self):
+        """
+        Test adding and updating product attributes with and without overwriting.
+        """
+        product_id = 101
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+
+        existing_product_data = {
+            "product_id": product_id,
+            "attributes": [
+                {
+                    "name": "color_base",
+                    "value": "red",
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+                {
+                    "name": "dimension_height",
+                    "value": 300,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+            ],
+        }
+
+        new_attributes = [
+            {  # should default to internal_user and unknown
+                "name": "dimension_height",
+                "value": 330,
+            },
+            {  # should default to internal_user and unknown
+                "name": "material_frame",
+                "value": "metal",
+            },
+        ]
+
+        updated_product_data = {
+            "product_id": product_id,
+            "attributes": [
+                {
+                    "name": "dimension_height",
+                    "value": 300,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+                {
+                    "name": "dimension_height",
+                    "value": 330,
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+                {
+                    "name": "material_frame",
+                    "value": "metal",
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+            ],
+        }
+
+        # Patch get_by_id and update_one
+        client.products.get_by_id = mock.MagicMock(
+            return_value=DummyResponse(existing_product_data)
+        )
+
+        def update_one_side_effect(product, service):
+            assert product == updated_product_data
+            return DummyResponse(product, status=200)
+
+        client.products.update_one = mock.MagicMock(side_effect=update_one_side_effect)
+
+        # Attributes to add/update
+
+        result = client.products.add_or_update_attributes(
+            product_id=product_id, attributes=new_attributes, overwrite_existing=True
+        )
+
+        assert result == updated_product_data
+        client.products.get_by_id.assert_called_once_with(product_id)
+        client.products.update_one.assert_called_once()
+
+    def test_add_or_update_attributes_only_one_actor_with_overwrite(self):
+        """
+        Test adding and updating product attributes with and without overwriting.
+        """
+        product_id = 101
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+
+        existing_product_data = {
+            "product_id": product_id,
+            "attributes": [
+                {
+                    "name": "color_base",
+                    "value": "red",
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+                {
+                    "name": "dimension_width",
+                    "value": 440,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+            ],
+        }
 
         # Attributes to add/update
         new_attributes = [
             {
                 "name": "dimension_height",
                 "value": 330,
-                "source_actor": "ai",
-                "source_type": "html",
+                "source_actor": "internal_user",
+                "source_type": "unknown",
             },
             {
                 "name": "material_frame",
                 "value": "metal",
-                "source_actor": "ai",
-                "source_type": "html",
+                "source_actor": "internal_user",
+                "source_type": "unknown",
             },
         ]
 
+        updated_product_data = {
+            "product_id": product_id,
+            "attributes": [
+                {
+                    "name": "dimension_width",
+                    "value": 440,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+                {
+                    "name": "dimension_height",
+                    "value": 330,
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+                {
+                    "name": "material_frame",
+                    "value": "metal",
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+            ],
+        }
+
+        # Patch get_by_id and update_one
+        client.products.get_by_id = mock.MagicMock(
+            return_value=DummyResponse(existing_product_data)
+        )
+
+        def update_one_side_effect(product, service):
+            assert product == updated_product_data
+            return DummyResponse(product, status=200)
+
+        client.products.update_one = mock.MagicMock(side_effect=update_one_side_effect)
+
         result = client.products.add_or_update_attributes(
-            product_id=product_id, attributes=new_attributes, overwrite_existing=False
+            product_id=product_id, attributes=new_attributes, overwrite_existing=True
         )
 
         assert result == updated_product_data
