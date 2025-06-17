@@ -3,8 +3,6 @@ import logging
 from daaily.lucy import Client
 from daaily.lucy.constants import LUCY_V2_BASE_URL_STAGING
 from daaily.lucy.enums import Service
-
-# from daaily.lucy.resources.attribute.types import AttributeType, AttributeValueUnit
 from daaily.lucy.utils import setup_logging
 
 # Setup logging
