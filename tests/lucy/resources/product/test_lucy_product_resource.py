@@ -806,7 +806,98 @@ class TestProductResource:
         result = client.products.deter_score_up_to_date(product_id)
         assert result is False
 
-    def test_add_or_update_attributes(self):
+    def test_add_or_update_attributes_with_overwrite(self):
+        """
+        Test adding and updating product attributes with and without overwriting.
+        """
+        product_id = 101
+        base_url = mock.sentinel.base_url
+        credentials = mock.create_autospec(
+            daaily.credentials.Credentials, instance=True
+        )
+        client = daaily.lucy.client.Client(credentials=credentials, base_url=base_url)
+
+        existing_product_data = {
+            "product_id": product_id,
+            "attributes": [
+                {
+                    "name": "color_base",
+                    "value": "red",
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+                {
+                    "name": "dimension_height",
+                    "value": 300,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+                {  # this one should disappear
+                    "name": "dimension_width",
+                    "value": 250,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+            ],
+        }
+
+        updated_product_data = {
+            "product_id": product_id,
+            "attributes": [
+                {
+                    "name": "color_base",
+                    "value": "red",
+                    "source_actor": "internal_user",
+                    "source_type": "unknown",
+                },
+                {
+                    "name": "dimension_height",
+                    "value": 330,
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+                {
+                    "name": "material_frame",
+                    "value": "metal",
+                    "source_actor": "ai",
+                    "source_type": "html",
+                },
+            ],
+        }
+
+        # Patch get_by_id and update_one
+        client.products.get_by_id = mock.MagicMock(
+            return_value=DummyResponse(existing_product_data)
+        )
+        client.products.update_one = mock.MagicMock(
+            return_value=DummyResponse(updated_product_data, status=200)
+        )
+
+        # Attributes to add/update
+        new_attributes = [
+            {
+                "name": "dimension_height",
+                "value": 330,
+                "source_actor": "ai",
+                "source_type": "html",
+            },
+            {
+                "name": "material_frame",
+                "value": "metal",
+                "source_actor": "ai",
+                "source_type": "html",
+            },
+        ]
+
+        result = client.products.add_or_update_attributes(
+            product_id=product_id, attributes=new_attributes, overwrite_existing=True
+        )
+
+        assert result == updated_product_data
+        client.products.get_by_id.assert_called_once_with(product_id)
+        client.products.update_one.assert_called_once()
+
+    def test_add_or_update_attributes_without_overwrite(self):
         """
         Test adding and updating product attributes with and without overwriting.
         """
@@ -884,10 +975,7 @@ class TestProductResource:
         ]
 
         result = client.products.add_or_update_attributes(
-            product_id=product_id,
-            attributes=new_attributes,
-            overwrite_existing=True,
-            dry_run=False,
+            product_id=product_id, attributes=new_attributes, overwrite_existing=False
         )
 
         assert result == updated_product_data
