@@ -1058,7 +1058,7 @@ class ProductsResource(BaseResource):
             EntityType.PRODUCT, product_id, AssetType.CAD, blob_id, target_status
         )
 
-    def add_or_update_attributes(
+    def add_or_update_attributes(  # noqa: C901
         self,
         product_id: int,
         attributes: list[dict[str, Any]],
@@ -1084,7 +1084,9 @@ class ProductsResource(BaseResource):
                 - value (Any): The value of the attribute.
             service (Service): The service to use for the operation. Default is sparky.
             overwrite_existing (bool): If True, existing attributes will be overwritten.
-                Default is False.
+                Default is False. Though it will only overwrite the attributes that
+                were set by the same source actor. Like a user associated attribute
+                will not be overwritten by an AI attribute.
             dry_run (bool): If True, the operation will not be executed, and the
                 updated product object will be returned without making any changes.
         """
@@ -1093,11 +1095,34 @@ class ProductsResource(BaseResource):
             raise Exception(f"Product with ID {product_id} not found")
         product["attributes"] = product.get("attributes") or []
         if overwrite_existing:
-            product["attributes"] = []
+            source_actor = None
+            for attribute in attributes:
+                if not source_actor:
+                    source_actor = attribute.get("source_actor", "internal_user")
+                elif source_actor != attribute.get("source_actor", "internal_user"):
+                    raise ValueError(
+                        "All attributes must have the same source actor when "
+                        + "overwrite_existing is True"
+                    )
+                attribute["source_actor"] = source_actor
+                source_type = attribute.get("source_type", "unknown")
+                attribute["source_type"] = source_type
+            # remove all attributes that were set by the same source actor
+            product["attributes"] = [
+                attr
+                for attr in product["attributes"]
+                if attr.get("source_actor") != source_actor
+            ]
         for attribute in attributes:
+            source_actor = attribute.get("source_actor")
             for product_attribute in product["attributes"]:
-                if product_attribute["name"] == attribute["name"]:
+                if (
+                    product_attribute["name"] == attribute["name"]
+                    and product_attribute["source_actor"] == source_actor
+                ):
                     product_attribute["value"] = attribute["value"]
+                    source_type = product_attribute.get("source_type", "unknown")
+                    product_attribute["source_type"] = source_type
                     break
             else:
                 product["attributes"].append(attribute)
