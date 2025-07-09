@@ -11,10 +11,7 @@ steps:
     python -m build
 
     # upload using the keyring plugin (no user/pass needed)
-    python -m twine upload \
-      --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ \
-      --skip-existing \
-      dist/*
+    python -m twine upload --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ --skip-existing dist/*
 
 options:
   logging: CLOUD_LOGGING_ONLY
