@@ -1,18 +1,36 @@
 steps:
+# 1. Install build, twine, and the GCP keyring plugin
 - name: python:3.10-slim
-  entrypoint: bash
+  entrypoint: python
   args:
-  - -eux
-  - |
-    # 1. Install your build tools + the GCP keyring plugin
-    python -m pip install --upgrade pip
-    pip install build twine keyrings.google-artifactregistry-auth
+  - -m
+  - pip
+  - install
+  - --upgrade
+  - pip
+  - build
+  - twine
+  - keyrings.google-artifactregistry-auth
 
-    # 2. Build your dist/
-    python -m build
+# 2. Build your package
+- name: python:3.10-slim
+  entrypoint: python
+  args:
+  - -m
+  - build
 
-    # 3. Upload—keyrings.google-artifactregistry-auth will
-    #    pick up the Cloud Build service account’s credentials
-    python -m twine upload --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ dist/* --skip-existing
+# 3. Upload via Twine (keyring plugin grabs credentials)
+- name: python:3.10-slim
+  entrypoint: python
+  args:
+  - -m
+  - twine
+  - upload
+  - --repository-url
+  - https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/
+  - --skip-existing
+  - dist/*
 
+options:
+  logging: CLOUD_LOGGING_ONLY
 timeout: 1200s
