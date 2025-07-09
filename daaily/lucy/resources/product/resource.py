@@ -108,6 +108,11 @@ class ProductsResource(BaseResource):
         return self._client.get_entity(EntityType.PRODUCT, product_id)
 
     def refresh(self, product_id: int):
+        """
+        This will refresh the product data. It will not return anything but will
+        simply refresh the data which will then update the denormalized data on the
+        product. It will not change the revision_uuid.
+        """
         return self._client.refresh_entity(EntityType.PRODUCT, product_id)
 
     def update(
