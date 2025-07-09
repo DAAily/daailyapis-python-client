@@ -3,7 +3,7 @@ steps:
 # 1. Install build, twine, and the GCP keyring plugin
 - name: python:3.10
   entrypoint: python
-  args: [ "-m", "pip", "install", "--upgrade", "pip", "build", "twine", "keyrings.google-artifactregistry-auth" ]
+  args: [ "-m", "pip", "install", "--upgrade", "pip", "keyrings.google-artifactregistry-auth", "build", "twine" ]
 
 # 2. Build your package
 - name: python:3.10
