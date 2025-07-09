@@ -1,21 +1,21 @@
 steps:
-
-# 1. Install build, twine, and the GCP keyring plugin
 - name: python:3.10
-  entrypoint: python
-  args: [ "-m", "pip", "install", "--upgrade", "pip", "keyrings.google-artifactregistry-auth", "build", "twine" ]
+  entrypoint: bash
+  args:
+  - -eux
+  - |
+    # install everything you need
+    python -m pip install --upgrade pip keyrings.google-artifactregistry-auth build twine 
 
-# 2. Build your package
-- name: python:3.10
-  entrypoint: python
-  args: [ "-m", "build" ]
+    # build your wheel/sdist
+    python -m build
 
-# 3. Upload via Twine (keyring plugin grabs credentials)
-- name: python:3.10
-  entrypoint: python
-  args: [ "-m", "twine", "upload", "--repository-url", "https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/", "--skip-existing", "dist/*" ]
+    # upload using the keyring plugin (no user/pass needed)
+    python -m twine upload \
+      --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ \
+      --skip-existing \
+      dist/*
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
 timeout: 1200s
