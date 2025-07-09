@@ -2,11 +2,21 @@ steps:
 - name: python:3.10
   entrypoint: bash
   args:
-  - -eux
+  - "-eux" # fail fast + echo commands
+  - "-c" # ← tell bash “next arg is the commands to run”
   - |
-    python -m pip install --upgrade pip keyrings.google-artifactregistry-auth build twine
+    python -m pip install --upgrade pip \
+      keyrings.google-artifactregistry-auth \
+      build twine
+
     python -m build
+
     python -m twine upload \
       --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ \
       --skip-existing \
       dist/*
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s
