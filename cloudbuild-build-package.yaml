@@ -13,9 +13,6 @@ steps:
 
     # 3. Upload—keyrings.google-artifactregistry-auth will
     #    pick up the Cloud Build service account’s credentials
-    twine upload \
-      --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ \
-      --skip-existing \
-      dist/*
+    python -m twine upload --repository-url https://europe-west3-python.pkg.dev/one-data-project/daailyapis-python-client/ dist/* --skip-existing
 
 timeout: 1200s
