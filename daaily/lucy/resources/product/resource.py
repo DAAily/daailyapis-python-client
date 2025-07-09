@@ -107,6 +107,9 @@ class ProductsResource(BaseResource):
     def get_by_id(self, product_id: int):
         return self._client.get_entity(EntityType.PRODUCT, product_id)
 
+    def refresh(self, product_id: int):
+        return self._client.refresh_entity(EntityType.PRODUCT, product_id)
+
     def update(
         self,
         products: list[dict],

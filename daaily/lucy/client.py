@@ -129,6 +129,15 @@ class Client:
         entity_url = f"{url}/{entity_id}"
         return Response.from_response(self._do_request("GET", entity_url))
 
+    def refresh_entity(self, entity_type: EntityType, entity_id: int) -> Response:
+        """
+        Refreshes an entity. This is only allowed for a handful of entity types
+        such as products, manufacturers etc.
+        """
+        url = get_entity_endpoint(self._base_url, entity_type)
+        entity_url = f"{url}/{entity_id}/refresh"
+        return Response.from_response(self._do_request("POST", entity_url))
+
     def get_entity_custom(
         self, entity_type: EntityType, identifier: str, identifier_field: str
     ) -> Response:
