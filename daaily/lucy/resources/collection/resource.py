@@ -3,7 +3,7 @@ from typing import Any, Dict, Generator
 from daaily.lucy.enums import EntityType
 from daaily.lucy.models import Filter
 
-from . import BaseResource
+from .. import BaseResource
 
 
 class CollectionsResource(BaseResource):
@@ -70,6 +70,14 @@ class CollectionsResource(BaseResource):
 
     def get_by_id(self, collection_id: int):
         return self._client.get_entity(EntityType.COLLECTION, collection_id)
+
+    def refresh(self, collection_id: int):
+        """
+        This will refresh the collection data. It will not return anything but will
+        simply refresh the data which will then update the denormalized data on the
+        collection. It will not change the revision_uuid.
+        """
+        return self._client.refresh_entity(EntityType.COLLECTION, collection_id)
 
     def update(self, collections: list[dict], filters: list[Filter] | None = None):
         return self._client.update_entities(EntityType.COLLECTION, collections, filters)

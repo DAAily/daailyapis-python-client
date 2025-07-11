@@ -1,0 +1,27 @@
+name: "Enforce version bump"
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  require-version-update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # need full history to diff against base
+
+    - name: Ensure daaily/version.py was updated
+      run: |
+        # Fetch the target branch for comparison
+        git fetch origin ${{ github.base_ref }} --depth=1
+
+        # Check if daaily/version.py is among the changed files
+        if git diff --name-only FETCH_HEAD...HEAD | grep -q '^daaily/version\.py$'; then
+          echo "✅ daaily/version.py was modified."
+        else
+          echo "❌ daaily/version.py must be updated on every PR." >&2
+          exit 1
+        fi

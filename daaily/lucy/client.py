@@ -10,10 +10,10 @@ from daaily.lucy.constants import ENTITY_STATUS, LUCY_V2_BASE_URL_PRODUCTION
 from daaily.lucy.enums import AssetType, EntityType, Service
 from daaily.lucy.models import Filter
 from daaily.lucy.resources.attribute.resource import AttributesResource
-from daaily.lucy.resources.collection import CollectionsResource
+from daaily.lucy.resources.collection.resource import CollectionsResource
 from daaily.lucy.resources.creator import CreatorsResource
 from daaily.lucy.resources.distributor import DistributorsResource
-from daaily.lucy.resources.family import FamiliesResource
+from daaily.lucy.resources.family.resource import FamiliesResource
 from daaily.lucy.resources.file import FilesResource
 from daaily.lucy.resources.filter import FiltersResource
 from daaily.lucy.resources.group import GroupsResource
@@ -132,7 +132,7 @@ class Client:
     def refresh_entity(self, entity_type: EntityType, entity_id: int) -> Response:
         """
         Refreshes an entity. This is only allowed for a handful of entity types
-        such as products, manufacturers etc.
+        such as products, families and collections.
         """
         url = get_entity_endpoint(self._base_url, entity_type)
         entity_url = f"{url}/{entity_id}/refresh"
