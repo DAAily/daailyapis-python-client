@@ -18,7 +18,7 @@ from daaily.lucy.utils import (
     get_file_data_and_mimetype,
 )
 
-from . import BaseResource
+from .. import BaseResource
 
 FAMILY_IMAGE_UPLOAD_ENDPOINT = "/families/{family_id}/image/upload"
 
@@ -92,6 +92,14 @@ class FamiliesResource(BaseResource):
 
     def get_by_id(self, family_id: int):
         return self._client.get_entity(EntityType.FAMILY, family_id)
+
+    def refresh(self, family_id: int):
+        """
+        This will refresh the family data. It will not return anything but will
+        simply refresh the data which will then update the denormalized data on the
+        family. It will not change the revision_uuid.
+        """
+        return self._client.refresh_entity(EntityType.FAMILY, family_id)
 
     def update(self, families: list[dict], filters: list[Filter] | None = None):
         return self._client.update_entities(EntityType.FAMILY, families, filters)
