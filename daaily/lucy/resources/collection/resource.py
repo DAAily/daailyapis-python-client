@@ -1,9 +1,17 @@
+import json
 from typing import Any, Dict, Generator
 
 from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
+from daaily.lucy.utils import (
+    extract_extension_from_blob_id,
+    extract_mime_type_from_extension,
+    get_file_data_and_mimetype,
+)
 
 from .. import BaseResource
+
+COLLECTION_IMAGE_UPLOAD_ENDPOINT = "/collections/{collection_id}/image/upload"
 
 
 class CollectionsResource(BaseResource):
@@ -98,3 +106,99 @@ class CollectionsResource(BaseResource):
         return self._client.create_entities(
             EntityType.COLLECTION, collections, filters, service=service
         )
+
+    def upload_image(
+        self,
+        collection_id: int,
+        image_path: str | None = None,
+        image_bytes: bytes | None = None,
+        mime_type: str | None = None,
+        filename: str | None = None,
+        old_blob_id: str | None = None,
+        **kwargs,
+    ) -> Any:
+        """
+        Uploads an image file to a collection and returns the blob ID.
+        Does not add the image file to the collection.
+
+        Args:
+            collection_id (int): The unique identifier of the collection.
+            image_path (str | None): The local file path to the image file.
+            image_bytes (bytes | None): The binary data of the image file.
+            mime_type (str | None): The MIME type of the image file.
+            filename (str | None): The name of the image file.
+            old_blob_id (str | None): The blob ID of the existing image file.
+            **kwargs: Additional keyword arguments containing image metadata.
+
+        Returns:
+            Any: The response data from the server.
+            For example:
+                {
+                    "image_blob_id": "m-on/310089/collections/12345/image/file.jpg",
+                    "image_mime_type": "image/jpeg",
+                    "image_size": 123456,
+                    "image_height": 600,
+                    "image_width": 800
+                }
+
+        Raises:
+            Exception: If neither image_path nor image_bytes is provided.
+            Exception: If the content type of the image file is not an image type.
+            Exception: If the upload fails.
+
+        Example:
+            ```python
+            # Upload an image file using a local file
+            response = client.collections.upload_image(
+                collection_id=12345,
+                image_path="/path/to/image_file.jpg"
+            )
+
+            # Upload an image file using binary data
+            response = client.collections.upload_image(
+                collection_id=12345,
+                image_bytes=b"binary_data",
+                mime_type="image/jpeg",
+                filename="image_file.jpg"
+            )
+            ```
+        """
+        if not image_path and not image_bytes:
+            raise Exception("Either image_path or image_bytes must be provided")
+        if image_path:
+            image_data, content_type, filename = get_file_data_and_mimetype(image_path)
+        else:
+            if not mime_type:
+                raise ValueError(
+                    "If 'image_bytes' is provided, 'mime_type' must be specified."
+                )
+            image_data = image_bytes
+            content_type = mime_type
+        if content_type is None:
+            raise Exception("Could not determine content type for image")
+        if not content_type.startswith("image/"):
+            raise Exception(f"File is not an image type. Detected: {content_type}")
+        if kwargs:
+            headers = dict(item for item in kwargs.items() if isinstance(item[1], str))
+        else:
+            headers = {}
+        image_upload_url = COLLECTION_IMAGE_UPLOAD_ENDPOINT.format(
+            collection_id=collection_id
+        )
+        url = f"{self._client._base_url}{image_upload_url}"
+        if old_blob_id:
+            old_extension = extract_extension_from_blob_id(old_blob_id)
+            old_mime_type = extract_mime_type_from_extension(old_extension)
+            if old_mime_type == content_type:
+                url += f"&old_blob_id={old_blob_id}"
+        resp = self._client._do_request(
+            "POST",
+            url,
+            fields={"file": (filename, image_data, content_type)},
+            headers=headers,
+        )
+        if resp.status != 200:
+            raise Exception(
+                f"Failed to upload image. Status code: {resp.status}. {resp.data}"
+            )
+        return json.loads(resp.data.decode("utf-8"))
