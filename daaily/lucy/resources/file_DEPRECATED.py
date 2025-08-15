@@ -1,5 +1,7 @@
 import os
 
+from typing_extensions import deprecated
+
 from daaily.lucy.utils import get_asset_type_from_mime_type, get_file_data_and_mimetype
 
 from . import BaseResource
@@ -7,6 +9,7 @@ from . import BaseResource
 FILE_UPLOADS_UNSPECIFIC_ENDPOINT = "/files/uploads/temp/unspecific"
 
 
+@deprecated("This resource is deprecated and will be removed in a future version.")
 class FilesResource(BaseResource):
     def upload_file_to_temp_bucket_by_file_path(
         self, file_path: str, metadata: dict | None = None

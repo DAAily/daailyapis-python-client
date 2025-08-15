@@ -1,6 +1,6 @@
 from typing import Any, Dict, Generator
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
 from .. import BaseResource
@@ -70,12 +70,22 @@ class InstitutionsResource(BaseResource):
     def get_by_id(self, institution_id: int):
         return self._client.get_entity(EntityType.INSTITUTION, institution_id)
 
-    def update(self, institutions: list[dict], filters: list[Filter] | None = None):
+    def update(
+        self,
+        institutions: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
         return self._client.update_entities(
-            EntityType.INSTITUTION, institutions, filters
+            EntityType.INSTITUTION, institutions, filters, service=service
         )
 
-    def create(self, institutions: list[dict], filters: list[Filter] | None = None):
+    def create(
+        self,
+        institutions: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
         return self._client.create_entities(
-            EntityType.INSTITUTION, institutions, filters
+            EntityType.INSTITUTION, institutions, filters, service=service
         )

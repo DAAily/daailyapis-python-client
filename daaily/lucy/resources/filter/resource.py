@@ -1,9 +1,9 @@
 from typing import Any, Dict, Generator
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
-from . import BaseResource
+from .. import BaseResource
 
 
 class FiltersResource(BaseResource):
@@ -71,15 +71,21 @@ class FiltersResource(BaseResource):
         return self._client.get_entity(EntityType.FILTER, filter_id)
 
     def update(
-        self, filters_data: list[dict], query_filters: list[Filter] | None = None
+        self,
+        filters_data: list[dict],
+        query_filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
     ):
         return self._client.update_entities(
-            EntityType.FILTER, filters_data, query_filters
+            EntityType.FILTER, filters_data, query_filters, service=service
         )
 
     def create(
-        self, filters_data: list[dict], query_filters: list[Filter] | None = None
+        self,
+        filters_data: list[dict],
+        query_filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
     ):
         return self._client.create_entities(
-            EntityType.FILTER, filters_data, query_filters
+            EntityType.FILTER, filters_data, query_filters, service=service
         )

@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Literal
 
+from typing_extensions import deprecated
 from urllib3 import filepost
 
 import daaily.transport
@@ -11,20 +12,20 @@ from daaily.lucy.enums import AssetType, EntityType, Service
 from daaily.lucy.models import Filter
 from daaily.lucy.resources.attribute.resource import AttributesResource
 from daaily.lucy.resources.collection.resource import CollectionsResource
-from daaily.lucy.resources.creator import CreatorsResource
-from daaily.lucy.resources.distributor import DistributorsResource
+from daaily.lucy.resources.creator.resource import CreatorsResource
+from daaily.lucy.resources.distributor.resource import DistributorsResource
 from daaily.lucy.resources.family.resource import FamiliesResource
-from daaily.lucy.resources.file import FilesResource
-from daaily.lucy.resources.filter import FiltersResource
-from daaily.lucy.resources.group import GroupsResource
+from daaily.lucy.resources.file_DEPRECATED import FilesResource
+from daaily.lucy.resources.filter.resource import FiltersResource
+from daaily.lucy.resources.group.resource import GroupsResource
 from daaily.lucy.resources.institution.resource import InstitutionsResource
-from daaily.lucy.resources.journalist import JournalistsResource
-from daaily.lucy.resources.manufacturer import ManufacturersResource
-from daaily.lucy.resources.material import MaterialsResource
+from daaily.lucy.resources.journalist.resource import JournalistsResource
+from daaily.lucy.resources.manufacturer.resource import ManufacturersResource
+from daaily.lucy.resources.material.resource import MaterialsResource
 from daaily.lucy.resources.product.resource import ProductsResource
-from daaily.lucy.resources.project import ProjectsResource
-from daaily.lucy.resources.space import SpacesResource
-from daaily.lucy.resources.story import StoriesResource
+from daaily.lucy.resources.project.resource import ProjectsResource
+from daaily.lucy.resources.space.resource import SpacesResource
+from daaily.lucy.resources.story.resource import StoriesResource
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
     add_x_goog_metadata_to_headers,
@@ -288,6 +289,7 @@ class Client:
                 break
         return entities
 
+    @deprecated("This method is deprecated and will be removed in a future version.")
     def move_asset(
         self,
         entity_type: EntityType,

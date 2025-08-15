@@ -6,9 +6,10 @@ from typing import Any, Dict, Generator, Literal
 from urllib.parse import urlencode, urlparse
 
 import urllib3
+from typing_extensions import deprecated
 
 from daaily.lucy.constants import COUNTRY_CODE_TO_COUNTRY_ID_MAPPING, ENTITY_STATUS
-from daaily.lucy.enums import AssetType, EntityType
+from daaily.lucy.enums import AssetType, EntityType, Service
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -21,7 +22,7 @@ from daaily.lucy.utils import (
     get_file_data_and_mimetype,
 )
 
-from . import BaseResource
+from .. import BaseResource
 
 MANUFACTURER_IMAGE_TYPE = Literal["logo", "header"]
 MANUFACTURER_IMAGE_UPLOAD_ENDPOINT = "/manufacturers/{manufacturer_id}/image/upload"
@@ -108,14 +109,24 @@ class ManufacturersResource(BaseResource):
     def get_by_domain(self, domain: str):
         return self._client.get_entity_custom(EntityType.MANUFACTURER, domain, "domain")
 
-    def update(self, manufacturers: list[dict], filters: list[Filter] | None = None):
+    def update(
+        self,
+        manufacturers: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
         return self._client.update_entities(
-            EntityType.MANUFACTURER, manufacturers, filters
+            EntityType.MANUFACTURER, manufacturers, filters, service=service
         )
 
-    def create(self, manufacturers: list[dict], filters: list[Filter] | None = None):
+    def create(
+        self,
+        manufacturers: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
         return self._client.create_entities(
-            EntityType.MANUFACTURER, manufacturers, filters
+            EntityType.MANUFACTURER, manufacturers, filters, service=service
         )
 
     def upload_image(  # noqa: C901
@@ -238,6 +249,7 @@ class ManufacturersResource(BaseResource):
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
+        service: Service = Service.SPARKY,
         **kwargs,
     ) -> Response:
         """
@@ -398,7 +410,9 @@ class ManufacturersResource(BaseResource):
             image,
             image_type,
         )
-        return self._client.update_entity(EntityType.MANUFACTURER, manufacturer)
+        return self._client.update_entity(
+            EntityType.MANUFACTURER, manufacturer, service=service
+        )
 
     def add_address(
         self,
@@ -406,6 +420,7 @@ class ManufacturersResource(BaseResource):
         address: dict,
         country_code: str | None,
         country_of_user_code: str | None = None,
+        service: Service = Service.SPARKY,
     ) -> Response:
         """
         Adds an address to a manufacturer.
@@ -499,7 +514,7 @@ class ManufacturersResource(BaseResource):
                 a for a in m["addresses"] if a["address_type"] != "headquarter"
             ]
         m["addresses"].append(address)
-        return self._client.update_entity(EntityType.MANUFACTURER, m)
+        return self._client.update_entity(EntityType.MANUFACTURER, m, service=service)
 
     def add_about(  # noqa: C901
         self,
@@ -507,6 +522,7 @@ class ManufacturersResource(BaseResource):
         about: dict,
         content_type: Literal["text", "picture", "video", "quote", "link", "pre_text"],
         image_path: str | None = None,
+        service: Service = Service.SPARKY,
     ) -> Response:
         """
         Adds an about section to a manufacturer.
@@ -670,7 +686,7 @@ class ManufacturersResource(BaseResource):
         if not m:
             raise Exception(f"Manufacturer with ID {manufacturer_id} not found.")
         m = add_about_to_manufacturer(m, about)
-        return self._client.update_entity(EntityType.MANUFACTURER, m)
+        return self._client.update_entity(EntityType.MANUFACTURER, m, service=service)
 
     def upload_pdf(  # noqa: C901
         self,
@@ -891,6 +907,9 @@ class ManufacturersResource(BaseResource):
             )
         return json.loads(resp.data.decode("utf-8"))
 
+    @deprecated(
+        "Support will be deprecated. Status now editable and does not need to be moved."
+    )
     def change_pdf_status(
         self, manufacturer_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
@@ -937,6 +956,9 @@ class ManufacturersResource(BaseResource):
             target_status,
         )
 
+    @deprecated(
+        "Support will be deprecated. Status now editable and does not need to be moved."
+    )
     def change_image_status(
         self,
         manufacturer_id: int,

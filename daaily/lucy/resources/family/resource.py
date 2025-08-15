@@ -5,9 +5,10 @@ from typing import Any, Dict, Generator
 from urllib.parse import urlparse
 
 import urllib3
+from typing_extensions import deprecated
 
 from daaily.lucy.constants import ENTITY_STATUS
-from daaily.lucy.enums import AssetType, EntityType
+from daaily.lucy.enums import AssetType, EntityType, Service
 from daaily.lucy.models import Filter
 from daaily.lucy.response import Response
 from daaily.lucy.utils import (
@@ -101,11 +102,25 @@ class FamiliesResource(BaseResource):
         """
         return self._client.refresh_entity(EntityType.FAMILY, family_id)
 
-    def update(self, families: list[dict], filters: list[Filter] | None = None):
-        return self._client.update_entities(EntityType.FAMILY, families, filters)
+    def update(
+        self,
+        families: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.update_entities(
+            EntityType.FAMILY, families, filters, service=service
+        )
 
-    def create(self, families: list[dict], filters: list[Filter] | None = None):
-        return self._client.create_entities(EntityType.FAMILY, families, filters)
+    def create(
+        self,
+        families: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.create_entities(
+            EntityType.FAMILY, families, filters, service=service
+        )
 
     def upload_image(
         self,
@@ -207,6 +222,7 @@ class FamiliesResource(BaseResource):
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
+        service: Service = Service.SPARKY,
         **kwargs,
     ) -> Response:
         """
@@ -384,8 +400,11 @@ class FamiliesResource(BaseResource):
         if not image.get("blob_id"):
             raise ValueError("Image object must contain a blob_id")
         family = add_image_to_family_by_blob_id(family, image, old_blob_id=old_blob_id)
-        return self._client.update_entity(EntityType.FAMILY, family)
+        return self._client.update_entity(EntityType.FAMILY, family, service=service)
 
+    @deprecated(
+        "Support will be deprecated. Status now editable and does not need to be moved."
+    )
     def change_image_status(
         self, family_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
