@@ -1,21 +1,22 @@
 from typing import Any, Dict, Generator
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
-from . import BaseResource
+from .. import BaseResource
 
 
-class CreatorsResource(BaseResource):
+class MaterialsResource(BaseResource):
     def get(
         self, filters: list[Filter] | None = None
     ) -> Generator[Dict[str, Any], None, None]:
         """
-        Retrieves creators with optional filtering, returning them as a generator
-        that yields each creator one at a time.
+        Retrieves materials with optional filtering, returning them as a generator
+        that yields each material one at a time.
 
         Available filters:
-            - creator_ids (str): Filter by comma separated creator IDs.
+            - manufacturer_id (int): Filter by manufacturer ID.
+            - material_ids (str): Filter by comma separated material IDs.
 
         Note that the following filters are automatically added to the query:
             - skip (int): Number of records to skip.
@@ -25,19 +26,19 @@ class CreatorsResource(BaseResource):
             filters (list[Filter] | None): A list of filters to apply to the query.
 
         Yields:
-            dict: A dictionary representing a single creator.
+            dict: A dictionary representing a single material.
 
         Example:
             ```python
             # Define filters
-            filters = [Filter("creator_ids", "12345, 78910")]
+            filters = [Filter("manufacturer_id", "12345")]
 
-            # Get creators (pagination handled internally)
-            creators = client.creators.get(filters=filters)
+            # Get materials (pagination handled internally)
+            materials = client.materials.get(filters=filters)
 
             # Iterate over the results without worrying about pagination
-            for c in creators:
-                print(f"ID: {c['creator_id']}, Name: {c['name']}")
+            for m in materials:
+                print(f"ID: {m['material_id']}, Name: {m['name_en']}")
             ```
         """
         if filters is None:
@@ -57,7 +58,7 @@ class CreatorsResource(BaseResource):
         new_filters.append(limit_filter)
         new_filters.append(skip_filter)
         while True:
-            response = self._client.get_entities(EntityType.CREATOR, new_filters)
+            response = self._client.get_entities(EntityType.MATERIAL, new_filters)
             if response.status != 200:
                 break
             for item in response.json():  # type: ignore
@@ -67,11 +68,25 @@ class CreatorsResource(BaseResource):
             new_filters = [f for f in new_filters if f.name != "skip"]
             new_filters.append(skip_filter)
 
-    def get_by_id(self, creator_id: int):
-        return self._client.get_entity(EntityType.CREATOR, creator_id)
+    def get_by_id(self, material_id: int):
+        return self._client.get_entity(EntityType.MATERIAL, material_id)
 
-    def update(self, creators: list[dict], filters: list[Filter] | None = None):
-        return self._client.update_entities(EntityType.CREATOR, creators, filters)
+    def update(
+        self,
+        materials: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.update_entities(
+            EntityType.MATERIAL, materials, filters, service=service
+        )
 
-    def create(self, creators: list[dict], filters: list[Filter] | None = None):
-        return self._client.create_entities(EntityType.CREATOR, creators, filters)
+    def create(
+        self,
+        materials: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.create_entities(
+            EntityType.MATERIAL, materials, filters, service=service
+        )

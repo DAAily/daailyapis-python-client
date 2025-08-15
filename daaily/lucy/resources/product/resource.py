@@ -6,6 +6,7 @@ from typing import Any, Dict, Generator
 from urllib.parse import urlencode, urlparse
 
 import urllib3
+from typing_extensions import deprecated
 
 from daaily.lucy.constants import ENTITY_STATUS
 from daaily.lucy.enums import AssetType, EntityType, Service
@@ -762,6 +763,7 @@ class ProductsResource(BaseResource):
         image_path: str | None = None,
         image_url: str | None = None,
         old_blob_id: str | None = None,
+        service: Service = Service.SPARKY,
         **kwargs,
     ) -> Response:
         """
@@ -939,8 +941,11 @@ class ProductsResource(BaseResource):
         product = add_image_to_product_by_blob_id(
             product, image, old_blob_id=old_blob_id
         )
-        return self._client.update_entity(EntityType.PRODUCT, product)
+        return self._client.update_entity(EntityType.PRODUCT, product, service=service)
 
+    @deprecated(
+        "Support will be deprecated. Status now editable and does not need to be moved."
+    )
     def change_image_status(
         self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
@@ -983,6 +988,9 @@ class ProductsResource(BaseResource):
             EntityType.PRODUCT, product_id, AssetType.IMAGE, blob_id, target_status
         )
 
+    @deprecated(
+        "Support will be deprecated. Status now editable and does not need to be moved."
+    )
     def change_pdf_status(
         self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:
@@ -1024,6 +1032,9 @@ class ProductsResource(BaseResource):
             EntityType.PRODUCT, product_id, AssetType.PDF, blob_id, target_status
         )
 
+    @deprecated(
+        "Support will be deprecated. Status now editable and does not need to be moved."
+    )
     def change_cad_status(
         self, product_id: int, blob_id: str, target_status: ENTITY_STATUS
     ) -> Response:

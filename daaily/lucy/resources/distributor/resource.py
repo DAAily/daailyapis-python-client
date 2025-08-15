@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, Generator
 from urllib.parse import urlencode
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 from daaily.lucy.utils import (
     extract_extension_from_blob_id,
@@ -10,7 +10,7 @@ from daaily.lucy.utils import (
     get_file_data_and_mimetype,
 )
 
-from . import BaseResource
+from .. import BaseResource
 
 DISTRIBUTOR_PDF_UPLOAD_ENDPOINT = "/distributors/{distributor_id}/pdf/upload"
 DISTRIBUTOR_PDF_SIGNED_URL_ENDPOINT = "/distributors/{distributor_id}/pdf/signed-url"
@@ -84,14 +84,24 @@ class DistributorsResource(BaseResource):
     def get_by_id(self, distributor_id: int):
         return self._client.get_entity(EntityType.DISTRIBUTOR, distributor_id)
 
-    def update(self, distributors: list[dict], filters: list[Filter] | None = None):
+    def update(
+        self,
+        distributors: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
         return self._client.update_entities(
-            EntityType.DISTRIBUTOR, distributors, filters
+            EntityType.DISTRIBUTOR, distributors, filters, service=service
         )
 
-    def create(self, distributors: list[dict], filters: list[Filter] | None = None):
+    def create(
+        self,
+        distributors: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
         return self._client.create_entities(
-            EntityType.DISTRIBUTOR, distributors, filters
+            EntityType.DISTRIBUTOR, distributors, filters, service=service
         )
 
     def upload_pdf(  # noqa: C901

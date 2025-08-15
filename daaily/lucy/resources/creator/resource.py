@@ -1,21 +1,21 @@
 from typing import Any, Dict, Generator
 
-from daaily.lucy.enums import EntityType
+from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
 
-from . import BaseResource
+from .. import BaseResource
 
 
-class ProjectsResource(BaseResource):
+class CreatorsResource(BaseResource):
     def get(
         self, filters: list[Filter] | None = None
     ) -> Generator[Dict[str, Any], None, None]:
         """
-        Retrieves project with optional filtering, returning them as a generator
-        that yields each project one at a time.
+        Retrieves creators with optional filtering, returning them as a generator
+        that yields each creator one at a time.
 
         Available filters:
-            - project_ids (str): Filter by comma separated project IDs.
+            - creator_ids (str): Filter by comma separated creator IDs.
 
         Note that the following filters are automatically added to the query:
             - skip (int): Number of records to skip.
@@ -25,19 +25,19 @@ class ProjectsResource(BaseResource):
             filters (list[Filter] | None): A list of filters to apply to the query.
 
         Yields:
-            dict: A dictionary representing a single project.
+            dict: A dictionary representing a single creator.
 
         Example:
             ```python
             # Define filters
-            filters = [Filter("manufacturer_id", "12345")]
+            filters = [Filter("creator_ids", "12345, 78910")]
 
-            # Get materials (pagination handled internally)
-            projects = client.projects.get(filters=filters)
+            # Get creators (pagination handled internally)
+            creators = client.creators.get(filters=filters)
 
             # Iterate over the results without worrying about pagination
-            for p in projects:
-                print(f"ID: {p['project_id']}, Name: {p['name']}")
+            for c in creators:
+                print(f"ID: {c['creator_id']}, Name: {c['name']}")
             ```
         """
         if filters is None:
@@ -57,7 +57,7 @@ class ProjectsResource(BaseResource):
         new_filters.append(limit_filter)
         new_filters.append(skip_filter)
         while True:
-            response = self._client.get_entities(EntityType.PROJECT, new_filters)
+            response = self._client.get_entities(EntityType.CREATOR, new_filters)
             if response.status != 200:
                 break
             for item in response.json():  # type: ignore
@@ -67,11 +67,25 @@ class ProjectsResource(BaseResource):
             new_filters = [f for f in new_filters if f.name != "skip"]
             new_filters.append(skip_filter)
 
-    def get_by_id(self, project_id: int):
-        return self._client.get_entity(EntityType.PROJECT, project_id)
+    def get_by_id(self, creator_id: int):
+        return self._client.get_entity(EntityType.CREATOR, creator_id)
 
-    def update(self, projects: list[dict], filters: list[Filter] | None = None):
-        return self._client.update_entities(EntityType.PROJECT, projects, filters)
+    def update(
+        self,
+        creators: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.update_entities(
+            EntityType.CREATOR, creators, filters, service=service
+        )
 
-    def create(self, projects: list[dict], filters: list[Filter] | None = None):
-        return self._client.create_entities(EntityType.PROJECT, projects, filters)
+    def create(
+        self,
+        creators: list[dict],
+        filters: list[Filter] | None = None,
+        service: Service = Service.SPARKY,
+    ):
+        return self._client.create_entities(
+            EntityType.CREATOR, creators, filters, service=service
+        )
