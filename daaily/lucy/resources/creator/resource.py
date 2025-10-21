@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, Literal
 
 from daaily.lucy.enums import EntityType, Service
 from daaily.lucy.models import Filter
@@ -66,6 +66,43 @@ class CreatorsResource(BaseResource):
             skip_filter.value = skip_value
             new_filters = [f for f in new_filters if f.name != "skip"]
             new_filters.append(skip_filter)
+
+    def search(
+        self,
+        query: str,
+        filters: list[Filter] | None = None,
+        return_type: Literal["json", "response"] = "response",
+    ) -> list[dict] | Any:
+        """
+        Searches for attributes based on a query string.
+
+        Args:
+            query (str): The search query string.
+            mode (str): The search mode. Available values: "keyword", "hybrid",
+                "vector".
+            filters (list[Filter] | None): A list of filters to apply to the search.
+            Example: [Filter("status", "online,preview")].
+
+        Returns:
+            list[dict]: A list of attributes matching the search criteria.
+
+        Example:
+            ```python
+            results = client.attributes.search("example attribute")
+            for attribute in results:
+                print(attribute)
+            ```
+        """
+        response = self._client.search_entities(
+            EntityType.CREATOR, query, mode="keyword", filters=filters
+        )
+        if return_type == "json":
+            if response.status != 200:
+                raise Exception(
+                    f"Error: {response.status} - {response.data.decode('utf-8')}"
+                )
+            return response.json()
+        return response
 
     def get_by_id(self, creator_id: int):
         return self._client.get_entity(EntityType.CREATOR, creator_id)

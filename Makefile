@@ -85,6 +85,9 @@ sample-lucy-25:
 sample-lucy-26:
 	venv/bin/python -m samples.lucy.refresh_product
 
+sample-lucy-27:
+	venv/bin/python -m samples.lucy.search_creators
+
 sample-franklin-1:
 	venv/bin/python -m samples.franklin.predict_group
 
