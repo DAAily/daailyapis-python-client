@@ -7,7 +7,7 @@ steps:
   - |
     python -m pip install --upgrade pip \
       keyrings.google-artifactregistry-auth \
-      build twine
+      build "twine<6.2.0"
 
     python -m build
 
